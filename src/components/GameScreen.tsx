@@ -1,25 +1,49 @@
 import { AnimatePresence } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import type { Arrow } from 'react-chessboard'
+import { type TimeControl, timeControlName } from '../chess/clock'
 import { type Color, colorToSide } from '../chess/game'
 import type { Bot } from '../engine/bots'
-import { BotAvatar } from './BotAvatar'
+import { readToken, withAlpha } from '../theme'
+import { BotAvatar, YouAvatar } from './BotAvatar'
 import { ChessBoard } from './ChessBoard'
+import { Clock } from './Clock'
+import { HintCard } from './HintCard'
+import { HintOrbs } from './HintOrbs'
 import { LeafBurst } from './LeafBurst'
 import { Logo } from './Logo'
+import { PlayerBar } from './PlayerBar'
 import { ResultCard } from './ResultCard'
 import { SidePanel } from './SidePanel'
 import { ThinkingDots } from './ThinkingDots'
+import { HINT_ALPHAS, useAnalysis } from './useAnalysis'
 import { useGame } from './useGame'
+import { WinRope } from './WinRope'
+
+const sideName = (c: Color) => (c === 'w' ? 'White' : 'Black')
 
 type Props = {
   bot: Bot
   myColor: Color
+  timeControl: TimeControl
   onNewGame: () => void
   onChangeOpponent: () => void
 }
 
-export function GameScreen({ bot, myColor, onNewGame, onChangeOpponent }: Props) {
-  const g = useGame(bot, myColor)
+export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOpponent }: Props) {
+  const g = useGame(bot, myColor, timeControl)
+  const analysis = useAnalysis(g.game, myColor, g.myTurn, g.summary?.result ?? null)
+
+  // Hint arrows: lagoon, strongest to weakest.
+  const hintArrows = useMemo<Arrow[]>(() => {
+    if (!analysis.hints) return []
+    const lagoon = readToken('--accent-2', '#3fb8af')
+    return analysis.hints.map((h) => ({
+      startSquare: h.from,
+      endSquare: h.to,
+      color: withAlpha(lagoon, HINT_ALPHAS[h.rank]),
+    }))
+  }, [analysis.hints])
   const [orientation, setOrientation] = useState(colorToSide(myColor))
   const [showResult, setShowResult] = useState(false)
 
@@ -40,38 +64,85 @@ export function GameScreen({ bot, myColor, onNewGame, onChangeOpponent }: Props)
         ? 'Check!'
         : `${bot.name}'s move`
 
+  const botColor = myColor === 'w' ? 'b' : 'w'
+  const statusTone =
+    g.game.inCheck() && !g.isOver ? 'text-danger' : g.myTurn ? 'text-accent' : 'text-muted'
+
+  const botBar = (
+    <PlayerBar
+      avatar={<BotAvatar bot={bot} size={40} />}
+      name={
+        <>
+          <span className="truncate font-display text-lg font-semibold">{bot.name}</span>
+          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-bold text-muted">
+            {bot.level}
+          </span>
+          {g.thinking && <ThinkingDots />}
+        </>
+      }
+      detail={
+        <span className={g.myTurn ? 'text-muted' : statusTone}>
+          {g.myTurn ? sideName(botColor) : status}
+        </span>
+      }
+    >
+      {g.clockOn && (
+        <Clock
+          label={`${bot.name}'s clock`}
+          remainingMs={g.clock.remaining[botColor]}
+          runningSince={g.turn === botColor ? g.clock.runningSince : null}
+        />
+      )}
+    </PlayerBar>
+  )
+
+  const youBar = (
+    <PlayerBar
+      avatar={<YouAvatar color={myColor} />}
+      name={<span className="font-display text-lg font-semibold">You</span>}
+      detail={
+        <span className={g.myTurn ? statusTone : 'text-muted'}>
+          {g.myTurn ? status : sideName(myColor)}
+        </span>
+      }
+    >
+      <HintOrbs
+        left={analysis.hintsLeft}
+        loading={analysis.hintLoading}
+        enabled={analysis.canHint}
+        onUse={analysis.requestHint}
+      />
+      {g.clockOn && (
+        <Clock
+          label="Your clock"
+          remainingMs={g.clock.remaining[myColor]}
+          runningSince={g.turn === myColor ? g.clock.runningSince : null}
+        />
+      )}
+    </PlayerBar>
+  )
+
+  // The bar nearest each side of the board belongs to the player sitting there.
+  const flipped = orientation !== colorToSide(myColor)
+
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-2 pb-6 pt-3 sm:px-4 lg:flex-row lg:items-start lg:justify-center lg:gap-6 lg:pt-6">
-      <div className="flex w-full flex-col gap-3 lg:w-[min(680px,calc(100dvh-120px))] lg:shrink-0">
-        <header className="flex items-center justify-between gap-3 px-1">
-          <div className="flex min-w-0 items-center gap-3">
-            <BotAvatar bot={bot} size={40} />
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="truncate font-display text-lg font-semibold">{bot.name}</span>
-                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-bold text-muted">
-                  {bot.level}
-                </span>
-                {g.thinking && <ThinkingDots />}
-              </div>
-              <span
-                className={`text-sm font-semibold ${
-                  g.game.inCheck() && !g.isOver ? 'text-danger' : g.myTurn ? 'text-accent' : 'text-muted'
-                }`}
-              >
-                {status}
-              </span>
-            </div>
-          </div>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-2 pb-6 pt-2 sm:px-4 lg:flex-row lg:items-start lg:justify-center lg:gap-6 lg:pt-4">
+      <div className="flex w-full flex-col gap-2 lg:w-[min(680px,calc(100dvh-190px))] lg:shrink-0">
+        <nav className="flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={onChangeOpponent}
-            className="min-h-11 shrink-0 cursor-pointer rounded-full px-3 hover:bg-surface-2"
+            className="-ml-2 min-h-11 cursor-pointer rounded-full px-3 hover:bg-surface-2"
             aria-label="Back to start"
           >
-            <Logo className="text-xl" />
+            <Logo className="text-2xl" />
           </button>
-        </header>
+          <span className="rounded-full bg-surface px-3 py-1 text-sm font-bold text-muted">
+            {timeControlName(timeControl)}
+          </span>
+        </nav>
+
+        {flipped ? youBar : botBar}
 
         <ChessBoard
           game={g.game}
@@ -80,7 +151,10 @@ export function GameScreen({ bot, myColor, onNewGame, onChangeOpponent }: Props)
           canMove={g.myTurn}
           lastMove={g.lastMove}
           onMove={g.play}
+          arrows={hintArrows}
         />
+
+        {flipped ? botBar : youBar}
       </div>
 
       <div className="w-full lg:relative lg:w-[340px] lg:shrink-0 lg:self-stretch">
@@ -93,6 +167,8 @@ export function GameScreen({ bot, myColor, onNewGame, onChangeOpponent }: Props)
             onNewGame={onNewGame}
             onResign={g.resign}
             onFlip={() => setOrientation((o) => (o === 'white' ? 'black' : 'white'))}
+            rope={<WinRope myWinPct={analysis.myWinPct} botName={bot.name} />}
+            hint={analysis.hints && <HintCard hints={analysis.hints} />}
           />
         </div>
       </div>

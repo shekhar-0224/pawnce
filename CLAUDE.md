@@ -39,7 +39,8 @@ A solo, non-developer founder working with Claude Code. So:
    move quality (best / good / inaccuracy / mistake / blunder)
 5. Tactic detection: fork, then pin, skewer, discovered attack
 6. Play with friends via shareable link (real-time rooms, "learning game" toggle)
-7. Jungle pieces and polish: animations, the "FORK!" moment, sounds
+7. Jungle pieces and polish: animations, the "FORK!" moment, sounds,
+   and a full branding refresh (logo, colors, overall look)
 8. Ship: web first, then app stores via Capacitor
 
 ## Design direction
@@ -51,4 +52,4 @@ A solo, non-developer founder working with Claude Code. So:
 - Big, playful feedback moments (e.g. a "FORK!" banner) but never cluttered.
 
 ## Current phase
-Phase 1.
+Phases 1 to 3 are built. Next: Phases 4 and 5 together.

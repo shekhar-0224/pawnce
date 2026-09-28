@@ -2,6 +2,7 @@
  * Works out if and how a game ended, and explains it in plain words.
  */
 import type { Chess, Color, PieceSymbol, Square } from 'chess.js'
+import { hasMatingMaterial } from './clock'
 import { PIECE_NAMES, kingSquare, otherColor } from './game'
 
 export type EndReason =
@@ -11,6 +12,7 @@ export type EndReason =
   | 'insufficient'
   | 'fifty-moves'
   | 'resignation'
+  | 'timeout'
 
 export type Result = 'win' | 'loss' | 'draw'
 
@@ -30,6 +32,12 @@ export function detectOutcome(game: Chess): Outcome | null {
   return null
 }
 
+/** `flagged` ran out of time: they lose, unless the opponent could never mate. */
+export function timeoutOutcome(game: Chess, flagged: Color): Outcome {
+  const opponent = otherColor(flagged)
+  return { reason: 'timeout', winner: hasMatingMaterial(game, opponent) ? opponent : null }
+}
+
 export function resultFor(outcome: Outcome, me: Color): Result {
   if (outcome.winner === null) return 'draw'
   return outcome.winner === me ? 'win' : 'loss'
@@ -38,6 +46,8 @@ export function resultFor(outcome: Outcome, me: Color): Result {
 export function headline(result: Result, reason: EndReason): string {
   if (reason === 'checkmate') return result === 'win' ? 'You win!' : 'Checkmate'
   if (reason === 'resignation') return 'You resigned'
+  if (reason === 'timeout' && result === 'win') return 'You win on time!'
+  if (reason === 'timeout' && result === 'loss') return "Time's up!"
   if (reason === 'stalemate') return 'Stalemate!'
   return "It's a draw"
 }
@@ -96,6 +106,14 @@ export function explain(game: Chess, outcome: Outcome, me: Color, botName: strin
       return "Neither side has enough pieces left to checkmate, so it's a draw."
     case 'fifty-moves':
       return 'Fifty moves each passed with no capture and no pawn move: a draw by the 50-move rule.'
+    case 'timeout': {
+      if (outcome.winner === me) return `The ${botName}'s clock ran out. You win on time!`
+      if (outcome.winner !== null) return `Your clock ran out, so the ${botName} wins on time. Try a longer time control?`
+      const iFlagged = game.turn() === me
+      return iFlagged
+        ? `Your clock ran out, but the ${botName} doesn't have enough pieces left to checkmate, so it's a draw.`
+        : `The ${botName}'s clock ran out, but you don't have enough pieces left to checkmate, so it's a draw.`
+    }
     case 'resignation':
       return `You gave up this one. The ${botName} takes the win. Ready for a rematch?`
   }

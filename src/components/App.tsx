@@ -1,20 +1,21 @@
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { TIME_CONTROLS, type TimeControlId } from '../chess/clock'
 import type { Color } from '../chess/game'
 import { BOTS, type BotId } from '../engine/bots'
-import { engine } from '../engine/stockfish'
+import { analyst, engine } from '../engine/stockfish'
 import { GameScreen } from './GameScreen'
 import { RecentGamesScreen } from './RecentGamesScreen'
 import { type SidePref, StartScreen } from './StartScreen'
 
 type Screen = 'start' | 'game' | 'recent'
 
-type Settings = { botId: BotId; side: SidePref }
+type Settings = { botId: BotId; side: SidePref; timeControl: TimeControlId }
 
 const SETTINGS_KEY = 'pawnce.settings.v1'
 
 function loadSettings(): Settings {
-  const fallback: Settings = { botId: 'ant', side: 'white' }
+  const fallback: Settings = { botId: 'ant', side: 'white', timeControl: 'none' }
   try {
     const raw = localStorage.getItem(SETTINGS_KEY)
     if (!raw) return fallback
@@ -22,6 +23,8 @@ function loadSettings(): Settings {
     return {
       botId: s.botId && s.botId in BOTS ? s.botId : fallback.botId,
       side: s.side === 'white' || s.side === 'black' || s.side === 'random' ? s.side : fallback.side,
+      timeControl:
+        s.timeControl && s.timeControl in TIME_CONTROLS ? s.timeControl : fallback.timeControl,
     }
   } catch {
     return fallback
@@ -49,6 +52,7 @@ export default function App() {
   // Start loading Stockfish right away so the first bot move is quick.
   useEffect(() => {
     engine.init().catch(() => undefined)
+    analyst.init().catch(() => undefined)
   }, [])
 
   const startGame = () => {
@@ -79,6 +83,8 @@ export default function App() {
               <StartScreen
                 botId={settings.botId}
                 side={settings.side}
+                timeControl={settings.timeControl}
+                onTimeControlChange={(timeControl) => setSettings((s) => ({ ...s, timeControl }))}
                 onBotChange={(botId) => setSettings((s) => ({ ...s, botId }))}
                 onSideChange={(side) => setSettings((s) => ({ ...s, side }))}
                 onPlay={startGame}
@@ -89,6 +95,7 @@ export default function App() {
               <GameScreen
                 bot={BOTS[settings.botId]}
                 myColor={match.myColor}
+                timeControl={TIME_CONTROLS[settings.timeControl]}
                 onNewGame={startGame}
                 onChangeOpponent={() => goTo('start')}
               />

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { TIME_CONTROL_GROUPS, TIME_CONTROLS, type TimeControlId } from '../chess/clock'
 import { BOT_LIST, type BotId } from '../engine/bots'
 import { BotAvatar } from './BotAvatar'
 import { Button } from './Button'
@@ -9,8 +10,10 @@ export type SidePref = 'white' | 'black' | 'random'
 type Props = {
   botId: BotId
   side: SidePref
+  timeControl: TimeControlId
   onBotChange: (id: BotId) => void
   onSideChange: (side: SidePref) => void
+  onTimeControlChange: (id: TimeControlId) => void
   onPlay: () => void
   onRecent: () => void
 }
@@ -21,7 +24,16 @@ const SIDES: { id: SidePref; label: string }[] = [
   { id: 'random', label: 'Random' },
 ]
 
-export function StartScreen({ botId, side, onBotChange, onSideChange, onPlay, onRecent }: Props) {
+export function StartScreen({
+  botId,
+  side,
+  timeControl,
+  onBotChange,
+  onSideChange,
+  onTimeControlChange,
+  onPlay,
+  onRecent,
+}: Props) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col items-center px-4 pb-10 pt-10 sm:pt-16">
       <Logo className="text-6xl sm:text-7xl" />
@@ -102,6 +114,50 @@ export function StartScreen({ botId, side, onBotChange, onSideChange, onPlay, on
             )
           })}
         </div>
+      </section>
+
+      <section className="mt-8 w-full max-w-xl" aria-labelledby="clock-heading">
+        <h2 id="clock-heading" className="mb-3 text-center font-display text-xl font-semibold">
+          Clock
+        </h2>
+        <div role="radiogroup" aria-labelledby="clock-heading" className="grid grid-cols-4 gap-2">
+          {TIME_CONTROL_GROUPS.flatMap((group) =>
+            group.ids.map((id) => {
+              const t = TIME_CONTROLS[id]
+              const active = id === timeControl
+              return (
+                <motion.button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  aria-label={t.speed ? `${t.speed} ${t.label}` : 'No clock'}
+                  onClick={() => onTimeControlChange(id)}
+                  whileTap={{ scale: 0.97 }}
+                  className={`flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 px-1 transition-colors ${
+                    active
+                      ? 'border-accent bg-surface-2'
+                      : 'border-border bg-surface hover:bg-surface-2'
+                  }`}
+                >
+                  <span className={`font-display text-lg font-semibold leading-tight ${active ? 'text-accent' : ''}`}>
+                    {t.speed ? t.label : '∞'}
+                  </span>
+                  <span className="text-xs font-bold text-muted">{group.label}</span>
+                </motion.button>
+              )
+            }),
+          )}
+        </div>
+        <p className="mt-2 text-center text-sm text-muted">
+          {TIME_CONTROLS[timeControl].speed
+            ? `${TIME_CONTROLS[timeControl].initialMs / 60_000} min each, ${
+                TIME_CONTROLS[timeControl].incrementMs
+                  ? `plus ${TIME_CONTROLS[timeControl].incrementMs / 1000}s after every move`
+                  : 'no extra time per move'
+              }`
+            : 'Take all the time you need.'}
+        </p>
       </section>
 
       <Button variant="primary" size="lg" className="mt-10 w-full max-w-xs text-xl" onClick={onPlay}>

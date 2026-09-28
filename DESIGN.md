@@ -44,6 +44,22 @@ exposed to Tailwind in `src/index.css` (e.g. `bg-surface`, `text-muted`,
 - Last move: `--last-move` on the from and to squares.
 - Check: the king's square pulses `--danger` twice.
 
+## Clocks
+- One clock per player, beside their name above and below the board.
+- Running: mango background. Stopped: `--surface-2`, muted text.
+- Under 10 seconds: `--danger`, gentle pulse, tenths shown (0:07.4).
+
+## Win % rope
+- A tug of war: your share in mango rope texture, the bot's in `--surface-2`.
+- A cream knot slides toward whoever is more likely to win (spring motion).
+- One plain caption under it: "About even", "You're doing better"...
+
+## Hint orbs
+- Two glowing lagoon (`--accent-2`) orbs next to your clock; a used orb
+  becomes a dashed outline.
+- A hint draws 3 lagoon arrows on the board, strongest one boldest, and a
+  lagoon card in the panel naming each move and the idea behind it.
+
 ## Pieces
 Loaded only through `src/theme/pieces.ts`. Today that is react-chessboard's
 default set. The jungle set replaces that one file later:
