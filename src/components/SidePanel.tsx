@@ -11,7 +11,7 @@ type Props = {
   myColor: Color
   moves: Move[]
   verdicts: (MoveVerdict | null)[]
-  opening: Opening | null
+  opening: (Opening & { ply: number }) | null
   isOver: boolean
   /** Win / draw / loss chances. */
   meter: ReactNode
@@ -62,6 +62,10 @@ export function SidePanel({
           {opening && (
             <span className="min-w-0 truncate text-xs font-semibold text-muted" title={opening.name}>
               {opening.name}
+              <span className="text-muted/70">
+                {' · '}
+                {moves[opening.ply]?.color === myColor ? 'your choice' : `${bot.name}'s choice`}
+              </span>
             </span>
           )}
         </div>

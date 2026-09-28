@@ -28,11 +28,14 @@ export function openingAt(fen: string): Opening | null {
   return hit ? { eco: hit[0], name: hit[1] } : null
 }
 
-/** The most specific opening reached so far, looking back through the game. */
-export function openingOf(fens: string[]): Opening | null {
+/**
+ * The most specific opening reached so far, looking back through the game,
+ * and the move (index into `fens`) that reached it, so we know who chose it.
+ */
+export function openingOf(fens: string[]): (Opening & { ply: number }) | null {
   for (let i = fens.length - 1; i >= 0; i--) {
     const o = openingAt(fens[i])
-    if (o) return o
+    if (o) return { ...o, ply: i }
   }
   return null
 }
