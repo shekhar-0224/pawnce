@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { TIME_CONTROLS, type TimeControlId } from '../chess/clock'
 import type { Color } from '../chess/game'
 import { BOTS, type BotId } from '../engine/bots'
-import { engine } from '../engine/stockfish'
+import { analyst, engine } from '../engine/stockfish'
 import { GameScreen } from './GameScreen'
 import { RecentGamesScreen } from './RecentGamesScreen'
 import { type SidePref, StartScreen } from './StartScreen'
@@ -52,6 +52,7 @@ export default function App() {
   // Start loading Stockfish right away so the first bot move is quick.
   useEffect(() => {
     engine.init().catch(() => undefined)
+    analyst.init().catch(() => undefined)
   }, [])
 
   const startGame = () => {

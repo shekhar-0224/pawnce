@@ -1,6 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useMemo, useState, type CSSProperties } from 'react'
-import { Chessboard, type PieceRenderObject, type SquareRenderer } from 'react-chessboard'
+import {
+  type Arrow,
+  Chessboard,
+  type PieceRenderObject,
+  type SquareRenderer,
+  defaultArrowOptions,
+} from 'react-chessboard'
 import type { Chess } from 'chess.js'
 import {
   type Color,
@@ -27,6 +33,8 @@ type Props = {
   canMove: boolean
   lastMove?: Move
   onMove: (move: MoveInput) => boolean
+  /** Arrows to draw on the board (used by hints). */
+  arrows?: Arrow[]
 }
 
 const MOVE_MS = 200
@@ -34,7 +42,15 @@ const CAPTURE_MS = 180
 
 const layer: CSSProperties = { position: 'absolute', inset: 0, pointerEvents: 'none' }
 
-export function ChessBoard({ game, orientation, myColor, canMove, lastMove, onMove }: Props) {
+export function ChessBoard({
+  game,
+  orientation,
+  myColor,
+  canMove,
+  lastMove,
+  onMove,
+  arrows = [],
+}: Props) {
   const [selected, setSelected] = useState<Square | null>(null)
   const [promotion, setPromotion] = useState<{ from: Square; to: Square } | null>(null)
 
@@ -173,6 +189,8 @@ export function ChessBoard({ game, orientation, myColor, canMove, lastMove, onMo
           pieces,
           animationDurationInMs: MOVE_MS,
           allowDrawingArrows: false,
+          arrows,
+          arrowOptions: { ...defaultArrowOptions, opacity: 0.85, arrowWidthDenominator: 6 },
           allowDragging: canMove && !promotion,
           allowDragOffBoard: false,
           dragActivationDistance: 4,

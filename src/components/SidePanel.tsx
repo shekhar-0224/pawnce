@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { type Color, type Move, capturedPieces, otherColor } from '../chess/game'
 import type { Bot } from '../engine/bots'
 import { Button } from './Button'
@@ -14,9 +14,23 @@ type Props = {
   onNewGame: () => void
   onResign: () => void
   onFlip: () => void
+  /** The win % rope. */
+  rope: ReactNode
+  /** The hint card, when a hint is showing. */
+  hint: ReactNode
 }
 
-export function SidePanel({ bot, myColor, moves, isOver, onNewGame, onResign, onFlip }: Props) {
+export function SidePanel({
+  bot,
+  myColor,
+  moves,
+  isOver,
+  onNewGame,
+  onResign,
+  onFlip,
+  rope,
+  hint,
+}: Props) {
   const captures = capturedPieces(moves)
   const myLead = myColor === 'w' ? captures.whiteLead : -captures.whiteLead
   const mine = myColor === 'w' ? captures.byWhite : captures.byBlack
@@ -32,8 +46,8 @@ export function SidePanel({ bot, myColor, moves, isOver, onNewGame, onResign, on
 
   return (
     <aside className="flex h-full min-h-0 flex-col gap-4 rounded-card border border-border bg-surface p-4 shadow-soft">
-      {/* Phase 3: win % rope goes here */}
-      <PanelSlot name="win-rope" />
+      {rope}
+      {hint}
 
       <section aria-label="Captured pieces" className="flex flex-col gap-1">
         <CapturedPieces label="You" pieces={mine} pieceColor={otherColor(myColor)} lead={myLead} />
@@ -51,9 +65,6 @@ export function SidePanel({ bot, myColor, moves, isOver, onNewGame, onResign, on
           <MoveList moves={moves} />
         </div>
       </section>
-
-      {/* Phase 3: hint orbs go here */}
-      <PanelSlot name="hint-orbs" />
 
       <div className="grid grid-cols-3 gap-2">
         <Button onClick={onNewGame} variant={isOver ? 'primary' : 'secondary'} className="whitespace-nowrap px-2 text-sm">

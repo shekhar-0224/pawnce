@@ -1,18 +1,24 @@
 import { AnimatePresence } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import type { Arrow } from 'react-chessboard'
 import { type TimeControl, timeControlName } from '../chess/clock'
 import { type Color, colorToSide } from '../chess/game'
 import type { Bot } from '../engine/bots'
+import { readToken, withAlpha } from '../theme'
 import { BotAvatar, YouAvatar } from './BotAvatar'
 import { ChessBoard } from './ChessBoard'
 import { Clock } from './Clock'
+import { HintCard } from './HintCard'
+import { HintOrbs } from './HintOrbs'
 import { LeafBurst } from './LeafBurst'
 import { Logo } from './Logo'
 import { PlayerBar } from './PlayerBar'
 import { ResultCard } from './ResultCard'
 import { SidePanel } from './SidePanel'
 import { ThinkingDots } from './ThinkingDots'
+import { HINT_ALPHAS, useAnalysis } from './useAnalysis'
 import { useGame } from './useGame'
+import { WinRope } from './WinRope'
 
 const sideName = (c: Color) => (c === 'w' ? 'White' : 'Black')
 
@@ -26,6 +32,18 @@ type Props = {
 
 export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOpponent }: Props) {
   const g = useGame(bot, myColor, timeControl)
+  const analysis = useAnalysis(g.game, myColor, g.myTurn, g.summary?.result ?? null)
+
+  // Hint arrows: lagoon, strongest to weakest.
+  const hintArrows = useMemo<Arrow[]>(() => {
+    if (!analysis.hints) return []
+    const lagoon = readToken('--accent-2', '#3fb8af')
+    return analysis.hints.map((h) => ({
+      startSquare: h.from,
+      endSquare: h.to,
+      color: withAlpha(lagoon, HINT_ALPHAS[h.rank]),
+    }))
+  }, [analysis.hints])
   const [orientation, setOrientation] = useState(colorToSide(myColor))
   const [showResult, setShowResult] = useState(false)
 
@@ -88,6 +106,12 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
         </span>
       }
     >
+      <HintOrbs
+        left={analysis.hintsLeft}
+        loading={analysis.hintLoading}
+        enabled={analysis.canHint}
+        onUse={analysis.requestHint}
+      />
       {g.clockOn && (
         <Clock
           label="Your clock"
@@ -127,6 +151,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
           canMove={g.myTurn}
           lastMove={g.lastMove}
           onMove={g.play}
+          arrows={hintArrows}
         />
 
         {flipped ? botBar : youBar}
@@ -142,6 +167,8 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
             onNewGame={onNewGame}
             onResign={g.resign}
             onFlip={() => setOrientation((o) => (o === 'white' ? 'black' : 'white'))}
+            rope={<WinRope myWinPct={analysis.myWinPct} botName={bot.name} />}
+            hint={analysis.hints && <HintCard hints={analysis.hints} />}
           />
         </div>
       </div>
