@@ -126,8 +126,9 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
   const flipped = orientation !== colorToSide(myColor)
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-2 pb-6 pt-2 sm:px-4 lg:flex-row lg:items-start lg:justify-center lg:gap-6 lg:pt-4">
-      <div className="flex w-full flex-col gap-2 lg:w-[min(680px,calc(100dvh-190px))] lg:shrink-0">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-2 pb-6 pt-2 sm:px-4 min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-center min-[900px]:gap-5 min-[900px]:pt-3 lg:gap-6">
+      {/* Beside the panel, the board is sized to fit the window height (no scrolling). */}
+      <div className="flex w-full flex-col gap-2 min-[900px]:w-[min(680px,calc(100dvh-204px),calc(100vw-380px))] min-[900px]:shrink-0">
         <nav className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -157,8 +158,8 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
         {flipped ? botBar : youBar}
       </div>
 
-      <div className="w-full lg:relative lg:w-[340px] lg:shrink-0 lg:self-stretch">
-        <div className="lg:absolute lg:inset-0">
+      <div className="w-full min-[900px]:relative min-[900px]:w-[320px] min-[900px]:shrink-0 min-[900px]:self-stretch lg:w-[340px]">
+        <div className="min-[900px]:absolute min-[900px]:inset-0">
           <SidePanel
             bot={bot}
             myColor={myColor}

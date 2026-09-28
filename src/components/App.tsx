@@ -70,7 +70,7 @@ export default function App() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <main className="min-h-dvh overflow-x-hidden">
+      <main className="min-h-dvh overflow-x-clip">
         <AnimatePresence mode="wait">
           <motion.div
             key={screenKey}
