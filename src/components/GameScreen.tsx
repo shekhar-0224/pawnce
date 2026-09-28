@@ -13,6 +13,8 @@ import { Coach } from './Coach'
 import { HintCard } from './HintCard'
 import { HintOrbs } from './HintOrbs'
 import { LeafBurst } from './LeafBurst'
+import { MomentCard } from './MomentCard'
+import { MoveTicker } from './MoveTicker'
 import { Logo } from './Logo'
 import { PlayerBar } from './PlayerBar'
 import { ResultCard } from './ResultCard'
@@ -31,9 +33,36 @@ type Props = {
 }
 
 export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOpponent }: Props) {
-  const g = useGame(bot, myColor, timeControl)
+  // Teaching moments: after your move the bot waits (and the clocks pause)
+  // until your move is judged; a mistake or blunder pauses the game.
+  const [hold, setHold] = useState(false)
+  const g = useGame(bot, myColor, timeControl, hold)
   const analysis = useAnalysis(g.moves, g.fen, myColor, g.myTurn, g.summary?.result ?? null)
   const botColor = otherColor(myColor)
+
+  const lastPly = g.moves.length - 1
+  const lastMove = g.moves[lastPly]
+  const lastIsMine = !!lastMove && lastMove.color === myColor && !g.isOver
+  const lastVerdict = analysis.verdicts[lastPly] ?? null
+  const [judgeTimeoutPly, setJudgeTimeoutPly] = useState(-1)
+  const [dismissedPly, setDismissedPly] = useState(-1)
+  const awaitingJudgement = lastIsMine && !lastVerdict && judgeTimeoutPly !== lastPly
+  const moment =
+    lastIsMine &&
+    lastVerdict &&
+    (lastVerdict.quality === 'mistake' || lastVerdict.quality === 'blunder') &&
+    dismissedPly !== lastPly
+      ? { move: lastMove, verdict: lastVerdict }
+      : null
+  const shouldHold = awaitingJudgement || moment !== null
+  if (shouldHold !== hold) setHold(shouldHold) // settle before effects run
+
+  // Never keep the bot waiting long if the judgement is slow.
+  useEffect(() => {
+    if (!awaitingJudgement) return
+    const t = setTimeout(() => setJudgeTimeoutPly(lastPly), 2500)
+    return () => clearTimeout(t)
+  }, [awaitingJudgement, lastPly])
 
   const opening = useMemo(
     () => (analysis.openingsReady ? openingOf(g.moves.map((m) => m.after)) : null),
@@ -145,7 +174,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-2 pb-6 pt-2 sm:px-4 min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-center min-[900px]:gap-6 min-[900px]:pt-3">
       {/* Beside the panel, the board is sized to fit the window height (no scrolling). */}
-      <div className="flex w-full flex-col gap-2 min-[900px]:w-[min(680px,calc(100dvh-190px),calc(100vw-400px))] min-[900px]:shrink-0">
+      <div className="flex w-full flex-col gap-2 min-[900px]:w-[min(680px,calc(100dvh-230px),calc(100vw-400px))] min-[900px]:shrink-0">
         <nav className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -162,15 +191,40 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
 
         {flipped ? youBar : botBar}
 
-        <ChessBoard
-          game={g.game}
-          orientation={orientation}
-          myColor={myColor}
-          canMove={g.myTurn}
-          lastMove={g.lastMove}
-          onMove={g.play}
-          arrows={arrows}
-        />
+        <MoveTicker moves={g.moves} verdicts={analysis.verdicts} myColor={myColor} bot={bot} />
+
+        <div className="relative">
+          <ChessBoard
+            game={g.game}
+            orientation={orientation}
+            myColor={myColor}
+            canMove={g.myTurn}
+            lastMove={g.lastMove}
+            onMove={g.play}
+            arrows={arrows}
+          />
+          <AnimatePresence>
+            {moment && (
+              <MomentCard
+                key={lastPly}
+                move={moment.move}
+                verdict={moment.verdict}
+                showingBetter={betterMove !== null}
+                onTakeBack={() => {
+                  setShowBetterFor(null)
+                  g.takeBack()
+                }}
+                onShowBetter={() =>
+                  setShowBetterFor((v) => (v === lastPly ? null : lastPly))
+                }
+                onPlayOn={() => {
+                  setShowBetterFor(null)
+                  setDismissedPly(lastPly)
+                }}
+              />
+            )}
+          </AnimatePresence>
+        </div>
 
         {flipped ? botBar : youBar}
       </div>
