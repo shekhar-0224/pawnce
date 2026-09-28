@@ -1,8 +1,8 @@
 import { type ReactNode, useEffect, useState } from 'react'
-import { type Color, type Move, capturedPieces, otherColor } from '../chess/game'
+import type { Color, Move } from '../chess/game'
+import type { Opening } from '../chess/openings'
 import type { Bot } from '../engine/bots'
 import { Button } from './Button'
-import { CapturedPieces } from './CapturedPieces'
 import { MoveList } from './MoveList'
 import type { MoveVerdict } from './useAnalysis'
 
@@ -10,38 +10,35 @@ type Props = {
   bot: Bot
   myColor: Color
   moves: Move[]
+  verdicts: (MoveVerdict | null)[]
+  opening: Opening | null
   isOver: boolean
+  /** Win / draw / loss chances. */
+  meter: ReactNode
+  /** The coach's feedback on your last move. */
+  coach: ReactNode
+  /** The hint card, when a hint is showing. */
+  hint: ReactNode
   onNewGame: () => void
   onResign: () => void
   onFlip: () => void
-  /** The win % rope. */
-  rope: ReactNode
-  /** The hint card, when a hint is showing. */
-  hint: ReactNode
-  /** Names and explains the last move. */
-  moveCard: ReactNode
-  /** Grade of each move, for the marks in the move list. */
-  verdicts: (MoveVerdict | null)[]
 }
 
+/** Right-hand panel: coach first, then the move list, then game buttons. */
 export function SidePanel({
   bot,
   myColor,
   moves,
+  verdicts,
+  opening,
   isOver,
+  meter,
+  coach,
+  hint,
   onNewGame,
   onResign,
   onFlip,
-  rope,
-  hint,
-  moveCard,
-  verdicts,
 }: Props) {
-  const captures = capturedPieces(moves)
-  const myLead = myColor === 'w' ? captures.whiteLead : -captures.whiteLead
-  const mine = myColor === 'w' ? captures.byWhite : captures.byBlack
-  const theirs = myColor === 'w' ? captures.byBlack : captures.byWhite
-
   // Resign needs a second tap, so a stray tap can't end the game.
   const [confirmResign, setConfirmResign] = useState(false)
   useEffect(() => {
@@ -50,33 +47,35 @@ export function SidePanel({
     return () => clearTimeout(t)
   }, [confirmResign])
 
+  const botLabel = `${bot.name}`
   return (
-    <aside className="pawnce-scroll flex h-full min-h-0 flex-col gap-4 overflow-y-auto rounded-card border border-border bg-surface p-4 shadow-soft">
-      {rope}
-      {hint}
+    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-card border border-border bg-surface shadow-soft">
+      <div className="border-b border-border p-4">{meter}</div>
+      <div className="pawnce-scroll flex min-h-0 flex-col gap-4 overflow-y-auto p-4">
+        {hint}
+        {coach}
+      </div>
 
-      <section aria-label="Captured pieces" className="flex flex-col gap-1">
-        <CapturedPieces label="You" pieces={mine} pieceColor={otherColor(myColor)} lead={myLead} />
-        <CapturedPieces label={bot.name} pieces={theirs} pieceColor={myColor} lead={-myLead} />
-      </section>
-
-      {moveCard}
-
-      <section aria-label="Moves" className="flex min-h-0 flex-1 flex-col">
-        <h2 className="mb-2 px-2 font-display text-sm font-semibold uppercase tracking-wider text-muted">
-          Moves
-        </h2>
-        <div className="pawnce-scroll max-h-44 min-h-24 flex-1 overflow-y-auto rounded-xl bg-bg/40 p-1 min-[900px]:max-h-none">
+      <section aria-label="Moves" className="flex min-h-0 flex-1 flex-col border-t border-border">
+        <div className="flex items-baseline justify-between gap-3 px-4 pb-1 pt-3">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted">Moves</h2>
+          {opening && (
+            <span className="min-w-0 truncate text-xs font-semibold text-muted" title={opening.name}>
+              {opening.name}
+            </span>
+          )}
+        </div>
+        <div className="pawnce-scroll max-h-40 min-h-20 flex-1 overflow-y-auto px-2 pb-2 min-[900px]:max-h-none">
           <MoveList
             moves={moves}
             verdicts={verdicts}
-            whiteLabel={myColor === 'w' ? 'You' : `${bot.emoji} ${bot.name}`}
-            blackLabel={myColor === 'b' ? 'You' : `${bot.emoji} ${bot.name}`}
+            whiteLabel={myColor === 'w' ? 'You' : botLabel}
+            blackLabel={myColor === 'b' ? 'You' : botLabel}
           />
         </div>
       </section>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 border-t border-border p-3">
         <Button onClick={onNewGame} variant={isOver ? 'primary' : 'secondary'} className="whitespace-nowrap px-2 text-sm">
           New game
         </Button>

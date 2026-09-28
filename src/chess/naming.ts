@@ -10,14 +10,14 @@ import type { Tactic, TacticKind } from './tactics'
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
-/** "Knight to f3", "Bishop takes knight on c6", "Castles kingside". */
+/** "Knight e5 → f3", "Knight on e5 takes pawn on f7", "Castles kingside". */
 export function plainName(move: Move): string {
   if (move.isKingsideCastle()) return 'Castles kingside'
   if (move.isQueensideCastle()) return 'Castles queenside'
   const piece = cap(PIECE_NAMES[move.piece])
   let text = move.captured
-    ? `${piece} takes ${PIECE_NAMES[move.captured]} on ${move.to}`
-    : `${piece} to ${move.to}`
+    ? `${piece} on ${move.from} takes ${PIECE_NAMES[move.captured]} on ${move.to}`
+    : `${piece} ${move.from} → ${move.to}`
   if (move.isEnPassant()) text += ' (en passant)'
   if (move.promotion) text += `, becomes a ${PIECE_NAMES[move.promotion]}`
   if (move.san.endsWith('#')) text += ', checkmate'
@@ -121,24 +121,39 @@ export function describeTactic(t: Tactic, byMe: boolean, botName: string, moved:
 
 export type Quality = 'book' | 'best' | 'good' | 'inaccuracy' | 'mistake' | 'blunder'
 
+const RANK: Quality[] = ['best', 'good', 'inaccuracy', 'mistake', 'blunder']
+
 /**
- * Lichess-style move grading by how much the mover's winning chances
- * dropped: 10+ points is an inaccuracy, 20+ a mistake, 30+ a blunder.
+ * Grades a move against the best move on the whole board, two ways, and
+ * keeps the harsher verdict:
+ * - Winning chances lost (Lichess style): 10+ points inaccuracy, 20+ mistake, 30+ blunder.
+ * - Score lost in pawns: 0.8+ inaccuracy, 1.5+ mistake, 3+ blunder.
+ * The second catches moves that throw away a piece when the game already
+ * looks decided (your chances were near 0% or 100% either way).
  */
 export function classifyMove(opts: {
   winBefore: number
   winAfter: number
+  cpLoss: number
   played: string
   best: string | null
   inBook: boolean
 }): Quality {
   if (opts.inBook) return 'book'
   const drop = opts.winBefore - opts.winAfter
-  if (drop >= 30) return 'blunder'
-  if (drop >= 20) return 'mistake'
-  if (drop >= 10) return 'inaccuracy'
-  if (opts.best && opts.played === opts.best) return 'best'
-  return 'good'
+  const byChances: Quality =
+    drop >= 30 ? 'blunder' : drop >= 20 ? 'mistake' : drop >= 10 ? 'inaccuracy' : 'good'
+  const byScore: Quality =
+    opts.cpLoss >= 300
+      ? 'blunder'
+      : opts.cpLoss >= 150
+        ? 'mistake'
+        : opts.cpLoss >= 80
+          ? 'inaccuracy'
+          : 'good'
+  const worst = RANK.indexOf(byChances) > RANK.indexOf(byScore) ? byChances : byScore
+  if (worst === 'good' && opts.best && opts.played === opts.best) return 'best'
+  return worst
 }
 
 export const QUALITY_LABELS: Record<Quality, string> = {

@@ -6,7 +6,7 @@ import { type Quality, classifyMove } from '../chess/naming'
 import { loadOpenings, openingAt } from '../chess/openings'
 import type { Result } from '../chess/outcome'
 import { analyst } from '../engine/stockfish'
-import { winPercentFor, winPercentForMover } from '../engine/winChance'
+import { cappedCp, winPercentFor, winPercentForMover } from '../engine/winChance'
 
 export const HINTS_PER_GAME = 2
 
@@ -31,6 +31,8 @@ export type Hint = {
 type Evaluation = {
   /** White's winning chances, 0 to 100. */
   winWhite: number
+  /** The engine's score for White in centipawns (100 = a pawn), capped at ±2000. */
+  cpWhite: number
   /** The engine's best move here (UCI), if any. */
   best: string | null
 }
@@ -40,8 +42,12 @@ export type MoveVerdict = {
   quality: Quality
   winBefore: number
   winAfter: number
+  /** How much worse than the best move this was, in centipawns (100 = a pawn). */
+  cpLoss: number
   /** The engine's preferred move instead (SAN), when it differs. */
   better: string | null
+  /** The same move as squares, for drawing it on the board. */
+  betterMove: { from: Square; to: Square } | null
 }
 
 const turnOf = (fen: string) => fen.split(' ')[1] as Color
@@ -84,15 +90,20 @@ export function useAnalysis(
       .then((res) => {
         const line = res.lines[0]
         let winWhite: number
+        let cpWhite: number
+        const whiteToMove = turnOf(position) === 'w'
         if (line) {
           const mover = winPercentForMover(line)
-          winWhite = turnOf(position) === 'w' ? mover : 100 - mover
+          winWhite = whiteToMove ? mover : 100 - mover
+          cpWhite = whiteToMove ? cappedCp(line) : -cappedCp(line)
         } else {
           // No moves at all: checkmate or stalemate.
           const g = new Chess(position)
-          winWhite = g.isCheckmate() ? (g.turn() === 'w' ? 0 : 100) : 50
+          const mated = g.isCheckmate()
+          winWhite = mated ? (whiteToMove ? 0 : 100) : 50
+          cpWhite = mated ? (whiteToMove ? -2000 : 2000) : 0
         }
-        setEvals((e) => ({ ...e, [position]: { winWhite, best: res.bestMove } }))
+        setEvals((e) => ({ ...e, [position]: { winWhite, cpWhite, best: res.bestMove } }))
       })
       .catch(() => requested.current.delete(position))
   }, [])
@@ -115,9 +126,12 @@ export function useAnalysis(
         const forMover = (e: Evaluation) => (m.color === 'w' ? e.winWhite : 100 - e.winWhite)
         const winBefore = forMover(before)
         const winAfter = forMover(after)
+        const sign = m.color === 'w' ? 1 : -1
+        const cpLoss = Math.max(0, sign * (before.cpWhite - after.cpWhite))
         const quality = classifyMove({
           winBefore,
           winAfter,
+          cpLoss,
           played: m.lan,
           best: before.best,
           inBook: openingsReady && openingAt(m.after) !== null,
@@ -130,7 +144,8 @@ export function useAnalysis(
             better = null
           }
         }
-        return { quality, winBefore, winAfter, better }
+        const betterMove = better && before.best ? parseUci(before.best) : null
+        return { quality, winBefore, winAfter, cpLoss, better, betterMove }
       }),
     [moves, evals, openingsReady],
   )
