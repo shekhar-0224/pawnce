@@ -9,6 +9,10 @@ pieces and illustrations, never through decoration on every surface.
 Tagline: **Play the move. Learn its name.**
 
 ## Layout principles
+- **Mobile first, frictionless.** Design for a phone first. While playing,
+  the board, the win-chances line, the move ticker and the coach's verdict
+  on your last move are all visible without scrolling. Every tap target is
+  44px or more. Leaving a game asks first (keep playing / resign and leave).
 - **Home screen: bento grid.** One large Play tile (headline, current setup,
   the Play button) plus smaller tiles for Opponent, Side, Clock and Recent
   games. On phones the tiles stack, Play tile first.

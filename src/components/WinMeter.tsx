@@ -7,12 +7,14 @@ type Props = {
   botName: string
   /** Once the game ends: the final result. */
   final: 'win' | 'loss' | 'draw' | null
+  /** One slim line, for phones. */
+  compact?: boolean
 }
 
 const spring = { type: 'spring', stiffness: 120, damping: 20 } as const
 
 /** Win / draw / loss chances as one bar, like a sports broadcast. */
-export function WinMeter({ myWinPct, botName, final }: Props) {
+export function WinMeter({ myWinPct, botName, final, compact = false }: Props) {
   const c =
     final === 'win'
       ? { win: 100, draw: 0, loss: 0 }
@@ -22,6 +24,27 @@ export function WinMeter({ myWinPct, botName, final }: Props) {
           ? { win: 0, draw: 100, loss: 0 }
           : outcomeChances(myWinPct ?? 50)
   const r = (n: number) => Math.round(n)
+  const bar = (
+    <div className="flex h-1.5 min-w-0 flex-1 gap-0.5 overflow-hidden rounded-sm" aria-hidden>
+      <motion.div className="bg-accent" initial={false} animate={{ flexGrow: c.win }} transition={spring} style={{ flexBasis: 0 }} />
+      <motion.div className="bg-muted/40" initial={false} animate={{ flexGrow: c.draw }} transition={spring} style={{ flexBasis: 0 }} />
+      <motion.div className="bg-board-light" initial={false} animate={{ flexGrow: c.loss }} transition={spring} style={{ flexBasis: 0 }} />
+    </div>
+  )
+  if (compact) {
+    return (
+      <section
+        aria-label={`Win chances: you ${r(c.win)}%, draw ${r(c.draw)}%, ${botName} ${r(c.loss)}%`}
+        className="flex items-center gap-2 text-xs"
+      >
+        <span className="shrink-0 text-muted">You</span>
+        <span className="shrink-0 font-mono font-semibold text-accent">{r(c.win)}%</span>
+        {bar}
+        <span className="shrink-0 font-mono font-semibold text-board-light">{r(c.loss)}%</span>
+        <span className="shrink-0 text-muted">{botName}</span>
+      </section>
+    )
+  }
   return (
     <section
       aria-label={`Win chances: you ${r(c.win)}%, draw ${r(c.draw)}%, ${botName} ${r(c.loss)}%`}
@@ -41,11 +64,7 @@ export function WinMeter({ myWinPct, botName, final }: Props) {
           <p className="font-mono text-2xl font-semibold leading-none text-board-light">{r(c.loss)}%</p>
         </div>
       </div>
-      <div className="flex h-1.5 gap-0.5 overflow-hidden rounded-sm" aria-hidden>
-        <motion.div className="bg-accent" initial={false} animate={{ flexGrow: c.win }} transition={spring} style={{ flexBasis: 0 }} />
-        <motion.div className="bg-muted/40" initial={false} animate={{ flexGrow: c.draw }} transition={spring} style={{ flexBasis: 0 }} />
-        <motion.div className="bg-board-light" initial={false} animate={{ flexGrow: c.loss }} transition={spring} style={{ flexBasis: 0 }} />
-      </div>
+      {bar}
       {myWinPct === null && !final && <p className="text-xs text-muted">Sizing up the position…</p>}
     </section>
   )

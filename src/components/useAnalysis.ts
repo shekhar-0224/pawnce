@@ -157,7 +157,10 @@ export function useAnalysis(
     const res = await analyst.search({ fen: at, movetimeMs: HINT_MS, multiPv: 3 }).catch(() => null)
     setHintLoadingFen(null)
     if (!res || res.lines.length === 0 || fenRef.current !== at) return
-    const lines: Hint[] = res.lines.slice(0, 3).map((line, rank) => {
+    // If the search was cut short mid-update, an older copy of a move can
+    // linger in the list; keep each move once, strongest first.
+    const unique = res.lines.filter((l, i) => res.lines.findIndex((x) => x.move === l.move) === i)
+    const lines: Hint[] = unique.slice(0, 3).map((line, rank) => {
       const { from, to } = parseUci(line.move)
       let san = line.move
       try {

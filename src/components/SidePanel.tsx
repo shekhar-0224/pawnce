@@ -50,7 +50,7 @@ export function SidePanel({
   const botLabel = `${bot.name}`
   return (
     <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-card border border-border bg-surface">
-      <div className="border-b border-border p-4">{meter}</div>
+      <div className="hidden border-b border-border p-4 min-[900px]:block">{meter}</div>
       <div className="pawnce-scroll flex min-h-0 flex-col gap-4 overflow-y-auto p-4">
         {hint}
         {coach}

@@ -13,11 +13,12 @@ import { Coach } from './Coach'
 import { HintCard } from './HintCard'
 import { HintOrbs } from './HintOrbs'
 import { LeafBurst } from './LeafBurst'
+import { LeaveDialog } from './LeaveDialog'
 import { MomentCard } from './MomentCard'
 import { MoveTicker } from './MoveTicker'
 import { Logo } from './Logo'
 import { PlayerBar } from './PlayerBar'
-import { ResultCard } from './ResultCard'
+import { GameSummary } from './GameSummary'
 import { SidePanel } from './SidePanel'
 import { ThinkingDots } from './ThinkingDots'
 import { HINT_ALPHAS, useAnalysis } from './useAnalysis'
@@ -70,6 +71,13 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
   )
 
   const [orientation, setOrientation] = useState(colorToSide(myColor))
+
+  // Going home mid-game asks first: keep playing, or resign and leave.
+  const [leaving, setLeaving] = useState(false)
+  const requestLeave = () => {
+    if (g.moves.length > 0 && !g.isOver) setLeaving(true)
+    else onChangeOpponent()
+  }
   const [showResult, setShowResult] = useState(false)
 
   // "Show better move" draws the engine's choice for your last move.
@@ -97,7 +105,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
   // Give the final move a beat to land before the result card pops up.
   useEffect(() => {
     if (!g.isOver) return
-    const t = setTimeout(() => setShowResult(true), 450)
+    const t = setTimeout(() => setShowResult(true), 900)
     return () => clearTimeout(t)
   }, [g.isOver])
 
@@ -139,7 +147,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
           <span className="font-display text-lg font-semibold">You</span>
           {g.myTurn && (
             <span
-              className={`rounded-md px-1.5 py-0.5 text-xs font-semibold ${
+              className={`whitespace-nowrap rounded-md px-1.5 py-0.5 text-xs font-semibold ${
                 inCheck ? 'bg-danger text-text' : 'bg-accent text-on-accent'
               }`}
             >
@@ -178,18 +186,39 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
         <nav className="flex items-center justify-between gap-3">
           <button
             type="button"
-            onClick={onChangeOpponent}
-            className="-ml-2 min-h-11 cursor-pointer rounded-lg px-2 hover:bg-surface-2"
-            aria-label="Back to start"
+            onClick={requestLeave}
+            className="-ml-2 flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-2 text-muted hover:bg-surface-2 hover:text-text"
+            aria-label="Back to home"
           >
+            <span aria-hidden className="text-lg leading-none">←</span>
             <Logo className="text-lg" />
           </button>
-          <span className="rounded-md border border-border px-2 py-1 font-mono text-xs font-medium text-muted">
-            {timeControlName(timeControl)}
-          </span>
+          {g.isOver && !showResult ? (
+            <button
+              type="button"
+              onClick={() => setShowResult(true)}
+              className="min-h-9 cursor-pointer rounded-lg bg-accent px-3 text-sm font-semibold text-on-accent"
+            >
+              Game summary
+            </button>
+          ) : (
+            <span className="rounded-md border border-border px-2 py-1 font-mono text-xs font-medium text-muted">
+              {timeControlName(timeControl)}
+            </span>
+          )}
         </nav>
 
         {flipped ? youBar : botBar}
+
+        {/* On phones the win chances sit right above the board. */}
+        <div className="min-[900px]:hidden">
+          <WinMeter
+            compact
+            myWinPct={analysis.myWinPct}
+            botName={bot.name}
+            final={g.summary?.result ?? null}
+          />
+        </div>
 
         <MoveTicker moves={g.moves} verdicts={analysis.verdicts} myColor={myColor} bot={bot} />
 
@@ -266,14 +295,29 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
       </div>
 
       <AnimatePresence>
+        {leaving && (
+          <LeaveDialog
+            key="leave"
+            onKeepPlaying={() => setLeaving(false)}
+            onResignAndLeave={() => {
+              setLeaving(false)
+              g.resign()
+              // Let the resignation save before leaving the screen.
+              setTimeout(onChangeOpponent, 60)
+            }}
+          />
+        )}
         {showResult && g.summary && (
-          <ResultCard
-            key="result"
+          <GameSummary
+            key="summary"
             bot={bot}
+            myColor={myColor}
+            moves={g.moves}
+            verdicts={analysis.verdicts}
+            opening={opening}
             result={g.summary.result}
             title={g.summary.title}
             detail={g.summary.detail}
-            moveCount={Math.ceil(g.moves.length / 2)}
             onPlayAgain={onNewGame}
             onChangeOpponent={onChangeOpponent}
             onClose={() => setShowResult(false)}

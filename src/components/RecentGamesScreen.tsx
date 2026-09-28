@@ -7,7 +7,7 @@ import { BotAvatar } from './BotAvatar'
 import { Button } from './Button'
 
 const BADGE: Record<Result, { label: string; className: string }> = {
-  win: { label: 'Win', className: 'bg-success/15 text-success' },
+  win: { label: 'Win', className: 'bg-accent/15 text-accent' },
   loss: { label: 'Loss', className: 'bg-danger/15 text-danger' },
   draw: { label: 'Draw', className: 'bg-surface-2 text-muted' },
 }
@@ -40,15 +40,15 @@ export function RecentGamesScreen({ onBack }: { onBack: () => void }) {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pb-10 pt-6 sm:pt-10">
       <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="font-display text-3xl font-bold">Recent games</h1>
+        <h1 className="text-2xl font-bold">Recent games</h1>
         <Button variant="ghost" onClick={onBack}>
           ← Back
         </Button>
       </div>
 
       {games.length === 0 ? (
-        <div className="rounded-card border border-border bg-surface p-8 text-center shadow-soft">
-          <p className="font-display text-xl font-semibold">No games yet</p>
+        <div className="rounded-card border border-border bg-surface p-8 text-center">
+          <p className="text-lg font-semibold">No games yet</p>
           <p className="mt-1 text-muted">Finish a game and it will show up here.</p>
         </div>
       ) : (
@@ -59,7 +59,7 @@ export function RecentGamesScreen({ onBack }: { onBack: () => void }) {
             return (
               <li
                 key={g.id}
-                className="flex items-center gap-3 rounded-card border border-border bg-surface p-3 shadow-soft sm:gap-4 sm:p-4"
+                className="flex items-center gap-3 rounded-card border border-border bg-surface p-3 sm:gap-4 sm:p-4"
               >
                 <BotAvatar bot={bot} size={44} />
                 <div className="min-w-0 flex-1">
@@ -75,7 +75,7 @@ export function RecentGamesScreen({ onBack }: { onBack: () => void }) {
                   </p>
                   <p className="text-xs text-muted/80">{formatDate(g.date)}</p>
                 </div>
-                <span className={`shrink-0 rounded-full px-3 py-1 text-sm font-bold ${badge.className}`}>
+                <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${badge.className}`}>
                   {badge.label}
                 </span>
               </li>
