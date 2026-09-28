@@ -3,29 +3,31 @@
  * See DESIGN.md for what each one is for.
  */
 :root {
-  --bg: #0e1a14;
-  --surface: #16271e;
-  --surface-2: #1e3428;
-  --border: #2a4234;
-  --text: #eef3e6;
-  --text-muted: #a9bfa8;
-  --board-light: #ede3c2;
-  --board-dark: #6b8f4e;
-  --accent: #f5a623;
-  --accent-2: #3fb8af;
-  --danger: #e5484d;
-  --success: #7bc67e;
-  --last-move: rgba(245, 166, 35, 0.38);
+  --bg: #0b100d;
+  --surface: #111814;
+  --surface-2: #172019;
+  --border: #222d26;
+  --text: #e9eeea;
+  --text-muted: #8c9a91;
+  --accent: #c6f36b;
+  --on-accent: #0b100d;
+  --warn: #f2b84b;
+  --danger: #f2555a;
+  --board-light: #dde4d6;
+  --board-dark: #6f8f76;
+  --last-move: rgba(198, 243, 107, 0.3);
 
-  /* Text drawn on top of --accent (the mango buttons) */
-  --on-accent: #1b1204;
+  /* One accent in practice: these are aliases. */
+  --success: var(--accent);
+  --accent-2: var(--accent);
 
-  --radius-card: 16px;
-  --radius-pill: 999px;
+  --radius-card: 12px;
+  --radius-control: 8px;
 
-  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.18);
-  --shadow-raised: 0 16px 40px rgba(0, 0, 0, 0.38), 0 4px 10px rgba(0, 0, 0, 0.22);
+  --shadow-soft: none;
+  --shadow-raised: 0 12px 32px rgba(0, 0, 0, 0.35);
 
-  --font-display: 'Fredoka', ui-rounded, system-ui, sans-serif;
-  --font-body: 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
