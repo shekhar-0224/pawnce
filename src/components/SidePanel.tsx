@@ -61,7 +61,7 @@ export function SidePanel({
         <h2 className="mb-2 px-2 font-display text-sm font-semibold uppercase tracking-wider text-muted">
           Moves
         </h2>
-        <div className="pawnce-scroll max-h-44 min-h-24 flex-1 overflow-y-auto rounded-xl bg-bg/40 p-1 lg:max-h-none">
+        <div className="pawnce-scroll max-h-44 min-h-24 flex-1 overflow-y-auto rounded-xl bg-bg/40 p-1 min-[900px]:max-h-none">
           <MoveList moves={moves} />
         </div>
       </section>
