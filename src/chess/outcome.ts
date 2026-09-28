@@ -36,7 +36,7 @@ export function resultFor(outcome: Outcome, me: Color): Result {
 }
 
 export function headline(result: Result, reason: EndReason): string {
-  if (reason === 'checkmate') return result === 'win' ? 'Checkmate! You win!' : 'Checkmate.'
+  if (reason === 'checkmate') return result === 'win' ? 'You win!' : 'Checkmate'
   if (reason === 'resignation') return 'You resigned'
   if (reason === 'stalemate') return 'Stalemate!'
   return "It's a draw"
