@@ -33,7 +33,8 @@ A solo, non-developer founder working with Claude Code. So:
 ## Roadmap (do not jump ahead)
 1. Playable game vs. Stockfish bot, difficulty levels, move history, game over
 2. Chess clocks: bullet, blitz, rapid, classical, with increments
-3. Win % rope (Lichess formula: win% = 50 + 50 * (2 / (1 + exp(-0.00368208 * cp)) - 1))
+3. Win chances meter: win / draw / loss, broadcast style (win% from the Lichess
+   formula: 50 + 50 * (2 / (1 + exp(-0.00368208 * cp)) - 1))
    and hint orbs (Stockfish MultiPV = 3, max 2 per game)
 4. Move naming: rule terms, opening names (Lichess chess-openings dataset),
    move quality (best / good / inaccuracy / mistake / blunder)

@@ -49,10 +49,12 @@ exposed to Tailwind in `src/index.css` (e.g. `bg-surface`, `text-muted`,
 - Running: mango background. Stopped: `--surface-2`, muted text.
 - Under 10 seconds: `--danger`, gentle pulse, tenths shown (0:07.4).
 
-## Win % rope
-- A tug of war: your share in mango rope texture, the bot's in `--surface-2`.
-- A cream knot slides toward whoever is more likely to win (spring motion).
-- One plain caption under it: "About even", "You're doing better"...
+## Win chances meter
+- Top of the side panel, like a sports broadcast: "You 52%" (mango) on the
+  left, the bot's % (cream) on the right, "Draw 9%" in the middle, and one
+  bar split in those three colors.
+- Win % comes from the engine score (Lichess formula); the draw share is
+  sized for everyday players (about 10% when even, less as one side leads).
 
 ## Hint orbs
 - Two glowing lagoon (`--accent-2`) orbs next to your clock; a used orb
@@ -60,18 +62,21 @@ exposed to Tailwind in `src/index.css` (e.g. `bg-surface`, `text-muted`,
 - A hint draws 3 lagoon arrows on the board, strongest one boldest, and a
   lagoon card in the panel naming each move and the idea behind it.
 
-## Move card (naming every move)
-- Sits in the side panel under the rope. Shows the opening name (ECO code +
-  Lichess name) and the last two moves: yours and the bot's reply, newest on top.
-- Each move: SAN in Fredoka, plus a plain name ("Knight takes pawn on c7, check").
-- Chips: a tactic chip in lagoon that pops in ("Fork!"), rule-term chips on
-  `--surface-2` (Castling, En passant, Check...), and a quality chip.
-- One teaching sentence for the most interesting thing (tactic first).
+## Coach (naming every move)
+- Top of the panel under the meter. "Your move" first: a big verdict badge
+  (★ best, ✓ good, 📖 book, ?! ? ??), "f6 was a blunder", the move in words
+  ("Pawn f7 → f6"), one sentence on why, and "Show better move" which draws
+  it on the board in leaf green.
+- Then "<Bot> replied": the move in words, plus a note only when it matters
+  to you (a tactic against you, a check, or a slip you can punish).
+- The opening name sits in the move list header.
 
 ## Move quality
-- Graded like Lichess, by the drop in the mover's winning chances:
-  10+ inaccuracy, 20+ mistake, 30+ blunder; the engine's own pick is "best";
-  positions from the opening book are "book".
+- Compared with the best move on the whole board, two ways, keeping the
+  harsher: winning chances lost (10+ inaccuracy, 20+ mistake, 30+ blunder)
+  and score lost in pawns (0.8+, 1.5+, 3+). The second catches giving away
+  a piece when the game already looks decided. The engine's own pick is
+  "best"; positions from the opening book are "book".
 - Colors: best/good `--success`, inaccuracy/mistake `--accent`, blunder `--danger`.
 - Marks in the move list: ★ best, ?! inaccuracy, ? mistake, ?? blunder.
 

@@ -2,27 +2,25 @@ import { AnimatePresence } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import type { Arrow } from 'react-chessboard'
 import { type TimeControl, timeControlName } from '../chess/clock'
-import { type Color, colorToSide } from '../chess/game'
+import { type Color, capturedPieces, colorToSide, otherColor } from '../chess/game'
 import { openingOf } from '../chess/openings'
 import type { Bot } from '../engine/bots'
 import { readToken, withAlpha } from '../theme'
 import { BotAvatar, YouAvatar } from './BotAvatar'
 import { ChessBoard } from './ChessBoard'
 import { Clock } from './Clock'
+import { Coach } from './Coach'
 import { HintCard } from './HintCard'
 import { HintOrbs } from './HintOrbs'
 import { LeafBurst } from './LeafBurst'
 import { Logo } from './Logo'
-import { MoveCard } from './MoveCard'
 import { PlayerBar } from './PlayerBar'
 import { ResultCard } from './ResultCard'
 import { SidePanel } from './SidePanel'
 import { ThinkingDots } from './ThinkingDots'
 import { HINT_ALPHAS, useAnalysis } from './useAnalysis'
 import { useGame } from './useGame'
-import { WinRope } from './WinRope'
-
-const sideName = (c: Color) => (c === 'w' ? 'White' : 'Black')
+import { WinMeter } from './WinMeter'
 
 type Props = {
   bot: Bot
@@ -35,25 +33,37 @@ type Props = {
 export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOpponent }: Props) {
   const g = useGame(bot, myColor, timeControl)
   const analysis = useAnalysis(g.moves, g.fen, myColor, g.myTurn, g.summary?.result ?? null)
+  const botColor = otherColor(myColor)
+
   const opening = useMemo(
     () => (analysis.openingsReady ? openingOf(g.moves.map((m) => m.after)) : null),
     [analysis.openingsReady, g.moves],
   )
-  // The move card shows the last two moves: yours and the bot's reply.
-  const recentStart = Math.max(0, g.moves.length - 2)
 
-  // Hint arrows: lagoon, strongest to weakest.
-  const hintArrows = useMemo<Arrow[]>(() => {
-    if (!analysis.hints) return []
-    const lagoon = readToken('--accent-2', '#3fb8af')
-    return analysis.hints.map((h) => ({
-      startSquare: h.from,
-      endSquare: h.to,
-      color: withAlpha(lagoon, HINT_ALPHAS[h.rank]),
-    }))
-  }, [analysis.hints])
   const [orientation, setOrientation] = useState(colorToSide(myColor))
   const [showResult, setShowResult] = useState(false)
+
+  // "Show better move" draws the engine's choice for your last move.
+  const [showBetterFor, setShowBetterFor] = useState<number | null>(null)
+  const myLastIndex = g.moves.findLastIndex((m) => m.color === myColor)
+  const betterMove =
+    showBetterFor === myLastIndex ? (analysis.verdicts[myLastIndex]?.betterMove ?? null) : null
+
+  const arrows = useMemo<Arrow[]>(() => {
+    const lagoon = readToken('--accent-2', '#3fb8af')
+    if (analysis.hints) {
+      return analysis.hints.map((h) => ({
+        startSquare: h.from,
+        endSquare: h.to,
+        color: withAlpha(lagoon, HINT_ALPHAS[h.rank]),
+      }))
+    }
+    if (betterMove) {
+      const leaf = readToken('--success', '#7bc67e')
+      return [{ startSquare: betterMove.from, endSquare: betterMove.to, color: withAlpha(leaf, 0.9) }]
+    }
+    return []
+  }, [analysis.hints, betterMove])
 
   // Give the final move a beat to land before the result card pops up.
   useEffect(() => {
@@ -62,19 +72,9 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
     return () => clearTimeout(t)
   }, [g.isOver])
 
-  const status = g.isOver
-    ? 'Game over'
-    : g.myTurn
-      ? g.game.inCheck()
-        ? 'Check! Save your king'
-        : 'Your move'
-      : g.game.inCheck()
-        ? 'Check!'
-        : `${bot.name}'s move`
-
-  const botColor = myColor === 'w' ? 'b' : 'w'
-  const statusTone =
-    g.game.inCheck() && !g.isOver ? 'text-danger' : g.myTurn ? 'text-accent' : 'text-muted'
+  const captures = capturedPieces(g.moves)
+  const myLead = myColor === 'w' ? captures.whiteLead : -captures.whiteLead
+  const inCheck = g.game.inCheck() && !g.isOver
 
   const botBar = (
     <PlayerBar
@@ -88,11 +88,9 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
           {g.thinking && <ThinkingDots />}
         </>
       }
-      detail={
-        <span className={g.myTurn ? 'text-muted' : statusTone}>
-          {g.myTurn ? sideName(botColor) : status}
-        </span>
-      }
+      captured={botColor === 'w' ? captures.byWhite : captures.byBlack}
+      capturedColor={myColor}
+      lead={-myLead}
     >
       {g.clockOn && (
         <Clock
@@ -107,12 +105,23 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
   const youBar = (
     <PlayerBar
       avatar={<YouAvatar color={myColor} />}
-      name={<span className="font-display text-lg font-semibold">You</span>}
-      detail={
-        <span className={g.myTurn ? statusTone : 'text-muted'}>
-          {g.myTurn ? status : sideName(myColor)}
-        </span>
+      name={
+        <>
+          <span className="font-display text-lg font-semibold">You</span>
+          {g.myTurn && (
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+                inCheck ? 'bg-danger text-text' : 'bg-accent text-on-accent'
+              }`}
+            >
+              {inCheck ? 'Check! Save your king' : 'Your move'}
+            </span>
+          )}
+        </>
       }
+      captured={myColor === 'w' ? captures.byWhite : captures.byBlack}
+      capturedColor={botColor}
+      lead={myLead}
     >
       <HintOrbs
         left={analysis.hintsLeft}
@@ -134,9 +143,9 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
   const flipped = orientation !== colorToSide(myColor)
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-2 pb-6 pt-2 sm:px-4 min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-center min-[900px]:gap-5 min-[900px]:pt-3 lg:gap-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-2 pb-6 pt-2 sm:px-4 min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-center min-[900px]:gap-6 min-[900px]:pt-3">
       {/* Beside the panel, the board is sized to fit the window height (no scrolling). */}
-      <div className="flex w-full flex-col gap-2 min-[900px]:w-[min(680px,calc(100dvh-204px),calc(100vw-380px))] min-[900px]:shrink-0">
+      <div className="flex w-full flex-col gap-2 min-[900px]:w-[min(680px,calc(100dvh-190px),calc(100vw-400px))] min-[900px]:shrink-0">
         <nav className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -160,36 +169,44 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
           canMove={g.myTurn}
           lastMove={g.lastMove}
           onMove={g.play}
-          arrows={hintArrows}
+          arrows={arrows}
         />
 
         {flipped ? botBar : youBar}
       </div>
 
-      <div className="w-full min-[900px]:relative min-[900px]:w-[320px] min-[900px]:shrink-0 min-[900px]:self-stretch lg:w-[340px]">
+      <div className="w-full min-[900px]:relative min-[900px]:w-[340px] min-[900px]:shrink-0 min-[900px]:self-stretch">
         <div className="min-[900px]:absolute min-[900px]:inset-0">
           <SidePanel
             bot={bot}
             myColor={myColor}
             moves={g.moves}
+            verdicts={analysis.verdicts}
+            opening={opening}
             isOver={g.isOver}
+            meter={
+              <WinMeter
+                myWinPct={analysis.myWinPct}
+                botName={bot.name}
+                final={g.summary?.result ?? null}
+              />
+            }
+            hint={analysis.hints && <HintCard hints={analysis.hints} />}
+            coach={
+              <Coach
+                moves={g.moves}
+                verdicts={analysis.verdicts}
+                myColor={myColor}
+                bot={bot}
+                showingBetter={betterMove !== null}
+                onToggleBetter={() =>
+                  setShowBetterFor((v) => (v === myLastIndex ? null : myLastIndex))
+                }
+              />
+            }
             onNewGame={onNewGame}
             onResign={g.resign}
             onFlip={() => setOrientation((o) => (o === 'white' ? 'black' : 'white'))}
-            rope={<WinRope myWinPct={analysis.myWinPct} botName={bot.name} />}
-            hint={analysis.hints && <HintCard hints={analysis.hints} />}
-            verdicts={analysis.verdicts}
-            moveCard={
-              <MoveCard
-                entries={g.moves.slice(recentStart).map((move, i) => ({
-                  move,
-                  verdict: analysis.verdicts[recentStart + i] ?? null,
-                }))}
-                myColor={myColor}
-                bot={bot}
-                opening={opening}
-              />
-            }
           />
         </div>
       </div>
