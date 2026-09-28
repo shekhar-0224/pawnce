@@ -1,0 +1,31 @@
+/*
+ * Pawnce design tokens. Every color in the app comes from here.
+ * See DESIGN.md for what each one is for.
+ */
+:root {
+  --bg: #0e1a14;
+  --surface: #16271e;
+  --surface-2: #1e3428;
+  --border: #2a4234;
+  --text: #eef3e6;
+  --text-muted: #a9bfa8;
+  --board-light: #ede3c2;
+  --board-dark: #6b8f4e;
+  --accent: #f5a623;
+  --accent-2: #3fb8af;
+  --danger: #e5484d;
+  --success: #7bc67e;
+  --last-move: rgba(245, 166, 35, 0.38);
+
+  /* Text drawn on top of --accent (the mango buttons) */
+  --on-accent: #1b1204;
+
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.18);
+  --shadow-raised: 0 16px 40px rgba(0, 0, 0, 0.38), 0 4px 10px rgba(0, 0, 0, 0.22);
+
+  --font-display: 'Fredoka', ui-rounded, system-ui, sans-serif;
+  --font-body: 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
