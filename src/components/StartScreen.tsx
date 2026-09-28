@@ -73,7 +73,7 @@ export function StartScreen({
       <header className="flex flex-col items-center text-center min-[900px]:items-start min-[900px]:text-left">
         <Logo className="text-5xl min-[900px]:text-7xl" />
         <p className="mt-1 text-lg text-muted min-[900px]:mt-2 min-[900px]:text-2xl">
-          Learn chess by playing.
+          Play the move. Learn its name.
         </p>
         <ul className="mt-5 hidden flex-wrap gap-2 min-[900px]:flex">
           {FEATURES.map((f) => (
