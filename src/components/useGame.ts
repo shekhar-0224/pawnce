@@ -252,8 +252,8 @@ export function useGame(
     lastMove: moves[moves.length - 1],
     turn,
     myTurn,
-    /** The bot is thinking whenever it's its turn. */
-    thinking: !isOver && turn !== myColor,
+    /** The bot is thinking whenever it's its turn (and the game isn't paused). */
+    thinking: !isOver && turn !== myColor && !hold,
     isOver,
     summary,
     play,

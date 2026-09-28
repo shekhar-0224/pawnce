@@ -29,22 +29,22 @@ export function WinMeter({ myWinPct, botName, final }: Props) {
     >
       <div className="flex items-end justify-between gap-2">
         <div>
-          <p className="text-sm font-bold">You</p>
-          <p className="font-display text-2xl font-semibold leading-none text-accent">{r(c.win)}%</p>
+          <p className="text-xs font-medium text-muted">You</p>
+          <p className="font-mono text-2xl font-semibold leading-none text-accent">{r(c.win)}%</p>
         </div>
         <div className="pb-0.5 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Win chances</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Win chances</p>
           <p className="text-xs font-semibold text-muted">Draw {r(c.draw)}%</p>
         </div>
         <div className="text-right">
-          <p className="text-sm font-bold">{botName}</p>
-          <p className="font-display text-2xl font-semibold leading-none text-board-light">{r(c.loss)}%</p>
+          <p className="text-xs font-medium text-muted">{botName}</p>
+          <p className="font-mono text-2xl font-semibold leading-none text-board-light">{r(c.loss)}%</p>
         </div>
       </div>
-      <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full" aria-hidden>
-        <motion.div className="rounded-l-full bg-accent" initial={false} animate={{ flexGrow: c.win }} transition={spring} style={{ flexBasis: 0 }} />
+      <div className="flex h-1.5 gap-0.5 overflow-hidden rounded-sm" aria-hidden>
+        <motion.div className="bg-accent" initial={false} animate={{ flexGrow: c.win }} transition={spring} style={{ flexBasis: 0 }} />
         <motion.div className="bg-muted/40" initial={false} animate={{ flexGrow: c.draw }} transition={spring} style={{ flexBasis: 0 }} />
-        <motion.div className="rounded-r-full bg-board-light" initial={false} animate={{ flexGrow: c.loss }} transition={spring} style={{ flexBasis: 0 }} />
+        <motion.div className="bg-board-light" initial={false} animate={{ flexGrow: c.loss }} transition={spring} style={{ flexBasis: 0 }} />
       </div>
       {myWinPct === null && !final && <p className="text-xs text-muted">Sizing up the position…</p>}
     </section>

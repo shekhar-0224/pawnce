@@ -16,11 +16,11 @@ type Props = {
 }
 
 const BADGE: Record<Quality, { mark: string; word: string; tone: string }> = {
-  book: { mark: '📖', word: 'a book move', tone: 'bg-surface-2 text-text' },
-  best: { mark: '★', word: 'the best move!', tone: 'bg-success text-bg' },
-  good: { mark: '✓', word: 'a good move', tone: 'bg-success/80 text-bg' },
-  inaccuracy: { mark: '?!', word: 'an inaccuracy', tone: 'bg-accent/70 text-bg' },
-  mistake: { mark: '?', word: 'a mistake', tone: 'bg-accent text-bg' },
+  book: { mark: 'B', word: 'a book move', tone: 'border border-border bg-surface-2 text-muted' },
+  best: { mark: '★', word: 'the best move!', tone: 'bg-accent text-on-accent' },
+  good: { mark: '✓', word: 'a good move', tone: 'bg-accent/20 text-accent' },
+  inaccuracy: { mark: '?!', word: 'an inaccuracy', tone: 'bg-warn/20 text-warn' },
+  mistake: { mark: '?', word: 'a mistake', tone: 'bg-warn text-on-accent' },
   blunder: { mark: '??', word: 'a blunder', tone: 'bg-danger text-text' },
 }
 
@@ -117,17 +117,17 @@ function YourMove({
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-xs font-bold uppercase tracking-wider text-muted">Your move</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Your move</p>
       <div className="flex items-center gap-3">
         <span
-          className={`grid size-11 shrink-0 place-items-center rounded-xl font-display text-lg font-bold ${
+          className={`grid size-10 shrink-0 place-items-center rounded-lg font-mono text-base font-bold ${
             badge ? badge.tone : 'bg-surface-2'
           }`}
         >
           {badge ? badge.mark : <ThinkingDots />}
         </span>
         <div className="min-w-0">
-          <p className="font-display text-xl font-semibold leading-tight">
+          <p className="text-lg font-semibold leading-tight">
             {move.san}
             <span className="text-muted"> {badge ? `was ${badge.word}` : ''}</span>
           </p>
@@ -140,7 +140,7 @@ function YourMove({
         <button
           type="button"
           onClick={onToggleBetter}
-          className="self-start rounded-full border border-success/50 px-3 py-1.5 text-sm font-bold text-success hover:bg-success/10"
+          className="self-start rounded-lg border border-accent/50 px-3 py-2 text-sm font-semibold text-accent hover:bg-accent/10"
         >
           {showingBetter ? 'Hide better move' : `Show better move (${verdict.better})`}
         </button>
@@ -156,29 +156,29 @@ function BotReply({ move, verdict, bot }: { move: Move; verdict: MoveVerdict | n
 
   let note: { text: string; tone: string } | null = null
   if (tactic) {
-    note = { text: `Watch out! ${describeTactic(tactic, false, bot.name, move.piece)}`, tone: 'bg-danger/15 text-text' }
+    note = { text: `Watch out! ${describeTactic(tactic, false, bot.name, move.piece)}`, tone: 'border border-danger/40 bg-danger/10 text-text' }
   } else if (move.san.endsWith('+')) {
-    note = { text: 'Check! Your king is attacked: move it, block, or capture the attacker.', tone: 'bg-danger/15 text-text' }
+    note = { text: 'Check! Your king is attacked: move it, block, or capture the attacker.', tone: 'border border-danger/40 bg-danger/10 text-text' }
   } else if (slipped && verdict) {
     note = {
       text: `The ${bot.name} slipped! Your chances went from ${pct(100 - verdict.winBefore)} to ${pct(100 - verdict.winAfter)}. Look for a strong move.`,
-      tone: 'bg-success/15 text-text',
+      tone: 'border border-accent/40 bg-accent/10 text-text',
     }
   } else if (helped && verdict) {
     note = {
       text: `Not the ${bot.name}'s best. That helped you: ${pct(100 - verdict.winBefore)} → ${pct(100 - verdict.winAfter)}.`,
-      tone: 'bg-surface-2 text-text',
+      tone: 'border border-border bg-surface-2 text-text',
     }
   }
 
   return (
     <div className="flex flex-col gap-2 border-t border-border pt-3">
-      <p className="text-xs font-bold uppercase tracking-wider text-muted">{bot.name} replied</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{bot.name} replied</p>
       <p className="text-[15px]">
-        <span className="font-display text-lg font-semibold">{move.san}</span>
+        <span className="font-mono font-semibold">{move.san}</span>
         <span className="text-muted"> · {plainName(move)}</span>
       </p>
-      {note && <p className={`rounded-xl px-3 py-2 text-sm ${note.tone}`}>{note.text}</p>}
+      {note && <p className={`rounded-lg px-3 py-2 text-sm ${note.tone}`}>{note.text}</p>}
     </div>
   )
 }

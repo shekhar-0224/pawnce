@@ -111,7 +111,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
       name={
         <>
           <span className="truncate font-display text-lg font-semibold">{bot.name}</span>
-          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-bold text-muted">
+          <span className="rounded-md border border-border px-1.5 py-0.5 text-xs font-medium text-muted">
             {bot.level}
           </span>
           {g.thinking && <ThinkingDots />}
@@ -139,7 +139,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
           <span className="font-display text-lg font-semibold">You</span>
           {g.myTurn && (
             <span
-              className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+              className={`rounded-md px-1.5 py-0.5 text-xs font-semibold ${
                 inCheck ? 'bg-danger text-text' : 'bg-accent text-on-accent'
               }`}
             >
@@ -179,12 +179,12 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
           <button
             type="button"
             onClick={onChangeOpponent}
-            className="-ml-2 min-h-11 cursor-pointer rounded-full px-3 hover:bg-surface-2"
+            className="-ml-2 min-h-11 cursor-pointer rounded-lg px-2 hover:bg-surface-2"
             aria-label="Back to start"
           >
-            <Logo className="text-2xl" />
+            <Logo className="text-lg" />
           </button>
-          <span className="rounded-full bg-surface px-3 py-1 text-sm font-bold text-muted">
+          <span className="rounded-md border border-border px-2 py-1 font-mono text-xs font-medium text-muted">
             {timeControlName(timeControl)}
           </span>
         </nav>
