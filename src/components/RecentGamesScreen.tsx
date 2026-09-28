@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { TIME_CONTROLS } from '../chess/clock'
 import { BOTS } from '../engine/bots'
 import type { EndReason, Result } from '../chess/outcome'
 import { loadRecentGames } from '../storage/recentGames'
@@ -18,6 +19,7 @@ const REASON: Record<EndReason, string> = {
   insufficient: 'Not enough pieces',
   'fifty-moves': '50-move rule',
   resignation: 'Resigned',
+  timeout: 'On time',
 }
 
 const dateFormat = new Intl.DateTimeFormat(undefined, {
@@ -67,6 +69,9 @@ export function RecentGamesScreen({ onBack }: { onBack: () => void }) {
                   <p className="truncate text-sm text-muted">
                     {g.myColor === 'white' ? 'White' : 'Black'} · {REASON[g.reason] ?? ''} ·{' '}
                     {g.moves} {g.moves === 1 ? 'move' : 'moves'}
+                    {g.timeControl && TIME_CONTROLS[g.timeControl]?.speed
+                      ? ` · ${TIME_CONTROLS[g.timeControl].label}`
+                      : ''}
                   </p>
                   <p className="text-xs text-muted/80">{formatDate(g.date)}</p>
                 </div>

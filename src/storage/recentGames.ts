@@ -3,6 +3,7 @@
  * Every read and write is wrapped in try/catch: storage can be full,
  * blocked (private mode) or hold old data we can't parse.
  */
+import type { TimeControlId } from '../chess/clock'
 import type { BotId } from '../engine/bots'
 import type { Side } from '../chess/game'
 import type { EndReason, Result } from '../chess/outcome'
@@ -17,6 +18,8 @@ export type SavedGame = {
   reason: EndReason
   /** Number of full moves (1. e4 e5 counts as one). */
   moves: number
+  /** Missing on games saved before clocks existed. */
+  timeControl?: TimeControlId
   pgn: string
 }
 

@@ -16,7 +16,11 @@ function randomMove(fen: string): UciMove | null {
 
 let warned = false
 
-export async function chooseBotMove(fen: string, bot: Bot): Promise<UciMove | null> {
+export async function chooseBotMove(
+  fen: string,
+  bot: Bot,
+  movetimeMs = bot.movetimeMs,
+): Promise<UciMove | null> {
   if (bot.randomMoveChance > 0 && Math.random() < bot.randomMoveChance) {
     return randomMove(fen)
   }
@@ -24,7 +28,7 @@ export async function chooseBotMove(fen: string, bot: Bot): Promise<UciMove | nu
     return await engine.bestMove({
       fen,
       skillLevel: bot.skillLevel,
-      movetimeMs: bot.movetimeMs,
+      movetimeMs,
       depth: bot.depth,
     })
   } catch (err) {
