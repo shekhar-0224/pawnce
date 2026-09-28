@@ -49,8 +49,6 @@ class StockfishEngine {
   private waiters: Waiter[] = []
   private queue: Promise<unknown> = Promise.resolve()
   private onInfo: ((line: string) => void) | null = null
-  private searching = false
-  private latestRequest = 0
 
   /** Start the worker (once) and wait until the engine says it's ready. */
   init(): Promise<void> {
@@ -103,10 +101,8 @@ class StockfishEngine {
       const limits = [`movetime ${opts.movetimeMs}`]
       if (opts.depth) limits.push(`depth ${opts.depth}`)
       const done = this.waitFor((l) => l.startsWith('bestmove'))
-      this.searching = true
       this.send(`go ${limits.join(' ')}`)
       const last = await done
-      this.searching = false
       this.onInfo = null
 
       const move = last.split(/\s+/)[1]
@@ -123,21 +119,6 @@ class StockfishEngine {
   /** Ask for the best move in UCI form ("e2e4", "e7e8q"), or null if none. */
   async bestMove(opts: SearchOptions): Promise<string | null> {
     return (await this.search(opts)).bestMove
-  }
-
-  /**
-   * Like `search`, but only the newest request matters: an older search
-   * still running is cut short, and ones still waiting are skipped
-   * (they resolve to null).
-   */
-  async analyse(opts: SearchOptions): Promise<SearchResult | null> {
-    const id = ++this.latestRequest
-    if (this.searching) this.send('stop')
-    const result = await this.queue.then(() => {
-      if (id !== this.latestRequest) return null
-      return this.search(opts)
-    })
-    return id === this.latestRequest ? result : null
   }
 
   /** Tell the engine a fresh game is starting (clears its memory). */

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Arrow } from 'react-chessboard'
 import { type TimeControl, timeControlName } from '../chess/clock'
 import { type Color, colorToSide } from '../chess/game'
+import { openingOf } from '../chess/openings'
 import type { Bot } from '../engine/bots'
 import { readToken, withAlpha } from '../theme'
 import { BotAvatar, YouAvatar } from './BotAvatar'
@@ -12,6 +13,7 @@ import { HintCard } from './HintCard'
 import { HintOrbs } from './HintOrbs'
 import { LeafBurst } from './LeafBurst'
 import { Logo } from './Logo'
+import { MoveCard } from './MoveCard'
 import { PlayerBar } from './PlayerBar'
 import { ResultCard } from './ResultCard'
 import { SidePanel } from './SidePanel'
@@ -32,7 +34,13 @@ type Props = {
 
 export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOpponent }: Props) {
   const g = useGame(bot, myColor, timeControl)
-  const analysis = useAnalysis(g.game, myColor, g.myTurn, g.summary?.result ?? null)
+  const analysis = useAnalysis(g.moves, g.fen, myColor, g.myTurn, g.summary?.result ?? null)
+  const opening = useMemo(
+    () => (analysis.openingsReady ? openingOf(g.moves.map((m) => m.after)) : null),
+    [analysis.openingsReady, g.moves],
+  )
+  // The move card shows the last two moves: yours and the bot's reply.
+  const recentStart = Math.max(0, g.moves.length - 2)
 
   // Hint arrows: lagoon, strongest to weakest.
   const hintArrows = useMemo<Arrow[]>(() => {
@@ -170,6 +178,18 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
             onFlip={() => setOrientation((o) => (o === 'white' ? 'black' : 'white'))}
             rope={<WinRope myWinPct={analysis.myWinPct} botName={bot.name} />}
             hint={analysis.hints && <HintCard hints={analysis.hints} />}
+            verdicts={analysis.verdicts}
+            moveCard={
+              <MoveCard
+                entries={g.moves.slice(recentStart).map((move, i) => ({
+                  move,
+                  verdict: analysis.verdicts[recentStart + i] ?? null,
+                }))}
+                myColor={myColor}
+                bot={bot}
+                opening={opening}
+              />
+            }
           />
         </div>
       </div>

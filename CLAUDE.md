@@ -52,4 +52,4 @@ A solo, non-developer founder working with Claude Code. So:
 - Big, playful feedback moments (e.g. a "FORK!" banner) but never cluttered.
 
 ## Current phase
-Phases 1 to 3 are built. Next: Phases 4 and 5 together.
+Phases 1 to 5 are built. Next: Phase 6 (play with friends).
