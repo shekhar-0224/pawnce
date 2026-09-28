@@ -171,7 +171,7 @@ export function GameSummary(p: Props) {
     >
       <div className="mx-auto grid w-full max-w-6xl gap-3 px-4 py-5 min-[900px]:grid-cols-12 min-[900px]:px-8 min-[900px]:py-8">
         {/* Result */}
-        <Tile label="Result" className="min-[900px]:col-span-5">
+        <Tile label="Result" className="order-1 min-[900px]:order-none min-[900px]:col-span-5">
           <h1 id="summary-title" className={`text-3xl font-bold ${resultTone}`}>
             {p.title}
           </h1>
@@ -200,7 +200,7 @@ export function GameSummary(p: Props) {
         </Tile>
 
         {/* Replay */}
-        <Tile label="Replay" className="min-[900px]:col-span-7 min-[900px]:row-span-3">
+        <Tile label="Replay" className="order-4 min-[900px]:order-none min-[900px]:col-span-7 min-[900px]:row-span-3">
           <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-lg">
             <Chessboard
               options={{
@@ -263,7 +263,7 @@ export function GameSummary(p: Props) {
         </Tile>
 
         {/* Key moments */}
-        <Tile label="Key moments" className="min-[900px]:col-span-5">
+        <Tile label="Key moments" className="order-3 min-[900px]:order-none min-[900px]:col-span-5">
           {moments.length === 0 ? (
             <p className="text-sm text-muted">A quiet game: no big swings or tactics.</p>
           ) : (
@@ -288,7 +288,7 @@ export function GameSummary(p: Props) {
         </Tile>
 
         {/* Patterns played */}
-        <Tile label="Patterns played" className="min-[900px]:col-span-5">
+        <Tile label="Patterns played" className="order-5 min-[900px]:order-none min-[900px]:col-span-5">
           {p.opening && (
             <p className="text-sm">
               <span className="text-muted">Opening · </span>
@@ -321,10 +321,10 @@ export function GameSummary(p: Props) {
         </Tile>
 
         {/* Play again */}
-        <section className="flex flex-col gap-2 rounded-card border border-border bg-surface p-5 min-[900px]:col-span-12 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between">
+        <section className="order-2 flex flex-col gap-2 rounded-card border border-border bg-surface p-5 min-[900px]:order-last min-[900px]:col-span-12 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between">
           <p className="text-sm text-muted">Ready for another? Every game teaches something new.</p>
           <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-3">
-            <Button variant="primary" onClick={p.onPlayAgain} autoFocus>
+            <Button variant="primary" onClick={p.onPlayAgain}>
               Play again
             </Button>
             <Button onClick={p.onChangeOpponent}>Change opponent</Button>
