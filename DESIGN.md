@@ -60,6 +60,21 @@ exposed to Tailwind in `src/index.css` (e.g. `bg-surface`, `text-muted`,
 - A hint draws 3 lagoon arrows on the board, strongest one boldest, and a
   lagoon card in the panel naming each move and the idea behind it.
 
+## Move card (naming every move)
+- Sits in the side panel under the rope. Shows the opening name (ECO code +
+  Lichess name) and the last two moves: yours and the bot's reply, newest on top.
+- Each move: SAN in Fredoka, plus a plain name ("Knight takes pawn on c7, check").
+- Chips: a tactic chip in lagoon that pops in ("Fork!"), rule-term chips on
+  `--surface-2` (Castling, En passant, Check...), and a quality chip.
+- One teaching sentence for the most interesting thing (tactic first).
+
+## Move quality
+- Graded like Lichess, by the drop in the mover's winning chances:
+  10+ inaccuracy, 20+ mistake, 30+ blunder; the engine's own pick is "best";
+  positions from the opening book are "book".
+- Colors: best/good `--success`, inaccuracy/mistake `--accent`, blunder `--danger`.
+- Marks in the move list: ★ best, ?! inaccuracy, ? mistake, ?? blunder.
+
 ## Pieces
 Loaded only through `src/theme/pieces.ts`. Today that is react-chessboard's
 default set. The jungle set replaces that one file later:

@@ -4,7 +4,7 @@ import type { Bot } from '../engine/bots'
 import { Button } from './Button'
 import { CapturedPieces } from './CapturedPieces'
 import { MoveList } from './MoveList'
-import { PanelSlot } from './PanelSlot'
+import type { MoveVerdict } from './useAnalysis'
 
 type Props = {
   bot: Bot
@@ -18,6 +18,10 @@ type Props = {
   rope: ReactNode
   /** The hint card, when a hint is showing. */
   hint: ReactNode
+  /** Names and explains the last move. */
+  moveCard: ReactNode
+  /** Grade of each move, for the marks in the move list. */
+  verdicts: (MoveVerdict | null)[]
 }
 
 export function SidePanel({
@@ -30,6 +34,8 @@ export function SidePanel({
   onFlip,
   rope,
   hint,
+  moveCard,
+  verdicts,
 }: Props) {
   const captures = capturedPieces(moves)
   const myLead = myColor === 'w' ? captures.whiteLead : -captures.whiteLead
@@ -45,7 +51,7 @@ export function SidePanel({
   }, [confirmResign])
 
   return (
-    <aside className="flex h-full min-h-0 flex-col gap-4 rounded-card border border-border bg-surface p-4 shadow-soft">
+    <aside className="pawnce-scroll flex h-full min-h-0 flex-col gap-4 overflow-y-auto rounded-card border border-border bg-surface p-4 shadow-soft">
       {rope}
       {hint}
 
@@ -54,15 +60,19 @@ export function SidePanel({
         <CapturedPieces label={bot.name} pieces={theirs} pieceColor={myColor} lead={-myLead} />
       </section>
 
-      {/* Phase 4: move explanation card goes here */}
-      <PanelSlot name="move-explain" />
+      {moveCard}
 
       <section aria-label="Moves" className="flex min-h-0 flex-1 flex-col">
         <h2 className="mb-2 px-2 font-display text-sm font-semibold uppercase tracking-wider text-muted">
           Moves
         </h2>
         <div className="pawnce-scroll max-h-44 min-h-24 flex-1 overflow-y-auto rounded-xl bg-bg/40 p-1 min-[900px]:max-h-none">
-          <MoveList moves={moves} />
+          <MoveList
+            moves={moves}
+            verdicts={verdicts}
+            whiteLabel={myColor === 'w' ? 'You' : `${bot.emoji} ${bot.name}`}
+            blackLabel={myColor === 'b' ? 'You' : `${bot.emoji} ${bot.name}`}
+          />
         </div>
       </section>
 

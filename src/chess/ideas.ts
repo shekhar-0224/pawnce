@@ -6,15 +6,12 @@
  */
 import { Chess, type Color, type PieceSymbol, type Square } from 'chess.js'
 import { PIECE_NAMES, capturedSquare, otherColor, parseUci } from './game'
+import { describeTactic } from './naming'
+import { detectTactics, mainTactic } from './tactics'
 
 const VALUE: Record<PieceSymbol, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 }
 
 type Line = { pv: string[]; mate?: number }
-
-function list(names: string[]): string {
-  if (names.length <= 1) return names[0] ?? ''
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
-}
 
 function allSquares(game: Chess, color: Color): { square: Square; type: PieceSymbol }[] {
   const out: { square: Square; type: PieceSymbol }[] = []
@@ -78,20 +75,16 @@ export function describeIdea(fen: string, uci: string, line: Line): string {
     return `Takes the ${victim}${withCheck}.`
   }
 
-  // 4. What the moved piece attacks now (forks, checks, threats)
+  // 4. Tactics (fork, pin, skewer, discovered attack), then plain threats
+  const tactic = mainTactic(detectTactics(fen, { from, to, promotion }))
+  if (tactic) return describeTactic(tactic, true, '', piece.type)
   const targets = allSquares(after, them).filter(
     (p) =>
       after.attackers(p.square, me).includes(to) &&
-      (p.type === 'k' ||
-        VALUE[p.type] > VALUE[piece.type] ||
+      p.type !== 'k' &&
+      (VALUE[p.type] > VALUE[piece.type] ||
         (p.type !== 'p' && after.attackers(p.square, them).length === 0)),
   )
-  if (targets.length >= 2) {
-    const names = targets
-      .sort((a, b) => VALUE[b.type] - VALUE[a.type])
-      .map((t) => PIECE_NAMES[t.type])
-    return `Fork! Your ${name} attacks the ${list(names)} at the same time.`
-  }
   if (check) return 'Gives check, so their king has to deal with it first.'
   if (targets.length === 1) {
     const target = PIECE_NAMES[targets[0].type]

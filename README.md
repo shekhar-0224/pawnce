@@ -7,6 +7,7 @@ Learn chess by playing. See `CLAUDE.md` for the project brief and
 npm install
 npm run dev     # local dev server
 npm run build   # production build (what Vercel runs)
+node scripts/build-openings.mjs   # refresh opening names from Lichess (rarely needed)
 ```
 
 Folders: `src/chess` (game logic), `src/engine` (Stockfish),
