@@ -1,10 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import type { Color, Move } from '../chess/game'
-import { type Quality, TACTIC_LABELS, describeTactic, plainName, termsFor } from '../chess/naming'
+import { plainName } from '../chess/naming'
 import { explainOpening } from '../chess/openingInfo'
-import { detectTactics, mainTactic, tacticHolds } from '../chess/tactics'
+import type { Threat } from '../chess/threats'
 import type { Bot } from '../engine/bots'
+import { BADGE, NOTE_TONES, botReplyNote, isSlip, yourMoveWhy } from './coachText'
 import { ThinkingDots } from './ThinkingDots'
+import { WordTag } from './WordTag'
 import { type MoveVerdict, costLine } from './useAnalysis'
 
 type Props = {
@@ -16,25 +18,17 @@ type Props = {
   onToggleBetter: () => void
   /** Per move: the opening name it newly reached, and the opening after it. */
   openings: { reached: (string | null)[]; current: (string | null)[] }
+  /** What the bot threatens next, if anything. */
+  threat: Threat | null
+  /** The chess word to tag "New" on a move, if any. */
+  newWordAt: (ply: number) => string | null
 }
-
-const BADGE: Record<Quality, { mark: string; word: string; tone: string }> = {
-  book: { mark: 'B', word: 'a book move', tone: 'border border-border bg-surface-2 text-muted' },
-  best: { mark: '★', word: 'the best move!', tone: 'bg-accent text-on-accent' },
-  good: { mark: '✓', word: 'a good move', tone: 'bg-accent/20 text-accent' },
-  inaccuracy: { mark: '?!', word: 'an inaccuracy', tone: 'bg-warn/20 text-warn' },
-  mistake: { mark: '?', word: 'a mistake', tone: 'bg-warn text-on-accent' },
-  blunder: { mark: '??', word: 'a blunder', tone: 'bg-danger text-text' },
-}
-
-const pct = (n: number) => `${Math.round(n)}%`
-const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1)
 
 /**
  * The coach: talks about YOUR last move (how good it was, and why), then
  * the bot's reply, only saying more when it matters to you.
  */
-export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBetter, openings }: Props) {
+export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBetter, openings, threat, newWordAt }: Props) {
   // Your most recent move, and the bot's reply to it (if it has replied).
   let mine = -1
   for (let i = moves.length - 1; i >= 0; i--) {
@@ -71,6 +65,7 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
               reached={openings.reached[mine] ?? null}
               current={openings.current[mine] ?? null}
               botName={bot.name}
+              newWord={newWordAt(mine)}
               showingBetter={showingBetter}
               onToggleBetter={onToggleBetter}
             />
@@ -80,10 +75,13 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
 
       {reply && mine >= 0 && (
         <BotReply
+          key={reply.after}
+          newWord={newWordAt(mine + 1)}
           move={reply}
           verdict={replyVerdict ?? null}
           bot={bot}
           reached={openings.reached[mine + 1] ?? null}
+          threat={threat}
         />
       )}
     </section>
@@ -96,9 +94,11 @@ function YourMove({
   reached,
   current,
   botName,
+  newWord,
   showingBetter,
   onToggleBetter,
 }: {
+  newWord: string | null
   move: Move
   verdict: MoveVerdict | null
   reached: string | null
@@ -107,25 +107,9 @@ function YourMove({
   showingBetter: boolean
   onToggleBetter: () => void
 }) {
-  const tactic = mainTactic(detectTactics(move.before, move))
-  const term = termsFor(move).find((t) => t.explain)
   const badge = verdict ? BADGE[verdict.quality] : null
-  const bad = verdict && ['inaccuracy', 'mistake', 'blunder'].includes(verdict.quality)
-
-  // Only praise a tactic that holds up; if it fails, say why.
-  const holds = tacticHolds(verdict?.quality)
-  let why: string | null = null
-  if (tactic && holds === false) {
-    const name = TACTIC_LABELS[tactic.kind].toLowerCase()
-    why = verdict?.refutation
-      ? `That looks like a ${name}, but ${lowerFirst(verdict.refutation.text)}`
-      : `That looks like a ${name}, but it doesn't work here.`
-  } else if (bad && verdict) why = verdict.refutation?.text ?? null
-  else if (tactic && holds) why = describeTactic(tactic, true, botName, move.piece)
-  else if (reached) why = `You're in the ${reached}. ${explainOpening(reached)}`
-  else if (term) why = term.explain
-  else if (verdict?.quality === 'book')
-    why = current ? `Still in the ${current}: a standard move here.` : 'A standard opening move.'
+  const bad = isSlip(verdict)
+  const why = yourMoveWhy(move, verdict, reached, current, botName)
 
   return (
     <div className="flex flex-col gap-2">
@@ -148,6 +132,7 @@ function YourMove({
       </div>
       {!verdict && <p className="text-sm text-muted">Checking your move…</p>}
       {why && <p className="text-[15px] leading-snug">{why}</p>}
+      <WordTag id={newWord} />
       {bad && verdict && <p className="font-mono text-xs text-muted">{costLine(verdict)}</p>}
       {bad && verdict?.better && (
         <button
@@ -167,44 +152,17 @@ function BotReply({
   verdict,
   bot,
   reached,
+  threat,
+  newWord,
 }: {
+  newWord: string | null
   move: Move
   verdict: MoveVerdict | null
   bot: Bot
   reached: string | null
+  threat: Threat | null
 }) {
-  const tactic = mainTactic(detectTactics(move.before, move))
-  const slipped = verdict && (verdict.quality === 'mistake' || verdict.quality === 'blunder')
-  const helped = verdict && verdict.quality === 'inaccuracy'
-
-  const holds = tacticHolds(verdict?.quality)
-  let note: { text: string; tone: string } | null = null
-  if (tactic && holds) {
-    note = { text: `Watch out! ${describeTactic(tactic, false, bot.name, move.piece)}`, tone: 'border border-danger/40 bg-danger/10 text-text' }
-  } else if (tactic && holds === false) {
-    const name = TACTIC_LABELS[tactic.kind].toLowerCase()
-    note = {
-      text: `The ${bot.name} tried a ${name}, but it doesn't work. ${verdict?.refutation?.text ?? 'Look for the strongest answer.'}`,
-      tone: 'border border-accent/40 bg-accent/10 text-text',
-    }
-  } else if (move.san.endsWith('+')) {
-    note = { text: 'Check! Your king is attacked: move it, block, or capture the attacker.', tone: 'border border-danger/40 bg-danger/10 text-text' }
-  } else if (slipped && verdict) {
-    note = {
-      text: `The ${bot.name} slipped! ${verdict.refutation?.text ?? 'Look for a strong move.'}`,
-      tone: 'border border-accent/40 bg-accent/10 text-text',
-    }
-  } else if (helped && verdict) {
-    note = {
-      text: `Not the ${bot.name}'s best. That helped you: ${pct(100 - verdict.winBefore)} → ${pct(100 - verdict.winAfter)}.`,
-      tone: 'border border-border bg-surface-2 text-text',
-    }
-  } else if (reached) {
-    note = {
-      text: `The ${bot.name} steered into the ${reached}. ${explainOpening(reached)}`,
-      tone: 'border border-border bg-surface-2 text-text',
-    }
-  }
+  const note = botReplyNote(move, verdict, bot, reached, threat)
 
   return (
     <div className="flex flex-col gap-2 border-t border-border pt-3">
@@ -213,7 +171,8 @@ function BotReply({
         <span className="font-mono font-semibold">{move.san}</span>
         <span className="text-muted"> · {plainName(move)}</span>
       </p>
-      {note && <p className={`rounded-lg px-3 py-2 text-sm ${note.tone}`}>{note.text}</p>}
+      {note && <p className={`rounded-lg px-3 py-2 text-sm ${NOTE_TONES[note.tone]}`}>{note.text}</p>}
+      <WordTag id={newWord} />
     </div>
   )
 }

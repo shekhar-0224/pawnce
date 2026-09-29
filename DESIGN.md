@@ -10,15 +10,25 @@ Tagline: **Play the move. Learn its name.**
 
 ## Layout principles
 - **Mobile first, frictionless.** Design for a phone first. While playing,
-  the board, the win-chances line, the move ticker and the coach's verdict
-  on your last move are all visible without scrolling. Every tap target is
-  44px or more. Leaving a game asks first (keep playing / resign and leave).
+  the board, the win-chances line, the coach's verdict and the main actions
+  are all visible without scrolling. Checked portrait phones 320x568 to
+  430x932, tablets 768x1024 to 1180x820, laptops and desktops 1280x720 to
+  2560x1440; the board shrinks on short phones to make room (down to 180px on
+  the smallest). Phones in landscape scroll; the store apps lock portrait. Every tap target is 44px
+  or more. Leaving a game asks first (keep playing / resign and leave).
 - **Home screen: bento grid.** One large Play tile (headline, current setup,
   the Play button) plus smaller tiles for Opponent, Side, Clock and Recent
   games. On phones the tiles stack, Play tile first.
-- **Game screen: minimal, not bento.** The board dominates. One clean side
-  panel holds winning chances, the coach (move labels and feedback), hints
-  and the move list. A slim ticker above the board names the last two moves.
+- **Game screen: minimal, not bento. Learning comes first.** The board
+  dominates. Desktop: the side panel starts with the coach (and hints), then
+  a slim win-chances bar, the move list and game buttons; a slim ticker above
+  the board names the last two moves.
+  Phones: a slim win-chances line above the board; directly under it, the
+  **verdict strip** (your move's grade, the bot's reply, and the one sentence
+  that matters most now: a threat, a chance, or why your move was good or
+  bad; tap it for the full coach in a sheet). Hints replace the strip with
+  three one-line suggestions. A fixed **bottom bar** holds Hint · Take back ·
+  Moves · Menu; Moves and Menu open bottom sheets.
 - **Game-over summary: bento grid.** Result, Key moments, Patterns played
   (opening, tactics, rule terms), a move-by-move Replay, and Play again.
 - Generous whitespace: 8px spacing grid, 16 to 24px inside tiles, 12 to 16px
@@ -66,19 +76,20 @@ only one accent color in practice.
 - Hints: accent arrows, strongest boldest. Better move: accent arrow.
 
 ## Win chances meter
-Top of the side panel, like a sports broadcast: "You 52%" on the left,
+A slim bar (under the coach on desktop, above the board on phones), like a
+sports broadcast: "You 52%" on the left,
 the bot's % on the right, "Draw 9%" in the middle, one thin bar split into
 accent / muted / light. Win % comes from the engine score (Lichess
 formula); the draw share is sized for everyday players.
 
 ## Coach and teaching moments
-- Coach, in the side panel: "Your move" first (verdict tag, the move in words,
+- Coach, at the top of the side panel (in a sheet on phones): "Your move" first (verdict tag, the move in words,
   one sentence on why, "Show better move"), then the bot's reply with a note
   only when it matters to you.
 - Ticker above the board: the last two moves with who played them and how
   good they were.
-- A mistake or blunder pauses the game (clock too) with a card over the lower
-  board: what it cost, the better move, Take it back / Show better / Play on.
+- A mistake or blunder pauses the game (clock too) with a card (under the
+  board on phones, top of the panel on desktop): what it cost, the better move, Take it back / Show better / Play on.
 
 ## Naming comes first
 Every piece of feedback names a pattern in board terms; grades and numbers
@@ -107,8 +118,37 @@ are secondary.
   "Wins a free knight" only when the engine line (the move plus 3 moves
   each) still has that material won. Otherwise: "Takes the pawn, but they
   can win it back", "you come out a little ahead", or a plain trade.
+- **Threat alerts.** After the bot moves, the engine checks what it would
+  play if it moved again. If that is a tactic, a mate threat, or wins
+  material (and the engine agrees it gains 1.2+ pawns), the coach warns in
+  amber: "Watch out: their knight threatens a fork on c2, hitting your king
+  and rook." The board draws the threat in `--warn`: the move, then lines
+  to its targets. Hints and teaching moments take priority on the board.
+- **Patterns show on the board.** When a tactic really works (graded good,
+  best or book), for either side, the board draws lines from the attacker to
+  its targets and a small mono chip ("FORK!", "PIN!") for about 1.5s: lime
+  for yours, red for the bot's. The chip sits on the half of the board away
+  from the tactic, so it never hides it.
 - The teaching-moment card never covers the board: under the board on
   phones, at the top of the side panel on desktop.
+
+## Vocabulary memory
+- Every chess word you meet is counted in this browser: seen (either side),
+  played by you, and missed (a tactic you could have played instead of a
+  slip). Openings you meet are collected by family.
+- **New tag, no pop-ups.** The first times a word shows up, the coach adds a
+  lime `NEW` tag with a question ("What's a fork?"). Tapping it opens the
+  meaning and a tip right there, and the word counts as known. A word stays
+  New until tapped or met 3 times. Tags never queue: only the current move's
+  word is tagged. On phones the verdict strip shows the tag; tap the strip
+  to open the coach and the explainer.
+- **Game summary:** a "Words from this game" tile lists every word met
+  (new ones in lime) and opens a flash-card deck, one card per word or
+  opening: meaning, what happened in this game, a tip. "Got it" marks it
+  known.
+- **Home:** a "Your chess vocabulary" tile: "X of 29 words known", how many
+  are waiting to learn, a progress bar, and "See all words" (a sheet by
+  category: Known, New, Not met yet; tap one for its meaning and counts).
 
 ## Move quality
 Compared with the best move on the whole board, by winning chances lost

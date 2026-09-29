@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { type ReactNode, useMemo, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import type { Color, Move } from '../chess/game'
@@ -9,7 +9,12 @@ import { detectTactics, mainTactic, tacticHolds, type TacticKind } from '../ches
 import type { Bot } from '../engine/bots'
 import { color } from '../theme'
 import { pieceSet } from '../theme/pieces'
+import { WORDS_BY_ID } from '../chess/glossary'
+import { learnWord } from '../storage/learned'
 import { Button } from './Button'
+import { LearnCard } from './LearnCard'
+import { Sheet } from './Sheet'
+import type { LearnCardData } from './useVocab'
 import type { MoveVerdict } from './useAnalysis'
 
 type Props = {
@@ -18,6 +23,10 @@ type Props = {
   moves: Move[]
   verdicts: (MoveVerdict | null)[]
   opening: (Opening & { ply: number }) | null
+  /** Flash cards: every chess word (and opening) met in this game. */
+  cards: LearnCardData[]
+  /** Word ids met for the very first time in this game. */
+  newThisGame: string[]
   result: Result
   title: string
   detail: string
@@ -156,6 +165,11 @@ export function GameSummary(p: Props) {
   const current = ply >= 0 ? moves[ply] : null
   const currentVerdict = ply >= 0 ? verdicts[ply] : null
 
+  // The flash-card deck: null when closed, otherwise the card showing.
+  const [deckAt, setDeckAt] = useState<number | null>(null)
+  const deckCard = deckAt !== null ? p.cards[deckAt] : null
+  const newSet = new Set(p.newThisGame)
+
   const resultTone =
     p.result === 'win' ? 'text-accent' : p.result === 'loss' ? 'text-danger' : 'text-muted'
   const counts = stats.counts
@@ -202,7 +216,7 @@ export function GameSummary(p: Props) {
         </Tile>
 
         {/* Replay */}
-        <Tile label="Replay" className="order-4 min-[900px]:order-none min-[900px]:col-span-7 min-[900px]:row-span-3">
+        <Tile label="Replay" className="order-5 min-[900px]:order-none min-[900px]:col-span-7 min-[900px]:row-span-4">
           <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-lg">
             <Chessboard
               options={{
@@ -264,8 +278,44 @@ export function GameSummary(p: Props) {
           </div>
         </Tile>
 
+        {/* Words from this game */}
+        <Tile label="Words from this game" className="order-3 min-[900px]:order-none min-[900px]:col-span-5">
+          {p.cards.length === 0 ? (
+            <p className="text-sm text-muted">No new chess words this time. Play on!</p>
+          ) : (
+            <>
+              {p.newThisGame.length > 0 && (
+                <p className="text-sm">
+                  <span className="font-semibold text-accent">
+                    {p.newThisGame.length} new {p.newThisGame.length === 1 ? 'word' : 'words'}
+                  </span>
+                  <span className="text-muted"> this game</span>
+                </p>
+              )}
+              <div className="flex flex-wrap gap-1.5">
+                {p.cards.map((c) => (
+                  <span
+                    key={c.kind === 'word' ? c.id : `o:${c.family}`}
+                    className={`rounded-md border px-2 py-1 text-xs ${
+                      c.kind === 'word' && newSet.has(c.id)
+                        ? 'border-accent/50 bg-accent/10 font-semibold text-accent'
+                        : 'border-border text-muted'
+                    }`}
+                  >
+                    {c.kind === 'word' ? WORDS_BY_ID[c.id]?.name : c.family}
+                    {c.kind === 'word' && newSet.has(c.id) && <span className="ml-1 font-mono text-[10px] uppercase">new</span>}
+                  </span>
+                ))}
+              </div>
+              <Button variant="primary" onClick={() => setDeckAt(0)}>
+                Review {p.cards.length} flash {p.cards.length === 1 ? 'card' : 'cards'}
+              </Button>
+            </>
+          )}
+        </Tile>
+
         {/* Key moments */}
-        <Tile label="Key moments" className="order-3 min-[900px]:order-none min-[900px]:col-span-5">
+        <Tile label="Key moments" className="order-4 min-[900px]:order-none min-[900px]:col-span-5">
           {moments.length === 0 ? (
             <p className="text-sm text-muted">A quiet game: no big swings or tactics.</p>
           ) : (
@@ -290,7 +340,7 @@ export function GameSummary(p: Props) {
         </Tile>
 
         {/* Patterns played */}
-        <Tile label="Patterns played" className="order-5 min-[900px]:order-none min-[900px]:col-span-5">
+        <Tile label="Patterns played" className="order-6 min-[900px]:order-none min-[900px]:col-span-5">
           {p.opening && (
             <p className="text-sm">
               <span className="text-muted">Opening · </span>
@@ -336,6 +386,27 @@ export function GameSummary(p: Props) {
           </div>
         </section>
       </div>
+
+      <AnimatePresence>
+        {deckCard && deckAt !== null && (
+          <Sheet key="deck" title="Flash cards" onClose={() => setDeckAt(null)}>
+            <LearnCard
+              key={deckAt}
+              card={deckCard}
+              moves={moves}
+              verdicts={verdicts}
+              myColor={myColor}
+              bot={bot}
+              progress={`${deckAt + 1} / ${p.cards.length}`}
+              actionLabel={deckAt + 1 < p.cards.length ? 'Got it · next' : 'Done'}
+              onGotIt={() => {
+                if (deckCard.kind === 'word') learnWord(deckCard.id)
+                setDeckAt(deckAt + 1 < p.cards.length ? deckAt + 1 : null)
+              }}
+            />
+          </Sheet>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }

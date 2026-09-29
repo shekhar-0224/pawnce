@@ -5,10 +5,10 @@ import { describeTactic, plainName } from '../chess/naming'
 import { explainOpening } from '../chess/openingInfo'
 import { detectTactics, mainTactic } from '../chess/tactics'
 import type { Bot } from '../engine/bots'
-import { useLearned } from '../storage/learned'
+import { isKnown, isNew, useLearned } from '../storage/learned'
 import { Button } from './Button'
 import type { MoveVerdict } from './useAnalysis'
-import type { LearnCardData } from './useLearning'
+import type { LearnCardData } from './useVocab'
 
 type Props = {
   card: LearnCardData
@@ -17,6 +17,10 @@ type Props = {
   myColor: Color
   bot: Bot
   onGotIt: () => void
+  /** In a deck: "2 / 5". */
+  progress?: string
+  /** The button text (default "Got it"). */
+  actionLabel?: string
 }
 
 const moveNo = (ply: number) => `${Math.floor(ply / 2) + 1}${ply % 2 === 0 ? '.' : '…'}`
@@ -29,7 +33,20 @@ function contextFor(card: LearnCardData, move: Move, verdict: MoveVerdict | null
   }
   const tactic = mainTactic(detectTactics(move.before, move))
   if (tactic && tactic.kind === card.id) return describeTactic(tactic, byMe, bot.name, move.piece)
+  if (byMe && verdict?.betterMove) {
+    const missed = mainTactic(detectTactics(move.before, verdict.betterMove))
+    if (missed && missed.kind === card.id) {
+      return `You missed one: instead of ${move.san}, ${verdict.better} was a ${WORDS_BY_ID[card.id].name.toLowerCase()}.`
+    }
+  }
   switch (card.id) {
+    case 'stalemate':
+    case 'insufficient':
+    case 'threefold':
+    case 'fifty-moves':
+    case 'flag':
+    case 'resign':
+      return `This game ended this way.`
     case 'blunder':
     case 'mistake':
     case 'inaccuracy':
@@ -46,21 +63,22 @@ function contextFor(card: LearnCardData, move: Move, verdict: MoveVerdict | null
 }
 
 /**
- * Teaches a chess word (or an opening) the first time it shows up. The game
- * waits while it's open. "Got it" adds it to your Chess words collection.
+ * A flash card for a chess word (or an opening) met in this game: what it
+ * means, where it happened, and a tip. "Got it" marks the word as known.
  */
-export function LearnCard({ card, moves, verdicts, myColor, bot, onGotIt }: Props) {
+export function LearnCard({ card, moves, verdicts, myColor, bot, onGotIt, progress, actionLabel = 'Got it' }: Props) {
   const learned = useLearned()
   const move = moves[card.ply]
   const byMe = move?.color === myColor
   const word = card.kind === 'word' ? WORDS_BY_ID[card.id] : null
   const title = word ? word.name : card.kind === 'opening' ? card.name : ''
-  const label = word ? `New chess word · ${word.category}` : 'New opening'
+  const fresh = word ? isNew(learned.words[word.id]) : !learned.openings[card.kind === 'opening' ? card.family : '']
+  const label = word ? `${fresh ? 'New word' : 'Chess word'} · ${word.category}` : fresh ? 'New opening' : 'Opening'
   const meaning = word ? word.meaning : card.kind === 'opening' ? explainOpening(card.name) : ''
   const tip = word
     ? word.tip
     : 'An opening is a named way to start a game. Names help players study and talk about them.'
-  const count = Object.keys(learned.words).length + 1
+  const known = WORDS.filter((w) => isKnown(learned.words[w.id])).length
 
   return (
     <motion.section
@@ -73,11 +91,9 @@ export function LearnCard({ card, moves, verdicts, myColor, bot, onGotIt }: Prop
     >
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">{label}</p>
-        {word && (
-          <p className="font-mono text-[11px] text-muted">
-            {Math.min(count, WORDS.length)} / {WORDS.length} words
-          </p>
-        )}
+        <p className="font-mono text-[11px] text-muted">
+          {progress ?? (word ? `${known} / ${WORDS.length} words` : '')}
+        </p>
       </div>
       <div>
         <h2 className="text-2xl font-bold leading-tight">{title}</h2>
@@ -94,7 +110,7 @@ export function LearnCard({ card, moves, verdicts, myColor, bot, onGotIt }: Prop
         {tip}
       </p>
       <Button variant="primary" onClick={onGotIt} className="w-full">
-        Got it
+        {actionLabel}
       </Button>
     </motion.section>
   )
