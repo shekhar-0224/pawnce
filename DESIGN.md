@@ -157,11 +157,20 @@ harsher. Tags: Best and Good in accent, Book in muted, Inaccuracy and
 Mistake in `--warn`, Blunder in `--danger`. Marks: ★ ?! ? ??.
 
 ## Pieces
-Loaded only through `src/theme/pieces.ts`, swappable in one file. The
-jungle set comes later: Knight = frog, Bishop = snake, Rook = rhino,
-Queen = jaguar, King = silverback gorilla, Pawns = army ants. The UI always
-uses standard piece names (Knight, Rook, check, fork). Bots are shown with
-simple monogram tiles until the animal art exists (no emoji in the UI).
+Jungle **tokens**: each piece is its animal on a round disc, loaded only
+through `src/theme/pieces.ts` (art in `src/theme/jungle/`), swappable there.
+- Knight = frog, Bishop = snake (rattlesnake), Rook = rhino, Queen = jaguar
+  (big-cat head), King = silverback gorilla, Pawns = army ants (drawn a little
+  smaller).
+- Day jungle (White): cream disc `--piece-day`, dark green ink
+  `--piece-day-ink`. Night jungle (Black): deep green disc `--piece-night`,
+  lime ink `--piece-night-ink`. A 2.5% lower rim (`--piece-*-edge`) gives a
+  hint of depth; no gradients.
+- Art: Game Icons (game-icons.net), CC BY 3.0, credited in the home footer
+  and CREDITS.md.
+- The UI always uses standard piece names (Knight, Rook, check, fork); the
+  jungle is visual only. Bots use their animal on a night token as avatar
+  (Ant = ant, Frog = frog, Jaguar = big cat). No emoji in the UI.
 
 ## Motion
 Quick and quiet: 150 to 250ms, ease-out. Pieces slide 200ms; captures
