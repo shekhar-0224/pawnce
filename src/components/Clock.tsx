@@ -30,13 +30,13 @@ export function Clock({ remainingMs, runningSince, label }: Props) {
     ? 'bg-danger text-text'
     : running
       ? 'bg-accent text-on-accent'
-      : 'bg-surface-2 text-muted'
+      : 'border border-border bg-surface text-muted'
 
   return (
     <motion.div
       role="timer"
       aria-label={`${label}: ${formatClock(ms)}`}
-      className={`min-w-[5.5rem] rounded-xl px-3 py-1.5 text-center font-display text-xl font-semibold tabular-nums shadow-soft transition-colors ${tone}`}
+      className={`min-w-[5.5rem] rounded-lg px-3 py-1.5 text-center font-mono text-lg font-semibold tabular-nums transition-colors ${tone}`}
       animate={low && running ? { scale: [1, 1.06, 1] } : { scale: 1 }}
       transition={low && running ? { duration: 1, repeat: Infinity } : { duration: 0.2 }}
     >

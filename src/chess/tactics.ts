@@ -103,7 +103,8 @@ export function detectTactics(fenBefore: string, move: Pick<Move, 'from' | 'to' 
   for (const dir of directionsFor(moved.type)) {
     const [first, second] = walk(after, move.to, dir)
     if (!first || !second || first.color !== them || second.color !== them) continue
-    if (first.type !== 'k' && (second.type === 'k' || (VALUE[second.type] > VALUE[first.type] && VALUE[second.type] >= 5))) {
+    // Pins of pawns are too common to be worth teaching; only pieces count.
+    if (first.type !== 'k' && first.type !== 'p' && (second.type === 'k' || (VALUE[second.type] > VALUE[first.type] && VALUE[second.type] >= 5))) {
       tactics.push({ kind: 'pin', by: moved.type, targets: [first.type, second.type] })
     } else if (
       (first.type === 'k' || first.type === 'q' || first.type === 'r') &&

@@ -196,9 +196,8 @@ export function ChessBoard({
           dragActivationDistance: 4,
           canDragPiece: ({ piece }) => canMove && piece.pieceType[0] === myColor,
           boardStyle: {
-            borderRadius: 14,
+            borderRadius: 8,
             overflow: 'hidden',
-            boxShadow: 'var(--shadow-raised)',
           },
           lightSquareStyle: { backgroundColor: color.boardLight },
           darkSquareStyle: { backgroundColor: color.boardDark },

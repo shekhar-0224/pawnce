@@ -11,7 +11,7 @@ type Props = {
   myColor: Color
   moves: Move[]
   verdicts: (MoveVerdict | null)[]
-  opening: Opening | null
+  opening: (Opening & { ply: number }) | null
   isOver: boolean
   /** Win / draw / loss chances. */
   meter: ReactNode
@@ -49,8 +49,8 @@ export function SidePanel({
 
   const botLabel = `${bot.name}`
   return (
-    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-card border border-border bg-surface shadow-soft">
-      <div className="border-b border-border p-4">{meter}</div>
+    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-card border border-border bg-surface">
+      <div className="hidden border-b border-border p-4 min-[900px]:block">{meter}</div>
       <div className="pawnce-scroll flex min-h-0 flex-col gap-4 overflow-y-auto p-4">
         {hint}
         {coach}
@@ -58,10 +58,14 @@ export function SidePanel({
 
       <section aria-label="Moves" className="flex min-h-0 flex-1 flex-col border-t border-border">
         <div className="flex items-baseline justify-between gap-3 px-4 pb-1 pt-3">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted">Moves</h2>
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Moves</h2>
           {opening && (
             <span className="min-w-0 truncate text-xs font-semibold text-muted" title={opening.name}>
               {opening.name}
+              <span className="text-muted/70">
+                {' · '}
+                {moves[opening.ply]?.color === myColor ? 'your choice' : `${bot.name}'s choice`}
+              </span>
             </span>
           )}
         </div>

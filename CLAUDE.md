@@ -28,7 +28,10 @@ A solo, non-developer founder working with Claude Code. So:
 - Keep chess logic, engine code, and UI in separate folders.
 - Piece artwork must be swappable (custom jungle animal pieces come later).
 - Layout: board on the left, side panel on the right (stacked on mobile).
-- Mobile-friendly from day one; the app will later be wrapped for iOS/Android.
+- Mobile first: design and test every screen on a phone before desktop.
+  It must feel frictionless: the board, your move's feedback and the main
+  action are visible without scrolling. The app will later be wrapped for
+  iOS/Android.
 
 ## Roadmap (do not jump ahead)
 1. Playable game vs. Stockfish bot, difficulty levels, move history, game over
@@ -45,12 +48,19 @@ A solo, non-developer founder working with Claude Code. So:
 8. Ship: web first, then app stores via Capacitor
 
 ## Design direction
+- Minimal, modern jungle (see DESIGN.md): muted deep-green neutrals, one lime
+  accent, Geist type, flat surfaces, thin borders, no bubbly shapes.
+- Bento grids for home and the game-over summary; the game screen stays
+  minimal with the board dominant.
+- Tagline: "Play the move. Learn its name."
 - Pieces keep standard names everywhere in the UI (Knight, Rook, fork, check).
   The jungle theme is visual only.
 - Planned jungle set: Knight = frog, Bishop = snake, Rook = rhino,
   Queen = jaguar, King = silverback gorilla, Pawns = army ants.
   Two sides: day jungle vs. night jungle.
-- Big, playful feedback moments (e.g. a "FORK!" banner) but never cluttered.
+- Clear feedback moments (teaching-moment card, "Fork!" tags), never cluttered.
 
 ## Current phase
-Phases 1 to 5 are built. Next: Phase 6 (play with friends).
+Phases 1 to 5 are built, plus a learning round (teaching moments, take-backs,
+move ticker, game summary with replay) and the minimal redesign.
+Next: decide between Phase 7 (jungle pieces and polish) and Phase 6 (friends).

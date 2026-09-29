@@ -46,7 +46,13 @@ export function timeLeft(clock: ClockState, side: Color, turn: Color, now = Date
  * All the state of one game against a bot. Mount a fresh one (via a React
  * `key`) for every new game.
  */
-export function useGame(bot: Bot, myColor: Color, timeControl: TimeControl) {
+export function useGame(
+  bot: Bot,
+  myColor: Color,
+  timeControl: TimeControl,
+  /** While true the bot waits and the clocks pause (teaching moments). */
+  hold = false,
+) {
   const [moves, setMoves] = useState<Move[]>([])
   const [resigned, setResigned] = useState(false)
   const [flagged, setFlagged] = useState<Color | null>(null)
@@ -116,6 +122,36 @@ export function useGame(bot: Bot, myColor: Color, timeControl: TimeControl) {
     updateClock({ remaining, runningSince: null })
   }, [clockOn, updateClock])
 
+  // Teaching moments pause the clock and resume it where it left off.
+  const pausedRef = useRef(false)
+  useEffect(() => {
+    if (!clockOn) return
+    if (hold && clockRef.current.runningSince !== null) {
+      stopClock()
+      pausedRef.current = true
+    } else if (!hold && pausedRef.current) {
+      pausedRef.current = false
+      if (!replay(movesRef.current).isGameOver()) {
+        updateClock({ ...clockRef.current, runningSince: Date.now() })
+      }
+    }
+  }, [hold, clockOn, stopClock, updateClock])
+
+  /** Undo your last move (for "Take it back"). Only when it's the bot's turn. */
+  const takeBack = useCallback(() => {
+    const current = movesRef.current
+    const last = current[current.length - 1]
+    if (!last || last.color !== myColor) return
+    if (clockOn && current.length >= 2) {
+      // Give back the increment that move earned.
+      const remaining = { ...clockRef.current.remaining }
+      remaining[myColor] = Math.max(0, remaining[myColor] - timeControl.incrementMs)
+      updateClock({ ...clockRef.current, remaining })
+    }
+    movesRef.current = current.slice(0, -1)
+    setMoves(movesRef.current)
+  }, [myColor, clockOn, timeControl.incrementMs, updateClock])
+
   // Flag fall: when the side to move runs out of time, the game ends.
   useEffect(() => {
     if (!clockOn || isOver || clock.runningSince === null) return
@@ -148,7 +184,7 @@ export function useGame(bot: Bot, myColor: Color, timeControl: TimeControl) {
 
   // The bot's turn: ask the engine, wait a natural moment, then move.
   useEffect(() => {
-    if (isOver || turn === myColor) return
+    if (isOver || turn === myColor || hold) return
     let cancelled = false
     let delay = BOT_DELAY_MIN + Math.random() * (BOT_DELAY_MAX - BOT_DELAY_MIN)
     let movetimeMs = bot.movetimeMs
@@ -169,7 +205,7 @@ export function useGame(bot: Bot, myColor: Color, timeControl: TimeControl) {
     return () => {
       cancelled = true
     }
-  }, [fen, isOver, turn, myColor, bot, play, clockOn, timeControl.incrementMs])
+  }, [fen, isOver, turn, myColor, bot, play, clockOn, timeControl.incrementMs, hold])
 
   // Save the finished game on this device, once.
   const saved = useRef(false)
@@ -216,13 +252,14 @@ export function useGame(bot: Bot, myColor: Color, timeControl: TimeControl) {
     lastMove: moves[moves.length - 1],
     turn,
     myTurn,
-    /** The bot is thinking whenever it's its turn. */
-    thinking: !isOver && turn !== myColor,
+    /** The bot is thinking whenever it's its turn (and the game isn't paused). */
+    thinking: !isOver && turn !== myColor && !hold,
     isOver,
     summary,
     play,
     clockOn,
     clock,
+    takeBack,
     resign: () => {
       stopClock()
       setResigned(true)

@@ -1,6 +1,6 @@
 # Pawnce
 
-Learn chess by playing. See `CLAUDE.md` for the project brief and
+Play the move. Learn its name. See `CLAUDE.md` for the project brief and
 `DESIGN.md` for the design system.
 
 ```bash

@@ -1,105 +1,102 @@
 # Pawnce design system
 
-## Mood
-A playful jungle at dusk. Warm, friendly, alive. Never cluttered.
-Rounded shapes, soft shadows, generous spacing.
+## Direction
+Minimal, modern jungle. Muted deep-green neutrals, one fresh accent (lime),
+a modern sans-serif, flat surfaces, thin borders, no bubbly shapes, lots of
+whitespace. The jungle shows up through color and, later, the animal
+pieces and illustrations, never through decoration on every surface.
+
+Tagline: **Play the move. Learn its name.**
+
+## Layout principles
+- **Mobile first, frictionless.** Design for a phone first. While playing,
+  the board, the win-chances line, the move ticker and the coach's verdict
+  on your last move are all visible without scrolling. Every tap target is
+  44px or more. Leaving a game asks first (keep playing / resign and leave).
+- **Home screen: bento grid.** One large Play tile (headline, current setup,
+  the Play button) plus smaller tiles for Opponent, Side, Clock and Recent
+  games. On phones the tiles stack, Play tile first.
+- **Game screen: minimal, not bento.** The board dominates. One clean side
+  panel holds winning chances, the coach (move labels and feedback), hints
+  and the move list. A slim ticker above the board names the last two moves.
+- **Game-over summary: bento grid.** Result, Key moments, Patterns played
+  (opening, tactics, rule terms), a move-by-move Replay, and Play again.
+- Generous whitespace: 8px spacing grid, 16 to 24px inside tiles, 12 to 16px
+  between tiles.
 
 ## Colors
-All colors are CSS variables, defined once in `src/theme/tokens.css` and
-exposed to Tailwind in `src/index.css` (e.g. `bg-surface`, `text-muted`,
-`text-accent`). Never hard-code a hex value in a component.
+All colors are CSS variables in `src/theme/tokens.css`, exposed to Tailwind
+in `src/index.css`. Never hard-code a hex value in a component.
 
-| Token           | Value                    | Use                                  | Tailwind name   |
-| --------------- | ------------------------ | ------------------------------------ | --------------- |
-| `--bg`          | `#0E1A14`                | Deep canopy green, page background   | `bg`            |
-| `--surface`     | `#16271E`                | Panels and cards                     | `surface`       |
-| `--surface-2`   | `#1E3428`                | Raised elements, hover states        | `surface-2`     |
-| `--border`      | `#2A4234`                | Borders and dividers                 | `border`        |
-| `--text`        | `#EEF3E6`                | Primary text                         | `text`          |
-| `--text-muted`  | `#A9BFA8`                | Secondary text                       | `muted`         |
-| `--board-light` | `#EDE3C2`                | Light squares                        | `board-light`   |
-| `--board-dark`  | `#6B8F4E`                | Dark squares                         | `board-dark`    |
-| `--accent`      | `#F5A623`                | Mango: main buttons, selection, focus| `accent`        |
-| `--accent-2`    | `#3FB8AF`                | Lagoon: info, hints (later phases)   | `accent-2`      |
-| `--danger`      | `#E5484D`                | Hibiscus: check, errors              | `danger`        |
-| `--success`     | `#7BC67E`                | Leaf: wins, good moves               | `success`       |
-| `--last-move`   | `rgba(245,166,35,0.38)`  | Highlight on from/to squares         | (board only)    |
-| `--on-accent`   | `#1B1204`                | Text on mango buttons                | `on-accent`     |
+| Token           | Value                     | Use                                         |
+| --------------- | ------------------------- | ------------------------------------------- |
+| `--bg`          | `#0B100D`                 | Page background (deep green-black)          |
+| `--surface`     | `#111814`                 | Tiles, panels                               |
+| `--surface-2`   | `#172019`                 | Raised or selected controls, hover          |
+| `--border`      | `#222D26`                 | Thin 1px borders and dividers               |
+| `--text`        | `#E9EEEA`                 | Primary text                                |
+| `--text-muted`  | `#8C9A91`                 | Secondary text, labels                      |
+| `--accent`      | `#C6F36B`                 | The one accent (lime): Play, selection, focus, good moves, hints |
+| `--on-accent`   | `#0B100D`                 | Text on the accent                          |
+| `--warn`        | `#F2B84B`                 | Inaccuracies and mistakes                   |
+| `--danger`      | `#F2555A`                 | Blunders, check, errors                     |
+| `--board-light` | `#DDE4D6`                 | Light squares (soft sage-cream)             |
+| `--board-dark`  | `#6F8F76`                 | Dark squares (muted sage)                   |
+| `--last-move`   | `rgba(198,243,107,0.30)`  | From/to squares of the last move            |
+
+`--success` and `--accent-2` are kept as aliases of `--accent` so there is
+only one accent color in practice.
 
 ## Typography (Google Fonts, loaded in `index.html`)
-- **Display** (logo, headings, big moments): Fredoka 600 to 700. Class `font-display`.
-- **Body / UI**: Nunito Sans 400, 600, 700. The default body font.
-- **Logo**: the word "Pawnce" in Fredoka, mango (`--accent`).
+- **Geist** for everything: 600 to 700 for headings, 400 to 500 for body.
+- **Geist Mono** for numbers that tick or compare: clocks, percentages.
+- Headings are tight (letter-spacing -0.02em), never outlined or shadowed.
+- Small uppercase labels (11 to 12px, +0.08em tracking, muted) name each tile.
 
-## Shape and spacing
-- Cards: 16px corner radius (`rounded-card`), soft shadow (`shadow-soft`).
-- Pills and buttons: 999px radius (`rounded-full`).
-- Spacing on an 8px grid (Tailwind steps 2, 4, 6, 8 = 8, 16, 24, 32px).
-- Every tappable control is at least 44px tall.
+## Shape
+- Tiles and panels: 12px radius, 1px `--border`, no drop shadows.
+- Buttons and inputs: 8px radius (not pills), at least 44px tall for touch.
+- Small tags (quality, tactic, level): 6px radius, 12px text.
+- Selected state: 1px accent border plus a faint accent tint. No glows.
 
 ## Board
-- Light squares `--board-light`, dark squares `--board-dark`, coordinates shown.
-- Selected piece: mango ring on its square.
-- Legal moves: small dots on empty squares, a ring on capturable pieces.
-- Last move: `--last-move` on the from and to squares.
-- Check: the king's square pulses `--danger` twice.
-
-## Clocks
-- One clock per player, beside their name above and below the board.
-- Running: mango background. Stopped: `--surface-2`, muted text.
-- Under 10 seconds: `--danger`, gentle pulse, tenths shown (0:07.4).
+- Flat sage board, coordinates shown in small Geist.
+- Selected piece: accent ring. Legal moves: small dots; captures: a ring.
+- Last move: `--last-move`. Check: the king's square pulses `--danger` twice.
+- Hints: accent arrows, strongest boldest. Better move: accent arrow.
 
 ## Win chances meter
-- Top of the side panel, like a sports broadcast: "You 52%" (mango) on the
-  left, the bot's % (cream) on the right, "Draw 9%" in the middle, and one
-  bar split in those three colors.
-- Win % comes from the engine score (Lichess formula); the draw share is
-  sized for everyday players (about 10% when even, less as one side leads).
+Top of the side panel, like a sports broadcast: "You 52%" on the left,
+the bot's % on the right, "Draw 9%" in the middle, one thin bar split into
+accent / muted / light. Win % comes from the engine score (Lichess
+formula); the draw share is sized for everyday players.
 
-## Hint orbs
-- Two glowing lagoon (`--accent-2`) orbs next to your clock; a used orb
-  becomes a dashed outline.
-- A hint draws 3 lagoon arrows on the board, strongest one boldest, and a
-  lagoon card in the panel naming each move and the idea behind it.
-
-## Coach (naming every move)
-- Top of the panel under the meter. "Your move" first: a big verdict badge
-  (★ best, ✓ good, 📖 book, ?! ? ??), "f6 was a blunder", the move in words
-  ("Pawn f7 → f6"), one sentence on why, and "Show better move" which draws
-  it on the board in leaf green.
-- Then "<Bot> replied": the move in words, plus a note only when it matters
-  to you (a tactic against you, a check, or a slip you can punish).
-- The opening name sits in the move list header.
+## Coach and teaching moments
+- Coach, in the side panel: "Your move" first (verdict tag, the move in words,
+  one sentence on why, "Show better move"), then the bot's reply with a note
+  only when it matters to you.
+- Ticker above the board: the last two moves with who played them and how
+  good they were.
+- A mistake or blunder pauses the game (clock too) with a card over the lower
+  board: what it cost, the better move, Take it back / Show better / Play on.
 
 ## Move quality
-- Compared with the best move on the whole board, two ways, keeping the
-  harsher: winning chances lost (10+ inaccuracy, 20+ mistake, 30+ blunder)
-  and score lost in pawns (0.8+, 1.5+, 3+). The second catches giving away
-  a piece when the game already looks decided. The engine's own pick is
-  "best"; positions from the opening book are "book".
-- Colors: best/good `--success`, inaccuracy/mistake `--accent`, blunder `--danger`.
-- Marks in the move list: ★ best, ?! inaccuracy, ? mistake, ?? blunder.
+Compared with the best move on the whole board, by winning chances lost
+(10 / 20 / 30 points) and score lost in pawns (0.8 / 1.5 / 3), keeping the
+harsher. Tags: Best and Good in accent, Book in muted, Inaccuracy and
+Mistake in `--warn`, Blunder in `--danger`. Marks: ★ ?! ? ??.
 
 ## Pieces
-Loaded only through `src/theme/pieces.ts`. Today that is react-chessboard's
-default set. The jungle set replaces that one file later:
-Knight = frog, Bishop = snake, Rook = rhino, Queen = jaguar,
-King = silverback gorilla, Pawns = army ants. Day jungle vs. night jungle.
-The UI always uses standard piece names (Knight, Rook, check, fork).
+Loaded only through `src/theme/pieces.ts`, swappable in one file. The
+jungle set comes later: Knight = frog, Bishop = snake, Rook = rhino,
+Queen = jaguar, King = silverback gorilla, Pawns = army ants. The UI always
+uses standard piece names (Knight, Rook, check, fork). Bots are shown with
+simple monogram tiles until the animal art exists (no emoji in the UI).
 
 ## Motion
-Subtle, fast and fun. Framer Motion for UI, CSS for the board.
-- Piece slide: about 200ms, ease-out.
-- Capture: captured piece shrinks and fades, about 180ms.
-- Check: king square pulses `--danger` twice.
-- Bot thinking: three bouncing dots next to the bot's name.
-- Screen change: fade plus slight upward slide, 250ms.
-- Result card: springs up from the bottom; a win adds a short burst of
-  falling leaves (under 2 seconds).
-- Buttons: scale to 0.97 on press.
-- `prefers-reduced-motion`: non-essential motion is turned off.
+Quick and quiet: 150 to 250ms, ease-out. Pieces slide 200ms; captures
+shrink and fade; tiles fade in; buttons press to 0.98. No bouncing
+decorations. `prefers-reduced-motion` turns non-essential motion off.
 
 ## Voice
-Friendly and plain. Explain chess words in the moment
-("Checkmate! Your queen and rook trapped the king.").
-Big, playful feedback moments, but never clutter the screen.
+Plain and direct. Name the move, then say why it matters in one sentence.
