@@ -1,10 +1,11 @@
+import { Chess } from 'chess.js'
 import { useEffect, useMemo, useState } from 'react'
 import { conceptsOf, QUIET_WORDS } from '../chess/concepts'
 import type { Color, Move } from '../chess/game'
 import { WORDS_BY_ID } from '../chess/glossary'
 import { openingFamily } from '../chess/openingInfo'
 import type { EndReason } from '../chess/outcome'
-import { type TacticKind, detectTactics, mainTactic, tacticHolds } from '../chess/tactics'
+import { type TacticKind, VALUE, detectTactics, mainTactic, tacticHolds } from '../chess/tactics'
 import { type Sighting, isNew, learnOpening, loadLearned, recordWord, useLearned } from '../storage/learned'
 import { isSlip } from './coachText'
 import type { MoveVerdict } from './useAnalysis'
@@ -28,13 +29,33 @@ const END_WORDS: Partial<Record<EndReason, string>> = {
 }
 
 /** The chess words one move shows, verified (a tactic only if it works). */
-export function wordsForMove(move: Move, verdict: MoveVerdict | null, byMe: boolean, ply: number): WordAt[] {
+export function wordsForMove(
+  move: Move,
+  verdict: MoveVerdict | null,
+  byMe: boolean,
+  ply: number,
+  /** The move before it, to spot trades (a capture answered by an equal recapture). */
+  prev?: Move,
+): WordAt[] {
   const holds = tacticHolds(verdict?.quality)
   const how: Sighting = byMe ? 'played' : 'seen'
   const out: WordAt[] = conceptsOf(move, byMe ? (verdict?.quality ?? null) : null, byMe, ply)
     .filter((id) => !TACTIC_IDS.has(id) || holds)
     .map((id) => ({ id, ply, how }))
-  if (move.captured) out.push({ id: 'capture', ply, how })
+  if (move.captured) {
+    out.push({ id: 'capture', ply, how })
+    // Taking a piece nobody defended: it was hanging. (Not a recapture,
+    // which is just finishing a trade.)
+    const victim = move.color === 'w' ? 'b' : 'w'
+    const recapture = prev?.captured && prev.to === move.to
+    if (!recapture && move.captured !== 'p' && new Chess(move.before).attackers(move.to, victim).length === 0) {
+      out.push({ id: 'hanging-piece', ply, how })
+    }
+    // Recapturing an equal piece on the same square: a trade.
+    if (prev?.captured && prev.to === move.to && VALUE[prev.captured] === VALUE[move.captured]) {
+      out.push({ id: 'trade', ply, how })
+    }
+  }
   // A tactic you could have played instead of a slip.
   if (byMe && isSlip(verdict) && verdict?.betterMove) {
     const missed = mainTactic(detectTactics(move.before, verdict.betterMove))
@@ -53,7 +74,7 @@ export function wordsPerMove(
   return moves.map((m, ply) => {
     const v = verdicts[ply] ?? null
     if (!v) return []
-    const words = wordsForMove(m, v, m.color === myColor, ply)
+    const words = wordsForMove(m, v, m.color === myColor, ply, moves[ply - 1])
     if (reached[ply]) words.push({ id: 'opening', ply, how: 'seen' })
     return words
   })
