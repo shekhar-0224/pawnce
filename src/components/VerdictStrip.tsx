@@ -65,7 +65,10 @@ export function VerdictStrip({ moves, verdicts, myColor, bot, openings, threat, 
     const why = yourMoveWhy(moves[mine], verdict, openings.reached[mine] ?? null, openings.current[mine] ?? null, bot.name)
     // Something happening now (a threat, a check, a chance) beats talk about your move.
     if (note && note.tone !== 'plain') line = { text: note.text, tone: NOTE_TONES[note.tone] }
-    else if (why) line = { text: why, tone: '' }
+    else if (why) {
+      const serious = verdict?.quality === 'mistake' || verdict?.quality === 'blunder'
+      line = { text: why, tone: serious ? NOTE_TONES.danger : '' }
+    }
     else if (note) line = { text: note.text, tone: '' }
     else if (!verdict) line = { text: 'Checking your move…', tone: '' }
   }

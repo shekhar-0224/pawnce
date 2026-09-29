@@ -48,7 +48,7 @@ const QUALITY_TONE: Record<Quality, string> = {
   best: 'text-accent',
   good: 'text-accent',
   inaccuracy: 'text-warn',
-  mistake: 'text-warn',
+  mistake: 'text-danger',
   blunder: 'text-danger',
 }
 
@@ -237,13 +237,15 @@ export function GameSummary(p: Props) {
             <div className="rounded-lg border border-border p-2">
               <dt className="text-[11px] text-muted">Slips</dt>
               <dd className="font-mono text-xl font-semibold">
-                <span className="text-warn">{(counts.inaccuracy ?? 0) + (counts.mistake ?? 0)}</span>
+                <span className="text-warn">{counts.inaccuracy ?? 0}</span>
+                <span className="text-muted"> / </span>
+                <span className="text-danger/80">{counts.mistake ?? 0}</span>
                 <span className="text-muted"> / </span>
                 <span className="text-danger">{counts.blunder ?? 0}</span>
               </dd>
             </div>
           </dl>
-          <p className="text-xs text-muted">Slips: inaccuracies and mistakes / blunders.</p>
+          <p className="text-xs text-muted">Slips: inaccuracies / mistakes / blunders.</p>
         </Tile>
 
         {/* Replay */}

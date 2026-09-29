@@ -186,8 +186,12 @@ browser (moves, grades, new words), so summaries reopen later.
 ## Move quality
 Compared with the best move on the whole board, by winning chances lost
 (10 / 20 / 30 points) and score lost in pawns (0.8 / 1.5 / 3), keeping the
-harsher. Tags: Best and Good in accent, Book in muted, Inaccuracy and
-Mistake in `--warn`, Blunder in `--danger`. Marks: ★ ?! ? ??.
+harsher. Tags: Best and Good in accent, Book in muted, Inaccuracy in
+`--warn` (amber: a small slip), Mistake and Blunder in `--danger` (red;
+mistake as a red tint, blunder solid red). The mistake/blunder pause card is
+red (red border and tint, red title), and the coach's explanation of a
+mistake or blunder sits in a red box. Summary "Slips" shows inaccuracies /
+mistakes / blunders. Marks: ★ ?! ? ??.
 
 ## Pieces
 **Classic Staunton shapes, Pawnce colors.** Players read pieces by shape, so

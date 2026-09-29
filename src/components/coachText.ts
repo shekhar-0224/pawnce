@@ -15,7 +15,7 @@ export const BADGE: Record<Quality, { mark: string; word: string; tone: string }
   best: { mark: '★', word: 'the best move!', tone: 'bg-accent text-on-accent' },
   good: { mark: '✓', word: 'a good move', tone: 'bg-accent/20 text-accent' },
   inaccuracy: { mark: '?!', word: 'an inaccuracy', tone: 'bg-warn/20 text-warn' },
-  mistake: { mark: '?', word: 'a mistake', tone: 'bg-warn text-on-accent' },
+  mistake: { mark: '?', word: 'a mistake', tone: 'bg-danger/25 text-danger' },
   blunder: { mark: '??', word: 'a blunder', tone: 'bg-danger text-text' },
 }
 
