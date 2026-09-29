@@ -10,15 +10,23 @@ Tagline: **Play the move. Learn its name.**
 
 ## Layout principles
 - **Mobile first, frictionless.** Design for a phone first. While playing,
-  the board, the win-chances line, the move ticker and the coach's verdict
-  on your last move are all visible without scrolling. Every tap target is
-  44px or more. Leaving a game asks first (keep playing / resign and leave).
+  the board, the win-chances line, the coach's verdict and the main actions
+  are all visible without scrolling (checked at 360x740, 375x667, 390x844);
+  the board shrinks on short phones to make room. Every tap target is 44px
+  or more. Leaving a game asks first (keep playing / resign and leave).
 - **Home screen: bento grid.** One large Play tile (headline, current setup,
   the Play button) plus smaller tiles for Opponent, Side, Clock and Recent
   games. On phones the tiles stack, Play tile first.
-- **Game screen: minimal, not bento.** The board dominates. One clean side
-  panel holds winning chances, the coach (move labels and feedback), hints
-  and the move list. A slim ticker above the board names the last two moves.
+- **Game screen: minimal, not bento. Learning comes first.** The board
+  dominates. Desktop: the side panel starts with the coach (and hints), then
+  a slim win-chances bar, the move list and game buttons; a slim ticker above
+  the board names the last two moves.
+  Phones: a slim win-chances line above the board; directly under it, the
+  **verdict strip** (your move's grade, the bot's reply, and the one sentence
+  that matters most now: a threat, a chance, or why your move was good or
+  bad; tap it for the full coach in a sheet). Hints replace the strip with
+  three one-line suggestions. A fixed **bottom bar** holds Hint · Take back ·
+  Moves · Menu; Moves and Menu open bottom sheets.
 - **Game-over summary: bento grid.** Result, Key moments, Patterns played
   (opening, tactics, rule terms), a move-by-move Replay, and Play again.
 - Generous whitespace: 8px spacing grid, 16 to 24px inside tiles, 12 to 16px
@@ -66,19 +74,20 @@ only one accent color in practice.
 - Hints: accent arrows, strongest boldest. Better move: accent arrow.
 
 ## Win chances meter
-Top of the side panel, like a sports broadcast: "You 52%" on the left,
+A slim bar (under the coach on desktop, above the board on phones), like a
+sports broadcast: "You 52%" on the left,
 the bot's % on the right, "Draw 9%" in the middle, one thin bar split into
 accent / muted / light. Win % comes from the engine score (Lichess
 formula); the draw share is sized for everyday players.
 
 ## Coach and teaching moments
-- Coach, in the side panel: "Your move" first (verdict tag, the move in words,
+- Coach, at the top of the side panel (in a sheet on phones): "Your move" first (verdict tag, the move in words,
   one sentence on why, "Show better move"), then the bot's reply with a note
   only when it matters to you.
 - Ticker above the board: the last two moves with who played them and how
   good they were.
-- A mistake or blunder pauses the game (clock too) with a card over the lower
-  board: what it cost, the better move, Take it back / Show better / Play on.
+- A mistake or blunder pauses the game (clock too) with a card (under the
+  board on phones, top of the panel on desktop): what it cost, the better move, Take it back / Show better / Play on.
 
 ## Naming comes first
 Every piece of feedback names a pattern in board terms; grades and numbers

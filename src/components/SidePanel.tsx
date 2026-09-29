@@ -24,7 +24,7 @@ type Props = {
   onFlip: () => void
 }
 
-/** Right-hand panel: coach first, then the move list, then game buttons. */
+/** Right-hand panel: coach first, a slim win chances bar, the move list, then game buttons. */
 export function SidePanel({
   bot,
   myColor,
@@ -50,11 +50,11 @@ export function SidePanel({
   const botLabel = `${bot.name}`
   return (
     <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-card border border-border bg-surface">
-      <div className="hidden border-b border-border p-4 min-[900px]:block">{meter}</div>
       <div className="pawnce-scroll flex min-h-0 flex-col gap-4 overflow-y-auto p-4">
         {hint}
         {coach}
       </div>
+      <div className="border-t border-border px-4 py-3">{meter}</div>
 
       <section aria-label="Moves" className="flex min-h-0 flex-1 flex-col border-t border-border">
         <div className="flex items-baseline justify-between gap-3 px-4 pb-1 pt-3">

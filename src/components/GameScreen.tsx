@@ -21,6 +21,10 @@ import { Logo } from './Logo'
 import { PatternChip } from './PatternChip'
 import { PlayerBar } from './PlayerBar'
 import { GameSummary } from './GameSummary'
+import { MenuSheetBody, MovesSheetBody } from './GameSheets'
+import { PhoneBar } from './PhoneBar'
+import { Sheet } from './Sheet'
+import { VerdictStrip } from './VerdictStrip'
 import { SidePanel } from './SidePanel'
 import { ThinkingDots } from './ThinkingDots'
 import { HINT_ALPHAS, useAnalysis } from './useAnalysis'
@@ -88,6 +92,8 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
     else onChangeOpponent()
   }
   const [showResult, setShowResult] = useState(false)
+  // Phones: the full coach, the move list and the menu open as sheets.
+  const [sheet, setSheet] = useState<'coach' | 'moves' | 'menu' | null>(null)
 
   // "Show better move" draws the engine's choice for your last move.
   const [showBetterFor, setShowBetterFor] = useState<number | null>(null)
@@ -208,12 +214,14 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
       capturedColor={botColor}
       lead={myLead}
     >
-      <HintOrbs
-        left={analysis.hintsLeft}
-        loading={analysis.hintLoading}
-        enabled={analysis.canHint}
-        onUse={analysis.requestHint}
-      />
+      <div className="hidden min-[900px]:block">
+        <HintOrbs
+          left={analysis.hintsLeft}
+          loading={analysis.hintLoading}
+          enabled={analysis.canHint}
+          onUse={analysis.requestHint}
+        />
+      </div>
       {g.clockOn && (
         <Clock
           label="Your clock"
@@ -248,13 +256,26 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
     </AnimatePresence>
   )
 
+  const coach = (
+    <Coach
+      moves={g.moves}
+      verdicts={analysis.verdicts}
+      myColor={myColor}
+      bot={bot}
+      openings={openings}
+      threat={analysis.threat}
+      showingBetter={betterMove !== null}
+      onToggleBetter={() => setShowBetterFor((v) => (v === myLastIndex ? null : myLastIndex))}
+    />
+  )
+
   // The bar nearest each side of the board belongs to the player sitting there.
   const flipped = orientation !== colorToSide(myColor)
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-2 pb-6 pt-2 sm:px-4 min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-center min-[900px]:gap-6 min-[900px]:pt-3">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-2 pb-24 pt-2 min-[900px]:pb-6 sm:px-4 min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-center min-[900px]:gap-6 min-[900px]:pt-3">
       {/* Beside the panel, the board is sized to fit the window height (no scrolling). */}
-      <div className="flex w-full flex-col gap-2 min-[900px]:w-[min(680px,calc(100dvh-230px),calc(100vw-400px))] min-[900px]:shrink-0">
+      <div className="flex w-full flex-col gap-2 min-[900px]:w-[min(680px,calc(100dvh-246px),calc(100vw-400px))] min-[900px]:shrink-0">
         <nav className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -292,9 +313,12 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
           />
         </div>
 
-        <MoveTicker moves={g.moves} verdicts={analysis.verdicts} myColor={myColor} bot={bot} />
+        <div className="hidden min-[900px]:block">
+          <MoveTicker moves={g.moves} verdicts={analysis.verdicts} myColor={myColor} bot={bot} />
+        </div>
 
-        <div className="relative">
+        {/* Phones: the board shrinks on short screens so nothing needs scrolling. */}
+        <div className="relative mx-auto w-full max-w-[max(260px,calc(100dvh-396px))] min-[900px]:max-w-none">
           <ChessBoard
             game={g.game}
             orientation={orientation}
@@ -318,14 +342,29 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
               />
             )}
           </AnimatePresence>
-          {/* Phones: the teaching moment sits right under the board. */}
-          <div className="mt-2 min-[900px]:hidden">{momentCard}</div>
+          {/* Phones: the coach (or the teaching moment) sits right under the board. */}
+          <div className="mt-2 min-[900px]:hidden">
+            {moment ? (
+              momentCard
+            ) : (
+              <VerdictStrip
+                moves={g.moves}
+                verdicts={analysis.verdicts}
+                myColor={myColor}
+                bot={bot}
+                openings={openings}
+                threat={analysis.threat}
+                hints={analysis.hints}
+                onOpen={() => setSheet('coach')}
+              />
+            )}
+          </div>
         </div>
 
         {flipped ? botBar : youBar}
       </div>
 
-      <div className="w-full min-[900px]:relative min-[900px]:w-[340px] min-[900px]:shrink-0 min-[900px]:self-stretch">
+      <div className="hidden w-full min-[900px]:relative min-[900px]:block min-[900px]:w-[340px] min-[900px]:shrink-0 min-[900px]:self-stretch">
         <div className="min-[900px]:absolute min-[900px]:inset-0">
           <SidePanel
             bot={bot}
@@ -336,6 +375,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
             isOver={g.isOver}
             meter={
               <WinMeter
+                compact
                 myWinPct={analysis.myWinPct}
                 botName={bot.name}
                 final={g.summary?.result ?? null}
@@ -346,18 +386,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
               moment ? (
                 <div className="hidden min-[900px]:block">{momentCard}</div>
               ) : (
-              <Coach
-                moves={g.moves}
-                verdicts={analysis.verdicts}
-                myColor={myColor}
-                bot={bot}
-                openings={openings}
-                threat={analysis.threat}
-                showingBetter={betterMove !== null}
-                onToggleBetter={() =>
-                  setShowBetterFor((v) => (v === myLastIndex ? null : myLastIndex))
-                }
-              />
+                coach
               )
             }
             onNewGame={onNewGame}
@@ -367,7 +396,54 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
         </div>
       </div>
 
+      <PhoneBar
+        hintsLeft={analysis.hintsLeft}
+        hintLoading={analysis.hintLoading}
+        canHint={analysis.canHint}
+        onHint={analysis.requestHint}
+        canTakeBack={g.canTakeBack && g.myTurn}
+        onTakeBack={() => {
+          setShowBetterFor(null)
+          g.takeBackRound()
+        }}
+        onMoves={() => setSheet('moves')}
+        onMenu={() => setSheet('menu')}
+      />
+
       <AnimatePresence>
+        {sheet === 'coach' && (
+          <Sheet key="coach" title="Coach" onClose={() => setSheet(null)}>
+            <div className="flex flex-col gap-4">
+              {analysis.hints && <HintCard hints={analysis.hints} />}
+              {coach}
+            </div>
+          </Sheet>
+        )}
+        {sheet === 'moves' && (
+          <Sheet key="moves" title="Moves" onClose={() => setSheet(null)}>
+            <MovesSheetBody bot={bot} myColor={myColor} moves={g.moves} verdicts={analysis.verdicts} opening={opening} />
+          </Sheet>
+        )}
+        {sheet === 'menu' && (
+          <Sheet key="menu" title="Menu" onClose={() => setSheet(null)}>
+            <MenuSheetBody
+              isOver={g.isOver}
+              onNewGame={onNewGame}
+              onResign={() => {
+                setSheet(null)
+                g.resign()
+              }}
+              onFlip={() => {
+                setSheet(null)
+                setOrientation((o) => (o === 'white' ? 'black' : 'white'))
+              }}
+              onHome={() => {
+                setSheet(null)
+                requestLeave()
+              }}
+            />
+          </Sheet>
+        )}
         {leaving && (
           <LeaveDialog
             key="leave"
