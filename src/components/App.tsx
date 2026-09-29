@@ -55,8 +55,9 @@ export default function App() {
     analyst.init().catch(() => undefined)
   }, [])
 
-  const startGame = () => {
-    setMatch((m) => ({ id: m.id + 1, myColor: pickColor(settings.side) }))
+  const startGame = (next: Settings = settings) => {
+    setSettings(next)
+    setMatch((m) => ({ id: m.id + 1, myColor: pickColor(next.side) }))
     setScreen('game')
     window.scrollTo({ top: 0 })
   }
@@ -81,13 +82,8 @@ export default function App() {
           >
             {screen === 'start' && (
               <StartScreen
-                botId={settings.botId}
-                side={settings.side}
-                timeControl={settings.timeControl}
-                onTimeControlChange={(timeControl) => setSettings((s) => ({ ...s, timeControl }))}
-                onBotChange={(botId) => setSettings((s) => ({ ...s, botId }))}
-                onSideChange={(side) => setSettings((s) => ({ ...s, side }))}
-                onPlay={startGame}
+                setup={settings}
+                onPlay={(next) => startGame(next)}
                 onRecent={() => goTo('recent')}
               />
             )}
@@ -96,7 +92,7 @@ export default function App() {
                 bot={BOTS[settings.botId]}
                 myColor={match.myColor}
                 timeControl={TIME_CONTROLS[settings.timeControl]}
-                onNewGame={startGame}
+                onNewGame={() => startGame()}
                 onChangeOpponent={() => goTo('start')}
               />
             )}

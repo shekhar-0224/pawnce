@@ -37,7 +37,18 @@ export function openingAt(fen: string): Opening | null {
 export function openingOf(fens: string[]): (Opening & { ply: number }) | null {
   for (let i = fens.length - 1; i >= 0; i--) {
     const o = openingAt(fens[i])
-    if (o) return { ...o, ply: i }
+    if (!o) continue
+    // "Chosen by" belongs to whoever entered this opening family, not to the
+    // move that reached a deeper variation of it.
+    const family = openingFamily(o.name)
+    let ply = i
+    for (let j = i - 1; j >= 0; j--) {
+      const earlier = openingAt(fens[j])
+      if (!earlier) continue
+      if (openingFamily(earlier.name) !== family) break
+      ply = j
+    }
+    return { ...o, ply }
   }
   return null
 }

@@ -16,9 +16,16 @@ Tagline: **Play the move. Learn its name.**
   2560x1440; the board shrinks on short phones to make room (down to 180px on
   the smallest). Phones in landscape scroll; the store apps lock portrait. Every tap target is 44px
   or more. Leaving a game asks first (keep playing / resign and leave).
-- **Home screen: bento grid.** One large Play tile (headline, current setup,
-  the Play button) plus smaller tiles for Opponent, Side, Clock and Recent
-  games. On phones the tiles stack, Play tile first.
+- **Home screen: bento grid, one decision at a time.** Tiles: Play (tagline
+  and the main action), Your chess vocabulary, Recent games. No settings on
+  home. First visit: one "New game" button. Returning players: "Play again"
+  (last setup, shown underneath, starts instantly) plus "New game".
+- **New game flow:** a bottom sheet on phones (dialog on desktop) asking one
+  question per step: 1) Who do you want to play? 2) Which side? 3) How much
+  time? Each tap advances; the last tap starts the game (3 taps). Last
+  time's answers are pre-highlighted; earlier answers show as chips (tap to
+  change); a back arrow goes one step back. "No clock" comes first, tagged
+  "Best for learning"; timed controls are grouped with plain explanations.
 - **Game screen: minimal, not bento. Learning comes first.** The board
   dominates. Desktop: the side panel starts with the coach (and hints), then
   a slim win-chances bar, the move list and game buttons; a slim ticker above
