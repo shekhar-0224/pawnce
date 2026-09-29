@@ -75,6 +75,8 @@ export function useAnalysis(
   const [hintsLeft, setHintsLeft] = useState(HINTS_PER_GAME)
   const [hint, setHint] = useState<{ fen: string; lines: Hint[] } | null>(null)
   const [hintLoadingFen, setHintLoadingFen] = useState<string | null>(null)
+  // Every move the engine suggested as a hint, by position (UCI moves).
+  const [suggested, setSuggested] = useState<Record<string, string[]>>({})
   // What the opponent would do if you passed, keyed by position.
   const [passes, setPasses] = useState<Record<string, { threat: Threat | null; cp: number; mate: number | null }>>({})
 
@@ -177,6 +179,7 @@ export function useAnalysis(
           played: m.lan,
           best: before.best,
           inBook: openingsReady && openingAt(m.after) !== null,
+          suggested: suggested[m.before]?.includes(m.lan) ?? false,
         })
         let better: string | null = null
         if (before.best && before.best !== m.lan) {
@@ -194,7 +197,7 @@ export function useAnalysis(
             : null
         return { quality, winBefore, winAfter, cpLoss, better, betterMove, refutation }
       }),
-    [moves, evals, openingsReady, myColor],
+    [moves, evals, openingsReady, myColor, suggested],
   )
 
   const requestHint = useCallback(async () => {
@@ -225,6 +228,20 @@ export function useAnalysis(
     })
     setHintsLeft((n) => n - 1)
     setHint({ fen: at, lines })
+    setSuggested((s) => ({ ...s, [at]: unique.slice(0, 3).map((l) => l.move) }))
+    // The hint search is longer (and deeper) than the quick judging search,
+    // so it becomes this position's verdict too: hint #1 is "best".
+    const top = unique[0]
+    const whiteToMove = turnOf(at) === 'w'
+    setEvals((e) => ({
+      ...e,
+      [at]: {
+        winWhite: whiteToMove ? winPercentForMover(top) : 100 - winPercentForMover(top),
+        cpWhite: whiteToMove ? cappedCp(top) : -cappedCp(top),
+        best: top.move,
+        mate: top.mate ?? null,
+      },
+    }))
   }, [myTurn, hintsLeft, hintLoadingFen, fen])
 
   // The rope: the latest judged position (it catches up after each move),

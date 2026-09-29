@@ -3,12 +3,11 @@ import { ANIMALS } from './animals'
 
 export type AnimalType = keyof typeof ANIMALS
 
-const NAMES: Record<AnimalType, string> = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' }
+const NAMES: Record<AnimalType, string> = { p: 'ant', n: 'frog', q: 'jaguar' }
 
-// Ants are small animals; draw them a touch smaller so the army reads as pawns.
-const ICON_SIZE: Record<AnimalType, number> = { p: 54, n: 62, b: 64, r: 64, q: 64, k: 64 }
+const ICON_SIZE: Record<AnimalType, number> = { p: 58, n: 62, q: 64 }
 
-/** One jungle piece: the animal on a round token (cream for day, deep green for night). */
+/** A bot's animal on a round token (cream for day, deep green for night). */
 export function JungleToken({ color, type, svgStyle }: { color: 'w' | 'b'; type: AnimalType; svgStyle?: CSSProperties }) {
   const side = color === 'w' ? 'day' : 'night'
   const size = ICON_SIZE[type]
@@ -17,7 +16,7 @@ export function JungleToken({ color, type, svgStyle }: { color: 'w' | 'b'; type:
     <svg
       viewBox="0 0 100 100"
       role="img"
-      aria-label={`${color === 'w' ? 'White' : 'Black'} ${NAMES[type]}`}
+      aria-label={NAMES[type]}
       style={{ width: '100%', height: '100%', display: 'block', ...svgStyle }}
     >
       {/* A thin lower rim gives the token a little depth. */}

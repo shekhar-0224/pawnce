@@ -16,9 +16,16 @@ Tagline: **Play the move. Learn its name.**
   2560x1440; the board shrinks on short phones to make room (down to 180px on
   the smallest). Phones in landscape scroll; the store apps lock portrait. Every tap target is 44px
   or more. Leaving a game asks first (keep playing / resign and leave).
-- **Home screen: bento grid.** One large Play tile (headline, current setup,
-  the Play button) plus smaller tiles for Opponent, Side, Clock and Recent
-  games. On phones the tiles stack, Play tile first.
+- **Home screen: bento grid, one decision at a time.** Tiles: Play (tagline
+  and the main action), Your chess vocabulary, Recent games. No settings on
+  home. First visit: one "New game" button. Returning players: "Play again"
+  (last setup, shown underneath, starts instantly) plus "New game".
+- **New game flow:** a bottom sheet on phones (dialog on desktop) asking one
+  question per step: 1) Who do you want to play? 2) Which side? 3) How much
+  time? Each tap advances; the last tap starts the game (3 taps). Last
+  time's answers are pre-highlighted; earlier answers show as chips (tap to
+  change); a back arrow goes one step back. "No clock" comes first, tagged
+  "Best for learning"; timed controls are grouped with plain explanations.
 - **Game screen: minimal, not bento. Learning comes first.** The board
   dominates. Desktop: the side panel starts with the coach (and hints), then
   a slim win-chances bar, the move list and game buttons; a slim ticker above
@@ -157,20 +164,19 @@ harsher. Tags: Best and Good in accent, Book in muted, Inaccuracy and
 Mistake in `--warn`, Blunder in `--danger`. Marks: ★ ?! ? ??.
 
 ## Pieces
-Jungle **tokens**: each piece is its animal on a round disc, loaded only
-through `src/theme/pieces.ts` (art in `src/theme/jungle/`), swappable there.
-- Knight = frog, Bishop = snake (rattlesnake), Rook = rhino, Queen = jaguar
-  (big-cat head), King = silverback gorilla, Pawns = army ants (drawn a little
-  smaller).
-- Day jungle (White): cream disc `--piece-day`, dark green ink
-  `--piece-day-ink`. Night jungle (Black): deep green disc `--piece-night`,
-  lime ink `--piece-night-ink`. A 2.5% lower rim (`--piece-*-edge`) gives a
-  hint of depth; no gradients.
-- Art: Game Icons (game-icons.net), CC BY 3.0, credited in the home footer
-  and CREDITS.md.
-- The UI always uses standard piece names (Knight, Rook, check, fork); the
-  jungle is visual only. Bots use their animal on a night token as avatar
-  (Ant = ant, Frog = frog, Jaguar = big cat). No emoji in the UI.
+**Classic Staunton shapes, Pawnce colors.** Players read pieces by shape, so
+the shapes stay classic (the cburnett set, GPL/GFDL/BSD); Pawnce makes them
+its own with color. Loaded only through `src/theme/pieces.ts` (shapes in
+`src/theme/classic/`), swappable there.
+- White: ivory `--piece-light` with forest-green ink `--piece-light-ink`.
+- Black: near-black green `--piece-dark`, outline `--piece-dark-ink`, thin
+  lime details `--piece-dark-detail`.
+- A soft drop shadow (0 1.5px 1px, 28% black) seats each piece on the board.
+- The UI always uses standard piece names (Knight, Rook, check, fork).
+- The jungle lives in the bots: Ant, Frog and Jaguar show their animal on a
+  night token (Game Icons, CC BY 3.0, credited on home and in CREDITS.md).
+  An earlier animal-piece set was dropped: swapping shapes made the board
+  hard to read. No emoji in the UI.
 
 ## Motion
 Quick and quiet: 150 to 250ms, ease-out. Pieces slide 200ms; captures

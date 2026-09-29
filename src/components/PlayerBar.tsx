@@ -26,7 +26,7 @@ export function PlayerBar({ avatar, name, captured, capturedColor, lead, childre
             {captured.map((p, i) => {
               const Piece = pieceSet[pieceCode(capturedColor, p)]
               return (
-                <span key={i} className="-mr-1 block size-5 drop-shadow-[0_0_1px_var(--board-light)]">
+                <span key={i} className={`-mr-1 block size-5 ${capturedColor === 'b' ? '[filter:drop-shadow(0_0_1px_var(--board-light))_drop-shadow(0_0_1px_var(--board-light))]' : ''}`}>
                   <Piece />
                 </span>
               )

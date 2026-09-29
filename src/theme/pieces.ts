@@ -1,31 +1,28 @@
 /*
  * The piece set used on the board, in the captured-pieces tray, the
- * promotion picker and replays: the jungle animals on round tokens.
- * Day jungle (White): cream tokens. Night jungle (Black): deep green with lime.
+ * promotion picker and replays: classic Staunton shapes (instantly readable)
+ * in Pawnce colors: ivory with forest-green ink for White, near-black with
+ * thin lime details for Black. Colors live in tokens.css (--piece-*).
  *
- * Knight = frog, Bishop = snake, Rook = rhino, Queen = jaguar,
- * King = silverback gorilla, Pawns = army ants. The names in the UI stay
- * standard (Knight, Rook…); the jungle is visual only.
- *
- * To swap the artwork, change only this file (and ./jungle): keep the same
+ * To swap the artwork, change only this file (and ./classic): keep the same
  * keys (wP … bK), each a component that draws the piece and fills its box.
  */
 import { createElement } from 'react'
 import type { PieceRenderObject } from 'react-chessboard'
-import { type AnimalType, JungleToken } from './jungle/JungleToken'
+import { ClassicPiece } from './classic/ClassicPiece'
 
 export type PieceCode =
   | 'wP' | 'wN' | 'wB' | 'wR' | 'wQ' | 'wK'
   | 'bP' | 'bN' | 'bB' | 'bR' | 'bQ' | 'bK'
 
-const TYPES: AnimalType[] = ['p', 'n', 'b', 'r', 'q', 'k']
+const TYPES = ['p', 'n', 'b', 'r', 'q', 'k']
 
 export const pieceSet: PieceRenderObject = Object.fromEntries(
   (['w', 'b'] as const).flatMap((color) =>
-    TYPES.map((type) => [
-      `${color}${type.toUpperCase()}`,
-      (props?: { svgStyle?: React.CSSProperties }) => createElement(JungleToken, { color, type, svgStyle: props?.svgStyle }),
-    ]),
+    TYPES.map((type) => {
+      const code = `${color}${type.toUpperCase()}`
+      return [code, (props?: { svgStyle?: React.CSSProperties }) => createElement(ClassicPiece, { code, svgStyle: props?.svgStyle })]
+    }),
   ),
 )
 

@@ -138,6 +138,8 @@ export function classifyMove(opts: {
   played: string
   best: string | null
   inBook: boolean
+  /** The engine itself suggested this move here (one of the hint moves). */
+  suggested?: boolean
 }): Quality {
   // A book move that still drops material (0.8+ pawns) is graded normally.
   if (opts.inBook && opts.cpLoss < 80) return 'book'
@@ -152,8 +154,14 @@ export function classifyMove(opts: {
         : opts.cpLoss >= 80
           ? 'inaccuracy'
           : 'good'
-  const worst = RANK.indexOf(byChances) > RANK.indexOf(byScore) ? byChances : byScore
+  // Once the game is decided (90%+ either way, before and after), a few
+  // pawns of score don't change anything: judge by winning chances only.
+  const decided =
+    (opts.winBefore >= 90 && opts.winAfter >= 90) || (opts.winBefore <= 10 && opts.winAfter <= 10)
+  const worst = decided || RANK.indexOf(byChances) > RANK.indexOf(byScore) ? byChances : byScore
   if (worst === 'good' && opts.best && opts.played === opts.best) return 'best'
+  // Never call a move the engine recommended (a hint) a slip.
+  if (opts.suggested && RANK.indexOf(worst) > RANK.indexOf('good')) return 'good'
   return worst
 }
 
