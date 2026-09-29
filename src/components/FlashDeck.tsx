@@ -120,6 +120,7 @@ export function FlashDeck({ items, onClose }: Props) {
 const ASK_BY_MEANING = new Set([
   'best', 'book', 'inaccuracy', 'mistake', 'blunder', 'resign', 'flag', 'fifty-moves', 'threefold',
   'insufficient', 'opening', 'piece-values', 'material', 'minor-piece', 'major-piece', 'middlegame', 'endgame',
+  'sacrifice', 'brilliant', 'miss', 'perpetual-check', 'the-exchange',
 ])
 
 type Question = { id: string; byBoard: boolean; options: string[] }

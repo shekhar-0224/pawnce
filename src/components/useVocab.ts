@@ -4,7 +4,7 @@ import { conceptsOf, QUIET_WORDS } from '../chess/concepts'
 import type { Color, Move } from '../chess/game'
 import { WORDS_BY_ID } from '../chess/glossary'
 import { openingFamily } from '../chess/openingInfo'
-import { PIECE_WORD, materialOf, mateNames, phaseNames } from '../chess/patterns'
+import { PIECE_WORD, materialOf, mateNames, moveNames, phaseNames, structureNames } from '../chess/patterns'
 import type { EndReason } from '../chess/outcome'
 import { type TacticKind, VALUE, detectTactics, mainTactic, tacticHolds } from '../chess/tactics'
 import { type Sighting, isNew, learnOpening, loadLearned, recordWord, useLearned } from '../storage/learned'
@@ -14,7 +14,11 @@ import type { MoveVerdict } from './useAnalysis'
 export type WordAt = { id: string; ply: number; how: Sighting }
 
 /** Everyday words taught by tag and flash card, but never worth pausing the game for. */
-const NO_PAUSE = new Set(['pawn', 'knight', 'bishop', 'rook', 'queen', 'king', 'minor-piece', 'major-piece'])
+const NO_PAUSE = new Set([
+  'pawn', 'knight', 'bishop', 'rook', 'queen', 'king', 'minor-piece', 'major-piece',
+  // Castling already pauses for its own card.
+  'kingside-castling', 'queenside-castling',
+])
 
 /** A flash card: a chess word (or opening) met in this game. */
 export type LearnCardData =
@@ -96,9 +100,47 @@ export function wordsPerMove(
     if (Math.abs(materialOf(m.after, 'w') - materialOf(m.after, 'b')) >= 3) add('material', 'seen')
     for (const id of mateNames(m, ply)) extra.push({ id, ply, how })
     for (const id of phaseNames(m.after, ply)) add(id, 'seen')
+    for (const id of moveNames(m)) add(id)
+    for (const id of structureNames(m.after)) add(id, 'seen')
 
     const v = verdicts[ply] ?? null
     if (!v) return []
+
+    // Sacrifice: the mover ends up 2+ points down after the reply (and still
+    // after their next move, so it isn't just the middle of a trade), yet the
+    // engine liked the move. Brilliant: a sacrifice that was the best move.
+    const reply = moves[ply + 1]
+    if (reply?.captured && ['good', 'best', 'book'].includes(v.quality)) {
+      const them = m.color === 'w' ? 'b' : 'w'
+      const diff = (fen: string) => materialOf(fen, m.color) - materialOf(fen, them)
+      const settled = moves[ply + 2]?.after ?? reply.after
+      if (diff(m.before) - diff(reply.after) >= 2 && diff(m.before) - diff(settled) >= 2) {
+        extra.push({ id: 'sacrifice', ply, how })
+        if (v.quality === 'best') extra.push({ id: 'brilliant', ply, how })
+      }
+    }
+    // Miss: the opponent just blundered (or made a mistake) and this move
+    // didn't punish it.
+    const prevV = verdicts[ply - 1]
+    if (prevV && (prevV.quality === 'mistake' || prevV.quality === 'blunder') && (isSlip(v) || v.cpLoss >= 100)) {
+      extra.push({ id: 'miss', ply, how })
+    }
+    // The exchange: a rook traded for a knight or bishop on one square.
+    const prev = moves[ply - 1]
+    if (m.captured && prev?.captured && prev.to === m.to) {
+      const pair = [m.captured, prev.captured].sort().join('')
+      if (pair === 'br' || pair === 'nr') extra.push({ id: 'the-exchange', ply, how: 'seen' })
+    }
+    // Perpetual check: checking into the same position for the third time.
+    if (m.san.includes('+')) {
+      const key = (fen: string) => fen.split(' ').slice(0, 4).join(' ')
+      const positions = [moves[0].before, ...moves.slice(0, ply + 1).map((x) => x.after)]
+      const repeats = positions.filter((f) => key(f) === key(m.after)).length
+      const myLast = moves.slice(0, ply + 1).filter((x) => x.color === m.color).slice(-3)
+      if (repeats >= 3 && myLast.length === 3 && myLast.every((x) => x.san.includes('+'))) {
+        extra.push({ id: 'perpetual-check', ply, how })
+      }
+    }
     const words = [...wordsForMove(m, v, byMe, ply, moves[ply - 1]), ...extra]
     if (reached[ply]) words.push({ id: 'opening', ply, how: 'seen' })
     return words

@@ -143,17 +143,21 @@ are secondary.
 - Every chess word you meet is counted in this browser: seen (either side),
   played by you, and missed (a tactic you could have played instead of a
   slip), plus the game and move where you first met it. Openings you meet
-  are collected by family. Every word can be met in games (48 so far, growing to about 80): hanging piece
+  are collected by family. Every word (70) can be met in games: hanging piece
   (taking an undefended piece, not a recapture) and trade (a capture
   answered by an equal recapture) are detected too.
-- **Word groups (batch 1 of 3 added):** Pieces (pawn … king, piece values,
-  material, minor/major piece), Rules, Tactics, Checkmate patterns
-  (back-rank, smothered, Scholar's, Fool's, ladder), Move quality, Game
-  phases (middlegame, endgame, king-and-pawn, rook endgame), Ideas, Game
-  endings. Game-level words (a piece's first move, the first capture, a
-  phase starting) count once per game. Piece-name words never pause the
-  game; they're taught by tag, card and quiz. Detection:
-  `src/chess/patterns.ts`.
+- **Word groups (70 words):** Pieces (pawn … king, piece values, material,
+  minor/major piece), Rules, Tactics (fork … hanging piece, battery, trapped
+  piece, removing the defender, mate threat, perpetual check, the exchange),
+  Checkmate patterns (back-rank, smothered, Scholar's, Fool's, ladder), Move
+  quality (best … blunder, sacrifice, brilliant, miss), Game phases
+  (middlegame, endgame, king-and-pawn, rook endgame), Pawns (passed,
+  doubled, isolated, backward, pawn chain), Strategy (open file, seventh
+  rank, fianchetto, outpost, bishop pair, kingside/queenside castling,
+  connected rooks), Ideas, Game endings. Game-level words (a piece's first
+  move, a phase starting, a pawn structure appearing, most strategy words)
+  count once per game. Piece names and the two castling sides never pause
+  the game. Detection: `src/chess/patterns.ts` and `useVocab.ts`.
 - **Learning in the moment.** When a move shows a word you haven't learned,
   the game pauses (bot and clocks wait) and its flash card opens in a sheet,
   with "In your game: …". "Got it · continue" marks it learned (it never

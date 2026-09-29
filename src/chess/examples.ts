@@ -155,6 +155,39 @@ export const EXAMPLES: Record<string, WordExample> = {
     caption: 'One rook guards the 7th row, the other checks on the 8th: the king has nowhere to go.',
   },
 
+  // Tactics (batch 2)
+  battery: {
+    fen: '6k1/5ppp/8/8/8/8/5PPP/R2Q2K1 w - - 0 1',
+    moves: ['Qd2', 'h6', 'Rd1'],
+    caption: 'Queen and rook stand one behind the other on the d-file: a battery.',
+  },
+  'trapped-piece': {
+    fen: 'k7/8/8/8/8/8/6PP/5K1n w - - 0 1',
+    moves: ['Kg1'],
+    caption: 'The knight on h1 is attacked and every square it could jump to is guarded: it’s trapped.',
+  },
+  'removing-the-defender': {
+    fen: '4k3/8/5n2/3b2B1/8/8/8/3QK3 w - - 0 1',
+    moves: ['Bxf6'],
+    arrows: [['d1', 'd5']],
+    caption: 'The knight on f6 was the only guard of the bishop on d5. Take the knight, and the bishop hangs.',
+  },
+  'mate-threat': {
+    moves: ['e4', 'e5', 'Qh5', 'Nc6', 'Bc4'],
+    arrows: [['h5', 'f7'], ['c4', 'f7']],
+    caption: 'Queen and bishop both aim at f7: White threatens Qxf7 checkmate next move.',
+  },
+  'perpetual-check': {
+    fen: '5rk1/5p1p/8/6Q1/8/8/5PPP/6K1 b - - 0 1',
+    moves: ['Kh8', 'Qf6+', 'Kg8', 'Qg5+', 'Kh8', 'Qf6+', 'Kg8', 'Qg5+'],
+    caption: 'The queen checks from g5 and f6 forever: the king can’t escape, so it’s a draw.',
+  },
+  'the-exchange': {
+    fen: 'r3k3/8/1n6/8/8/8/8/4K2B w - - 0 1',
+    moves: ['Bxa8', 'Nxa8'],
+    caption: 'White gave a bishop (3) for a rook (5): White won the exchange.',
+  },
+
   // Move quality
   best: {
     moves: ['e4', 'e5', 'Qh5', 'Nc6', 'Bc4', 'g6'],
@@ -199,6 +232,84 @@ export const EXAMPLES: Record<string, WordExample> = {
     fen: '8/5k2/8/r7/P7/8/5K2/R7 w - - 0 1',
     moves: [],
     caption: 'A rook each plus pawns: the most common endgame in real games.',
+  },
+
+  // More move quality (batch 2)
+  sacrifice: {
+    fen: 'r1bq1rk1/pppn1ppp/4p3/3pP3/1b1P4/2NB1N2/PPP2PPP/R1BQK2R w KQ - 0 8',
+    moves: ['Bxh7+'],
+    next: 'Kxh7',
+    caption: 'The bishop gives itself up on h7 to open Black’s king for an attack: a sacrifice.',
+  },
+  brilliant: {
+    moves: ['e4', 'e5', 'Nf3', 'd6', 'Bc4', 'Bg4', 'Nc3', 'g6', 'Nxe5'],
+    next: 'Bxd1',
+    caption: '5.Nxe5!! gives up the queen: if 5…Bxd1, then Bxf7+ Ke7 and Nd5 is checkmate.',
+  },
+  miss: {
+    moves: ['e4', 'd5', 'Qg4', 'Nf6'],
+    better: 'Bxg4',
+    caption: 'White’s queen was free on g4, but Black played 2…Nf6. Bxg4 would have won it.',
+  },
+
+  // Pawns (batch 3)
+  'passed-pawn': {
+    fen: '8/8/4k3/8/1P6/8/8/4K3 w - - 0 1',
+    moves: ['b5'],
+    caption: 'No black pawn can ever stop the b-pawn: it’s a passed pawn heading for promotion.',
+  },
+  'doubled-pawns': {
+    moves: ['e4', 'd5', 'exd5', 'e6', 'dxe6', 'fxe6'],
+    caption: 'After fxe6, Black has two pawns on the e-file (e7 and e6): doubled pawns.',
+  },
+  'isolated-pawn': {
+    moves: ['d4', 'd5', 'c4', 'e6', 'Nc3', 'c5', 'cxd5', 'exd5', 'dxc5'],
+    caption: 'Black’s d5 pawn has no pawns left on the c- or e-file beside it: an isolated pawn.',
+  },
+  'backward-pawn': {
+    moves: ['e4', 'c5', 'Nf3', 'Nc6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'e5', 'Ndb5', 'd6'],
+    caption: 'Black’s d6 pawn is behind its neighbour on e5, and White’s e4 pawn guards d5: a backward pawn.',
+  },
+  'pawn-chain': {
+    moves: ['e4', 'e6', 'd4', 'd5', 'e5', 'c5', 'c3'],
+    caption: 'White’s pawns on c3, d4 and e5 form a diagonal chain, each protecting the next.',
+  },
+
+  // Strategy (batch 3)
+  'open-file': {
+    fen: '4k3/ppp2ppp/8/8/8/8/PPP2PPP/R5K1 w - - 0 1',
+    moves: ['Rd1'],
+    caption: 'The d-file has no pawns at all: the rook takes the open file.',
+  },
+  'seventh-rank': {
+    fen: '4k3/pp3ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1',
+    moves: ['Rd7'],
+    caption: 'The rook reaches the seventh rank, attacking the pawns on their starting row.',
+  },
+  fianchetto: {
+    moves: ['g3', 'd5', 'Bg2'],
+    caption: 'After g3, the bishop settles on g2 to aim down the long diagonal: a fianchetto.',
+  },
+  outpost: {
+    moves: ['e4', 'c5', 'Nf3', 'Nc6', 'd4', 'cxd4', 'Nxd4', 'Nf6', 'Nc3', 'e5', 'Ndb5', 'd6', 'Bg5', 'a6', 'Na3', 'b5', 'Nd5'],
+    caption: 'The knight on d5 is backed by the e4 pawn, and no black pawn can ever chase it away: an outpost.',
+  },
+  'bishop-pair': {
+    moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6', 'Bxc6', 'dxc6'],
+    caption: 'White gave up a bishop, so Black now has the bishop pair.',
+  },
+  'kingside-castling': {
+    moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Bc5', 'O-O'],
+    caption: 'O-O: the king goes to g1 and the rook to f1.',
+  },
+  'queenside-castling': {
+    moves: ['d4', 'd5', 'Nc3', 'Nc6', 'Bf4', 'Bf5', 'Qd2', 'Qd7', 'O-O-O'],
+    caption: 'O-O-O: the king goes to c1 and the rook lands on d1, in the center.',
+  },
+  'connected-rooks': {
+    fen: 'r3k2r/pppq1ppp/2n1bn2/3pp3/3PP3/2N1BN2/PPPQ1PPP/R3K2R w KQkq - 0 1',
+    moves: ['O-O-O'],
+    caption: 'After castling, nothing stands between White’s rooks on d1 and h1: they’re connected.',
   },
 
   // Game endings
