@@ -22,6 +22,8 @@ type Props = {
   onNewGame: () => void
   onResign: () => void
   onFlip: () => void
+  pauseForWords: boolean
+  onTogglePause: () => void
 }
 
 /** Right-hand panel: coach first, a slim win chances bar, the move list, then game buttons. */
@@ -38,6 +40,8 @@ export function SidePanel({
   onNewGame,
   onResign,
   onFlip,
+  pauseForWords,
+  onTogglePause,
 }: Props) {
   // Resign needs a second tap, so a stray tap can't end the game.
   const [confirmResign, setConfirmResign] = useState(false)
@@ -79,6 +83,18 @@ export function SidePanel({
         </div>
       </section>
 
+      <button
+        type="button"
+        role="switch"
+        aria-checked={pauseForWords}
+        onClick={onTogglePause}
+        className="flex min-h-10 cursor-pointer items-center justify-between gap-3 border-t border-border px-4 text-xs font-semibold text-muted hover:text-text"
+      >
+        Pause for new words
+        <span className={`relative h-5 w-9 rounded-full transition-colors ${pauseForWords ? 'bg-accent' : 'bg-border'}`}>
+          <span className={`absolute top-0.5 size-4 rounded-full bg-bg transition-all ${pauseForWords ? 'left-[18px]' : 'left-0.5'}`} />
+        </span>
+      </button>
       <div className="grid grid-cols-3 gap-2 border-t border-border p-3">
         <Button onClick={onNewGame} variant={isOver ? 'primary' : 'secondary'} className="whitespace-nowrap px-2 text-sm">
           New game

@@ -11,6 +11,11 @@ import { BotAvatar, YouAvatar } from './BotAvatar'
 import { ChessBoard } from './ChessBoard'
 import { Clock } from './Clock'
 import { Coach } from './Coach'
+import { Button } from './Button'
+import { gameContext } from './cardContext'
+import { FlashCard } from './FlashCard'
+import { learnWord } from '../storage/learned'
+import { usePauseForWords } from '../storage/prefs'
 import { HintCard } from './HintCard'
 import { HintOrbs } from './HintOrbs'
 import { LeafBurst } from './LeafBurst'
@@ -79,8 +84,6 @@ export function GameScreen({
     dismissedPly !== lastPly
       ? { move: lastMove, verdict: lastVerdict }
       : null
-  const shouldHold = awaitingJudgement || moment !== null
-  if (shouldHold !== hold) setHold(shouldHold) // settle before effects run
 
   // Never keep the bot waiting long if the judgement is slow.
   useEffect(() => {
@@ -102,6 +105,26 @@ export function GameScreen({
   )
 
   const vocab = useVocab(g.moves, analysis.verdicts, myColor, openings.reached, g.summary?.reason ?? null, gameId)
+
+  // Learning in the moment: when a move shows a chess word you haven't
+  // learned yet, the game pauses and its flash card opens (one per move,
+  // after any mistake card; a learned word never interrupts again).
+  const [pauseForWords, setPauseForWords] = usePauseForWords()
+  const [wordDoneAt, setWordDoneAt] = useState(-1)
+  const newWord =
+    pauseForWords && lastVerdict && !g.isOver && !moment && wordDoneAt !== lastPly ? vocab.newWordAt(lastPly) : null
+  const [wordCard, setWordCard] = useState<{ ply: number; id: string } | null>(null)
+  // Keep the card on screen until it's dismissed, even once the word is learned.
+  if (newWord && !wordCard) setWordCard({ ply: lastPly, id: newWord })
+  if (wordCard && wordCard.ply !== lastPly && !newWord) setWordCard(null)
+  const dismissWord = (learn: boolean) => {
+    if (learn && wordCard) learnWord(wordCard.id)
+    setWordDoneAt(wordCard?.ply ?? lastPly)
+    setWordCard(null)
+  }
+
+  const shouldHold = awaitingJudgement || moment !== null || wordCard !== null
+  if (shouldHold !== hold) setHold(shouldHold) // settle before effects run
 
   // Once the game is over, keep its saved record up to date as the last
   // grades come in, so its summary can be reopened later from Recent games.
@@ -437,6 +460,8 @@ export function GameScreen({
             onNewGame={onNewGame}
             onResign={g.resign}
             onFlip={() => setOrientation((o) => (o === 'white' ? 'black' : 'white'))}
+            pauseForWords={pauseForWords}
+            onTogglePause={() => setPauseForWords(!pauseForWords)}
           />
         </div>
       </div>
@@ -456,6 +481,51 @@ export function GameScreen({
       />
 
       <AnimatePresence>
+        {wordCard && lastMove && (
+          <Sheet
+            key={`word-${wordCard.ply}`}
+            title="New chess word"
+            onClose={() => dismissWord(false)}
+            footer={
+              <div className="flex flex-col gap-2">
+                <p className="text-center text-xs text-muted">
+                  The game is paused while you read.{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPauseForWords(false)
+                      dismissWord(false)
+                    }}
+                    className="cursor-pointer underline hover:text-text"
+                  >
+                    Turn off
+                  </button>
+                </p>
+                <div className="grid grid-cols-[auto_1fr] gap-2">
+                  <Button variant="ghost" onClick={() => dismissWord(false)}>
+                    Not now
+                  </Button>
+                  <Button variant="primary" onClick={() => dismissWord(true)}>
+                    Got it · continue
+                  </Button>
+                </div>
+              </div>
+            }
+          >
+            <FlashCard
+              card={{ kind: 'word', id: wordCard.id }}
+              context={{
+                text: gameContext(
+                  { kind: 'word', id: wordCard.id, ply: wordCard.ply },
+                  g.moves[wordCard.ply] ?? lastMove,
+                  analysis.verdicts[wordCard.ply] ?? null,
+                  (g.moves[wordCard.ply] ?? lastMove).color === myColor,
+                  bot,
+                ),
+              }}
+            />
+          </Sheet>
+        )}
         {sheet === 'coach' && (
           <Sheet key="coach" title="Coach" onClose={() => setSheet(null)}>
             <div className="flex flex-col gap-4">
@@ -473,6 +543,8 @@ export function GameScreen({
           <Sheet key="menu" title="Menu" onClose={() => setSheet(null)}>
             <MenuSheetBody
               isOver={g.isOver}
+              pauseForWords={pauseForWords}
+              onTogglePause={() => setPauseForWords(!pauseForWords)}
               onNewGame={onNewGame}
               onResign={() => {
                 setSheet(null)

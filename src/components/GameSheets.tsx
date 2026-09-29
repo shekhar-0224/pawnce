@@ -48,12 +48,16 @@ export function MovesSheetBody({
 /** Phones: the less common game actions. */
 export function MenuSheetBody({
   isOver,
+  pauseForWords,
+  onTogglePause,
   onNewGame,
   onResign,
   onFlip,
   onHome,
 }: {
   isOver: boolean
+  pauseForWords: boolean
+  onTogglePause: () => void
   onNewGame: () => void
   onResign: () => void
   onFlip: () => void
@@ -67,6 +71,18 @@ export function MenuSheetBody({
         New game
       </Button>
       <Button onClick={onFlip}>Flip board</Button>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={pauseForWords}
+        onClick={onTogglePause}
+        className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-surface-2 px-4 text-sm font-semibold"
+      >
+        Pause for new words
+        <span className={`relative h-6 w-10 rounded-full transition-colors ${pauseForWords ? 'bg-accent' : 'bg-border'}`}>
+          <span className={`absolute top-1 size-4 rounded-full bg-bg transition-all ${pauseForWords ? 'left-5' : 'left-1'}`} />
+        </span>
+      </button>
       <Button
         variant={confirmResign ? 'danger' : 'secondary'}
         disabled={isOver}
