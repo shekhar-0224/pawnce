@@ -143,9 +143,17 @@ are secondary.
 - Every chess word you meet is counted in this browser: seen (either side),
   played by you, and missed (a tactic you could have played instead of a
   slip), plus the game and move where you first met it. Openings you meet
-  are collected by family. All 29 words can be met in games: hanging piece
+  are collected by family. Every word can be met in games (48 so far, growing to about 80): hanging piece
   (taking an undefended piece, not a recapture) and trade (a capture
   answered by an equal recapture) are detected too.
+- **Word groups (batch 1 of 3 added):** Pieces (pawn … king, piece values,
+  material, minor/major piece), Rules, Tactics, Checkmate patterns
+  (back-rank, smothered, Scholar's, Fool's, ladder), Move quality, Game
+  phases (middlegame, endgame, king-and-pawn, rook endgame), Ideas, Game
+  endings. Game-level words (a piece's first move, the first capture, a
+  phase starting) count once per game. Piece-name words never pause the
+  game; they're taught by tag, card and quiz. Detection:
+  `src/chess/patterns.ts`.
 - **Learning in the moment.** When a move shows a word you haven't learned,
   the game pauses (bot and clocks wait) and its flash card opens in a sheet,
   with "In your game: …". "Got it · continue" marks it learned (it never
@@ -169,11 +177,11 @@ are secondary.
   (scrolling it into view on phones). While replaying, the words at the
   current move are highlighted in the list, named on a chip over the board
   and explained under it.
-- **Home:** "Your chess vocabulary" tile (X of 29 known, how many waiting,
+- **Home:** "Your chess vocabulary" tile (X of N known, how many waiting,
   word chips linking to each word, "See all words").
 - **/words:** every word by group with its definition and status (Known,
   New, Not met yet); learned words link "First met: vs Frog · 4. O-O ›" to
-  that game's summary at that move. "Study all 29" and "Study the ones I've
+  that game's summary at that move. "Study all" and "Study the ones I've
   met" open decks. **/words/<id>**: the word's card and seen / played /
   missed counts.
 

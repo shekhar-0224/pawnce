@@ -112,7 +112,7 @@ export function GameScreen({
   const [pauseForWords, setPauseForWords] = usePauseForWords()
   const [wordDoneAt, setWordDoneAt] = useState(-1)
   const newWord =
-    pauseForWords && lastVerdict && !g.isOver && !moment && wordDoneAt !== lastPly ? vocab.newWordAt(lastPly) : null
+    pauseForWords && lastVerdict && !g.isOver && !moment && wordDoneAt !== lastPly ? vocab.newWordAt(lastPly, { forPause: true }) : null
   const [wordCard, setWordCard] = useState<{ ply: number; id: string } | null>(null)
   // Keep the card on screen until it's dismissed, even once the word is learned.
   if (newWord && !wordCard) setWordCard({ ply: lastPly, id: newWord })

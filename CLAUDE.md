@@ -64,7 +64,7 @@ A solo, non-developer founder working with Claude Code. So:
 Phases 1 to 5 are built, plus a learning round, the minimal redesign and
 "naming first" (threat alerts, verified tactics, openings, vocabulary memory).
 Also built: pages with links (/play, /game/<id>/summary, /games, /words),
-saved game summaries, flash cards with examples for all 29 words, a swipe
+saved game summaries, flash cards with examples for every word (48, growing to ~80 in 3 batches), a swipe
 deck and quiz, and in-game pauses for new words.
 Now: Phase 7, one step at a time: (1) pieces [done: classic shapes in
 Pawnce colors; animal pieces were tried and dropped as hard to read],
