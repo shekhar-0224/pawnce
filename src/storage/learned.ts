@@ -19,6 +19,9 @@ export type WordStats = {
   missed: number
   /** ISO date you opened its explainer. */
   tapped?: string
+  /** Where you first met it: the game's id and the move (0-based ply). */
+  game?: string
+  ply?: number
 }
 
 export type Learned = {
@@ -87,11 +90,11 @@ const recorded = new Set<string>()
  * Count one sighting of a word. `key` identifies it (game, move, word), so
  * the same sighting is never counted twice.
  */
-export function recordWord(id: string, how: Sighting, key: string) {
+export function recordWord(id: string, how: Sighting, key: string, where?: { game: string; ply: number }) {
   if (recorded.has(key)) return
   recorded.add(key)
   const cur = read()
-  const s = cur.words[id] ?? { first: new Date().toISOString(), seen: 0, played: 0, missed: 0 }
+  const s = cur.words[id] ?? { first: new Date().toISOString(), seen: 0, played: 0, missed: 0, ...where }
   const next: WordStats = {
     ...s,
     seen: s.seen + 1,

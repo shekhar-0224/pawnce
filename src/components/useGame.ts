@@ -50,6 +50,8 @@ export function useGame(
   bot: Bot,
   myColor: Color,
   timeControl: TimeControl,
+  /** This game's id: its saved record and its link, /game/<id>/summary. */
+  gameId: string,
   /** While true the bot waits and the clocks pause (teaching moments). */
   hold = false,
 ) {
@@ -239,6 +241,7 @@ export function useGame(
     }
     g.setHeader('Result', outcome.winner === null ? '1/2-1/2' : outcome.winner === 'w' ? '1-0' : '0-1')
     saveGame({
+      id: gameId,
       date: new Date().toISOString(),
       bot: bot.id,
       myColor: colorToSide(myColor),
@@ -247,8 +250,9 @@ export function useGame(
       moves: Math.ceil(moves.length / 2),
       timeControl: timeControl.id,
       pgn: g.pgn(),
+      sans: moves.map((m) => m.san),
     })
-  }, [outcome, moves, bot, myColor, clockOn, timeControl])
+  }, [outcome, moves, bot, myColor, clockOn, timeControl, gameId])
 
   const summary = useMemo(() => {
     if (!outcome) return null

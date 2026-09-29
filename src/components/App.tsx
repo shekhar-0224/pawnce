@@ -1,14 +1,15 @@
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { TIME_CONTROLS, type TimeControlId } from '../chess/clock'
 import type { Color } from '../chess/game'
 import { BOTS, type BotId } from '../engine/bots'
 import { analyst, engine } from '../engine/stockfish'
 import { GameScreen } from './GameScreen'
 import { RecentGamesScreen } from './RecentGamesScreen'
+import { SavedGameSummary } from './SavedGameSummary'
+import { newGameId } from '../storage/recentGames'
 import { type SidePref, StartScreen } from './StartScreen'
-
-type Screen = 'start' | 'game' | 'recent'
 
 type Settings = { botId: BotId; side: SidePref; timeControl: TimeControlId }
 
@@ -36,10 +37,20 @@ function pickColor(side: SidePref): Color {
   return side === 'white' ? 'w' : 'b'
 }
 
+type Match = { gameId: string; myColor: Color }
+
+/*
+ * Pages (each has its own link):
+ *   /                     home
+ *   /play                 the game you're playing now
+ *   /game/<id>/summary    a game's summary (?ply=12 opens the replay at a move)
+ *   /games                recent games
+ */
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('start')
+  const navigate = useNavigate()
+  const location = useLocation()
   const [settings, setSettings] = useState(loadSettings)
-  const [match, setMatch] = useState<{ id: number; myColor: Color }>({ id: 0, myColor: 'w' })
+  const [match, setMatch] = useState<Match | null>(null)
 
   useEffect(() => {
     try {
@@ -55,51 +66,128 @@ export default function App() {
     analyst.init().catch(() => undefined)
   }, [])
 
+  // Scroll to the top on every new page.
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [location.pathname])
+
   const startGame = (next: Settings = settings) => {
     setSettings(next)
-    setMatch((m) => ({ id: m.id + 1, myColor: pickColor(next.side) }))
-    setScreen('game')
-    window.scrollTo({ top: 0 })
+    setMatch({ gameId: newGameId(), myColor: pickColor(next.side) })
+    navigate('/play')
   }
 
-  const goTo = (s: Screen) => {
-    setScreen(s)
-    window.scrollTo({ top: 0 })
-  }
+  // The live game and its summary share one page, so closing the summary
+  // returns to the same board.
+  const summaryId = location.pathname.match(/^\/game\/([^/]+)\/summary/)?.[1]
+  const onGamePage = location.pathname === '/play' || (!!match && summaryId === match.gameId)
+  const pageKey = onGamePage ? `game-${match?.gameId ?? 'new'}` : location.pathname
 
-  const screenKey = screen === 'game' ? `game-${match.id}` : screen
+  const gameHost = (
+    <GameHost
+      match={match}
+      settings={settings}
+      onStart={startGame}
+      onHome={() => navigate('/')}
+      onBack={() => navigate(-1)}
+    />
+  )
 
   return (
     <MotionConfig reducedMotion="user">
       <main className="min-h-dvh overflow-x-clip">
         <AnimatePresence mode="wait">
           <motion.div
-            key={screenKey}
+            key={pageKey}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
           >
-            {screen === 'start' && (
-              <StartScreen
-                setup={settings}
-                onPlay={(next) => startGame(next)}
-                onRecent={() => goTo('recent')}
+            <Routes location={location}>
+              <Route path="/" element={<StartScreen setup={settings} onPlay={startGame} onRecent={() => navigate('/games')} onOpenGame={(id) => navigate(`/game/${id}/summary`)} />} />
+              <Route path="/play" element={gameHost} />
+              <Route path="/game/:id/summary" element={gameHost} />
+              <Route
+                path="/games"
+                element={
+                  <RecentGamesScreen
+                    onBack={() => navigate('/')}
+                    onOpen={(id) => navigate(`/game/${id}/summary`)}
+                  />
+                }
               />
-            )}
-            {screen === 'game' && (
-              <GameScreen
-                bot={BOTS[settings.botId]}
-                myColor={match.myColor}
-                timeControl={TIME_CONTROLS[settings.timeControl]}
-                onNewGame={() => startGame()}
-                onChangeOpponent={() => goTo('start')}
-              />
-            )}
-            {screen === 'recent' && <RecentGamesScreen onBack={() => goTo('start')} />}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </motion.div>
         </AnimatePresence>
       </main>
     </MotionConfig>
   )
+}
+
+/**
+ * /play and /game/<id>/summary. While you're playing (or just finished),
+ * this shows the live game, with its summary on top when the URL says so.
+ * Any other game's summary is rebuilt from what was saved.
+ */
+function GameHost({
+  match,
+  settings,
+  onStart,
+  onHome,
+  onBack,
+}: {
+  match: Match | null
+  settings: Settings
+  onStart: (next?: Settings) => void
+  onHome: () => void
+  onBack: () => void
+}) {
+  const { id } = useParams()
+  const [search] = useSearchParams()
+  const navigate = useNavigate()
+  const live = !!match && (!id || id === match.gameId)
+
+  // Opening /play directly (or refreshing it) starts a fresh game.
+  useEffect(() => {
+    if (!id && !match) onStart()
+  }, [id, match, onStart])
+
+  if (live && match) {
+    return (
+      <GameScreen
+        key={match.gameId}
+        bot={BOTS[settings.botId]}
+        myColor={match.myColor}
+        timeControl={TIME_CONTROLS[settings.timeControl]}
+        gameId={match.gameId}
+        summaryOpen={!!id}
+        onOpenSummary={() => navigate(`/game/${match.gameId}/summary`)}
+        onCloseSummary={() => navigate('/play')}
+        onNewGame={() => onStart()}
+        onChangeOpponent={onHome}
+      />
+    )
+  }
+  if (id) {
+    const ply = Number(search.get('ply'))
+    return (
+      <SavedGameSummary
+        key={id}
+        id={id}
+        initialPly={Number.isInteger(ply) && search.has('ply') ? ply : undefined}
+        onPlayAgain={(s) =>
+          onStart({
+            botId: (s.botId in BOTS ? s.botId : settings.botId) as BotId,
+            side: s.side,
+            timeControl: (s.timeControl && s.timeControl in TIME_CONTROLS ? s.timeControl : 'none') as TimeControlId,
+          })
+        }
+        onHome={onHome}
+        onBack={onBack}
+      />
+    )
+  }
+  return null
 }

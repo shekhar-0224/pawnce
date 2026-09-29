@@ -33,6 +33,10 @@ type Props = {
   onPlayAgain: () => void
   onChangeOpponent: () => void
   onClose: () => void
+  /** The close button's text ("Back to board" for a live game). */
+  closeLabel?: string
+  /** Start the replay at this move (e.g. from a word's link). */
+  initialPly?: number
 }
 
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
@@ -161,7 +165,7 @@ export function GameSummary(p: Props) {
   }, [moves, verdicts, myColor])
 
   // Replay position: -1 is the start, otherwise the position after that move.
-  const [ply, setPly] = useState(moves.length - 1)
+  const [ply, setPly] = useState(p.initialPly ?? moves.length - 1)
   const current = ply >= 0 ? moves[ply] : null
   const currentVerdict = ply >= 0 ? verdicts[ply] : null
 
@@ -379,9 +383,9 @@ export function GameSummary(p: Props) {
             <Button variant="primary" onClick={p.onPlayAgain}>
               Play again
             </Button>
-            <Button onClick={p.onChangeOpponent}>Change opponent</Button>
+            <Button onClick={p.onChangeOpponent}>Home</Button>
             <Button variant="ghost" onClick={p.onClose}>
-              Back to board
+              {p.closeLabel ?? 'Back to board'}
             </Button>
           </div>
         </section>
