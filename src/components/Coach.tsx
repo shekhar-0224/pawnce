@@ -131,7 +131,17 @@ function YourMove({
         </div>
       </div>
       {!verdict && <p className="text-sm text-muted">Checking your move…</p>}
-      {why && <p className="text-[15px] leading-snug">{why}</p>}
+      {why && (
+        <p
+          className={`text-[15px] leading-snug ${
+            verdict?.quality === 'mistake' || verdict?.quality === 'blunder'
+              ? 'rounded-lg border border-danger/50 bg-danger/10 px-3 py-2'
+              : ''
+          }`}
+        >
+          {why}
+        </p>
+      )}
       <WordTag id={newWord} />
       {bad && verdict && <p className="font-mono text-xs text-muted">{costLine(verdict)}</p>}
       {bad && verdict?.better && (

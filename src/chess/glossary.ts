@@ -4,7 +4,15 @@
  * introduces it; after that it lives in your collection.
  */
 
-export type WordCategory = 'Rules' | 'Tactics' | 'Move quality' | 'Game endings' | 'Ideas'
+export type WordCategory =
+  | 'Pieces'
+  | 'Rules'
+  | 'Tactics'
+  | 'Checkmate patterns'
+  | 'Move quality'
+  | 'Game phases'
+  | 'Game endings'
+  | 'Ideas'
 
 export type ChessWord = {
   id: string
@@ -19,6 +27,18 @@ export type ChessWord = {
 }
 
 export const WORDS: ChessWord[] = [
+  // Pieces
+  { id: 'pawn', name: 'Pawn', category: 'Pieces', meaning: 'The smallest piece: moves one square forward (two on its first move) and captures one square diagonally. Worth 1.', tip: 'Pawns can’t move backwards, so think before you push.' },
+  { id: 'knight', name: 'Knight', category: 'Pieces', meaning: 'Moves in an L: two squares one way, then one to the side. The only piece that jumps over others. Worth 3.', tip: 'Knights love the center: “a knight on the rim is dim.”' },
+  { id: 'bishop', name: 'Bishop', category: 'Pieces', meaning: 'Moves any distance diagonally and stays on one color all game. Worth 3.', tip: 'Open the diagonals in front of your bishops so they can breathe.' },
+  { id: 'rook', name: 'Rook', category: 'Pieces', meaning: 'Moves any distance straight along rows and columns. Worth 5.', tip: 'Rooks are strongest on open files and on the 7th rank.' },
+  { id: 'queen', name: 'Queen', category: 'Pieces', meaning: 'Moves any distance straight or diagonally: the strongest piece. Worth 9.', tip: 'Don’t bring her out too early, or she gets chased around.' },
+  { id: 'king', name: 'King', category: 'Pieces', meaning: 'Moves one square in any direction. If it’s checkmated, the game is over.', tip: 'Keep it safe early (castle); use it actively in the endgame.' },
+  { id: 'piece-values', name: 'Piece values', category: 'Pieces', ask: 'What are piece values?', meaning: 'A rough score for each piece: pawn 1, knight 3, bishop 3, rook 5, queen 9.', tip: 'Before a trade, add up what you give and what you get.' },
+  { id: 'material', name: 'Material', category: 'Pieces', ask: 'What does “material” mean?', meaning: 'All the pieces a side has, counted in piece values. Being “up material” means you have more.', tip: 'When you’re ahead in material, trading pieces makes winning easier.' },
+  { id: 'minor-piece', name: 'Minor piece', category: 'Pieces', meaning: 'A knight or a bishop, each worth about 3.', tip: 'Two minor pieces are usually worth more than a rook.' },
+  { id: 'major-piece', name: 'Major piece', category: 'Pieces', meaning: 'A rook or a queen: the heavy pieces.', tip: 'Major pieces need open lines; bring them out after the minor pieces.' },
+
   // Rules
   { id: 'check', name: 'Check', category: 'Rules', meaning: 'The king is under attack.', tip: 'You must answer right away: move the king, block, or capture the attacker.' },
   { id: 'castling', name: 'Castling', category: 'Rules', meaning: 'The king steps two squares toward a rook, and the rook hops over it.', tip: 'Castle early: it tucks your king away and brings a rook into the game.' },
@@ -37,12 +57,25 @@ export const WORDS: ChessWord[] = [
   { id: 'double-check', name: 'Double check', category: 'Tactics', meaning: 'Two pieces give check at the same time.', tip: 'Blocking or capturing can’t stop both: the king has to move.' },
   { id: 'hanging-piece', name: 'Hanging piece', category: 'Tactics', meaning: 'A piece that is attacked and not defended, so it can be taken for free.', tip: 'Before every move, ask: is anything of mine or theirs hanging?' },
 
+  // Checkmate patterns
+  { id: 'back-rank-mate', name: 'Back-rank mate', category: 'Checkmate patterns', meaning: 'A rook or queen checkmates a king stuck on its back row behind its own pawns.', tip: 'Give your king an escape square (“luft”) with a pawn move like h3.' },
+  { id: 'smothered-mate', name: 'Smothered mate', category: 'Checkmate patterns', meaning: 'A knight checkmates a king that is completely boxed in by its own pieces.', tip: 'When your king has no free squares, watch out for knight checks.' },
+  { id: 'scholars-mate', name: 'Scholar’s mate', category: 'Checkmate patterns', ask: 'What’s Scholar’s mate?', meaning: 'A quick checkmate: the queen and bishop both attack f7 (or f2) and the queen takes there with mate.', tip: 'Defend f7 early: …Nf6, …g6 or …Qe7 all stop it.' },
+  { id: 'fools-mate', name: 'Fool’s mate', category: 'Checkmate patterns', ask: 'What’s Fool’s mate?', meaning: 'The fastest checkmate: after weak moves like f3 and g4, the queen mates on h4 on move two.', tip: 'Don’t open the diagonal to your king with early f- and g-pawn moves.' },
+  { id: 'ladder-mate', name: 'Ladder mate', category: 'Checkmate patterns', meaning: 'Two rooks (or a rook and queen) take turns checking, pushing the king to the edge and mating it there.', tip: 'Each heavy piece guards one row; step by step, the king runs out of room.' },
+
   // Move quality
   { id: 'best', ask: 'What does “best move” mean?', name: 'Best move', category: 'Move quality', meaning: 'The move the engine likes most in the position.', tip: 'You don’t need the best move every time. Avoiding blunders matters more.' },
   { id: 'book', name: 'Book move', category: 'Move quality', meaning: 'A well-known opening move from the "book" of theory players have studied.', tip: 'Book moves are safe, tried and tested ways to start.' },
   { id: 'inaccuracy', name: 'Inaccuracy', category: 'Move quality', meaning: 'A slightly weaker move that gives away a little of your advantage.', tip: 'Not a disaster, but there was something better.' },
   { id: 'mistake', name: 'Mistake', category: 'Move quality', meaning: 'A clearly weaker move that noticeably hurts your chances.', tip: 'Often a missed threat. Check what the opponent is attacking first.' },
   { id: 'blunder', name: 'Blunder', category: 'Move quality', meaning: 'A serious error, like giving away a piece or allowing checkmate.', tip: 'Before you move, check: can they capture something or give check?' },
+
+  // Game phases
+  { id: 'middlegame', name: 'Middlegame', category: 'Game phases', ask: 'What’s the middlegame?', meaning: 'The phase after the opening: the pieces are out and the real fight begins.', tip: 'Make a plan: attack a weakness, or improve your worst piece.' },
+  { id: 'endgame', name: 'Endgame', category: 'Game phases', ask: 'What’s the endgame?', meaning: 'The final phase, when only a few pieces are left.', tip: 'In the endgame your king becomes a strong piece: bring it forward.' },
+  { id: 'pawn-endgame', name: 'King and pawn endgame', category: 'Game phases', meaning: 'An endgame where only kings and pawns are left.', tip: 'Count carefully: one move often decides who promotes first.' },
+  { id: 'rook-endgame', name: 'Rook endgame', category: 'Game phases', meaning: 'An endgame with only kings, rooks and pawns: the most common kind.', tip: 'Put your rook behind passed pawns, yours or theirs.' },
 
   // Game endings
   { id: 'checkmate', name: 'Checkmate', category: 'Game endings', meaning: 'The king is in check and has no way out. The game is over.', tip: 'Usually takes two pieces working together, like a queen and a rook.' },
@@ -62,7 +95,7 @@ export const WORDS: ChessWord[] = [
 export const WORDS_BY_ID: Record<string, ChessWord> = Object.fromEntries(WORDS.map((w) => [w.id, w]))
 
 // Words that read as "What's a fork?" (the rest: "What's castling?").
-const COUNTABLE = new Set(['capture', 'opening', 'fork', 'pin', 'skewer', 'discovered-attack', 'discovered-check', 'double-check', 'hanging-piece', 'book', 'inaccuracy', 'mistake', 'blunder', 'trade'])
+const COUNTABLE = new Set(['pawn', 'knight', 'bishop', 'rook', 'queen', 'king', 'minor-piece', 'major-piece', 'back-rank-mate', 'smothered-mate', 'ladder-mate', 'pawn-endgame', 'rook-endgame', 'capture', 'opening', 'fork', 'pin', 'skewer', 'discovered-attack', 'discovered-check', 'double-check', 'hanging-piece', 'book', 'inaccuracy', 'mistake', 'blunder', 'trade'])
 
 /** The question on a word's "New" tag, e.g. "What's a fork?". */
 export function askAbout(word: ChessWord): string {
@@ -71,4 +104,13 @@ export function askAbout(word: ChessWord): string {
   return COUNTABLE.has(word.id) ? `What’s a ${name}?` : `What’s ${name}?`
 }
 
-export const WORD_CATEGORIES: WordCategory[] = ['Rules', 'Tactics', 'Move quality', 'Game endings', 'Ideas']
+export const WORD_CATEGORIES: WordCategory[] = [
+  'Pieces',
+  'Rules',
+  'Tactics',
+  'Checkmate patterns',
+  'Move quality',
+  'Game phases',
+  'Ideas',
+  'Game endings',
+]

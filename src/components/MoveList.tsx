@@ -6,7 +6,7 @@ import type { MoveVerdict } from './useAnalysis'
 const MARK_TONE: Partial<Record<Quality, string>> = {
   best: 'text-success',
   inaccuracy: 'text-warn/80',
-  mistake: 'text-warn',
+  mistake: 'text-danger',
   blunder: 'text-danger',
 }
 

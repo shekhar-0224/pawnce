@@ -184,11 +184,20 @@ and rook."
   answered by an equal recapture on the same square. Game-ending words
   (stalemate, repetition, 50-move rule, not enough pieces, flag, resign)
   are counted when a game ends that way.
+- New in batch 1: each piece's first move (Pawn, Knight…), the first
+  capture (Piece values; Minor/Major piece by what was taken), Material (one
+  side 3+ points ahead), named checkmates (back-rank: rook/queen mates on
+  the back row with 2+ of the king's own pawns in front; smothered: a knight
+  mates a king boxed in by its own pieces; Scholar's: an early queen takes
+  f7/f2 with mate; Fool's: mate by Black's 2nd move; ladder: two rooks or
+  rook + queen, mate along the edge), and phases (middlegame from move 8
+  with most minor pieces developed; endgame at 6 or fewer pieces besides
+  kings and pawns; king-and-pawn and rook endgames).
 - A word is **New** until you tap its explainer (or "Got it" on its card) or
   meet it 3 times.
 - When a move shows a New word, the game pauses and opens its flash card
   (one per move; switch off with "Pause for new words").
-- Every one of the 29 words has an example position on its flash card,
+- Every one of the 48 words has an example position on its flash card,
   checked with the chess rules library, so you can learn words you haven't
   met yet from the words page.
 

@@ -23,7 +23,7 @@ export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBet
     <motion.div
       role="alertdialog"
       aria-label={blunder ? 'Blunder' : 'Mistake'}
-      className="rounded-card border border-danger/40 bg-surface p-4"
+      className="rounded-card border border-danger/60 bg-danger/10 p-4"
       initial={{ y: 8, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 8, opacity: 0 }}
@@ -32,13 +32,13 @@ export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBet
       <div className="flex items-start gap-3">
         <span
           className={`grid size-10 shrink-0 place-items-center rounded-lg font-mono text-base font-bold ${
-            blunder ? 'bg-danger text-text' : 'bg-warn text-on-accent'
+            blunder ? 'bg-danger text-text' : 'bg-danger/25 text-danger'
           }`}
         >
           {blunder ? '??' : '?'}
         </span>
         <div className="min-w-0">
-          <p className="text-lg font-semibold leading-tight">
+          <p className="text-lg font-semibold leading-tight text-danger">
             {blunder ? 'Blunder!' : 'Mistake'} <span className="text-muted">{move.san}</span>
           </p>
           <p className="text-sm text-muted">{plainName(move)}</p>

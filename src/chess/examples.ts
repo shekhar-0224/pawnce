@@ -22,6 +22,39 @@ export type WordExample = {
 }
 
 export const EXAMPLES: Record<string, WordExample> = {
+  // Pieces
+  pawn: { moves: ['e4'], caption: 'On its first move a pawn may step two squares: e2 to e4.' },
+  knight: { moves: ['e4', 'e5', 'Nf3'], caption: 'The knight jumps in an L from g1 to f3, over the pawns in its way.' },
+  bishop: { moves: ['e4', 'e5', 'Bc4'], caption: 'The bishop slides along the diagonal from f1 to c4.' },
+  rook: {
+    fen: '4k3/8/8/8/8/8/8/R3K3 w - - 0 1',
+    moves: ['Ra7'],
+    caption: 'The rook moves any distance straight up the a-file.',
+  },
+  queen: { moves: ['e4', 'e5', 'Qh5'], caption: 'The queen can move like a rook or a bishop: here along a diagonal.' },
+  king: {
+    fen: '8/8/8/3k4/8/8/4K3/8 w - - 0 1',
+    moves: ['Kd3'],
+    caption: 'The king steps one square, here toward the center.',
+  },
+  'piece-values': {
+    moves: ['e4', 'd5', 'exd5', 'Qxd5'],
+    caption: 'A pawn for a pawn: 1 point each, an even exchange.',
+  },
+  material: {
+    moves: ['e4', 'd5', 'Qg4', 'Bxg4'],
+    caption: 'Black just won the queen: Black is now up 9 points of material.',
+  },
+  'minor-piece': {
+    moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5', 'a6', 'Bxc6', 'dxc6'],
+    caption: 'White gave a bishop for a knight: both are minor pieces, worth about 3.',
+  },
+  'major-piece': {
+    fen: '4k3/8/8/8/r7/8/8/R3K3 w - - 0 1',
+    moves: ['Rxa4'],
+    caption: 'Rook takes rook: rooks and queens are the major pieces, the heavy hitters.',
+  },
+
   // Rules
   check: {
     moves: ['e4', 'e5', 'd4', 'd5', 'Bb5+'],
@@ -96,6 +129,32 @@ export const EXAMPLES: Record<string, WordExample> = {
     caption: 'Nothing defended the knight on d5, so the queen takes it for free.',
   },
 
+  // Checkmate patterns
+  'back-rank-mate': {
+    fen: '6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1',
+    moves: ['Ra8#'],
+    caption: 'The rook checks on the back row and the king’s own pawns block every escape.',
+  },
+  'smothered-mate': {
+    fen: '6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1',
+    moves: ['Nf7#'],
+    caption: 'The knight checks from f7; the rook and pawns leave the king no square at all.',
+  },
+  'scholars-mate': {
+    moves: ['e4', 'e5', 'Bc4', 'Nc6', 'Qh5', 'Nf6', 'Qxf7#'],
+    caption: 'The queen takes on f7, backed up by the bishop on c4: checkmate in four moves.',
+  },
+  'fools-mate': {
+    moves: ['f3', 'e5', 'g4', 'Qh4#'],
+    caption: 'White weakened the king with f3 and g4; the queen mates on h4 on Black’s second move.',
+  },
+  'ladder-mate': {
+    fen: '4k3/R7/8/8/8/8/8/1R4K1 w - - 0 1',
+    moves: ['Rb8#'],
+    arrows: [['a7', 'h7']],
+    caption: 'One rook guards the 7th row, the other checks on the 8th: the king has nowhere to go.',
+  },
+
   // Move quality
   best: {
     moves: ['e4', 'e5', 'Qh5', 'Nc6', 'Bc4', 'g6'],
@@ -121,10 +180,32 @@ export const EXAMPLES: Record<string, WordExample> = {
     caption: '2.Qg4?? puts the queen where Black’s bishop simply takes it.',
   },
 
+  // Game phases
+  middlegame: {
+    moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Bc5', 'O-O', 'Nf6', 'd3', 'd6', 'c3', 'O-O', 'Re1', 'a6', 'Nbd2', 'Ba7'],
+    caption: 'Pieces developed and both kings castled: the opening is over and the middlegame begins.',
+  },
+  endgame: {
+    fen: '8/5pk1/6p1/8/8/6P1/5PK1/3R4 w - - 0 1',
+    moves: [],
+    caption: 'Only a rook and a few pawns left: this is an endgame.',
+  },
+  'pawn-endgame': {
+    fen: '8/8/4k3/4p3/4P3/4K3/8/8 w - - 0 1',
+    moves: [],
+    caption: 'Just kings and pawns: every king move counts.',
+  },
+  'rook-endgame': {
+    fen: '8/5k2/8/r7/P7/8/5K2/R7 w - - 0 1',
+    moves: [],
+    caption: 'A rook each plus pawns: the most common endgame in real games.',
+  },
+
   // Game endings
   checkmate: {
-    moves: ['e4', 'e5', 'Bc4', 'Nc6', 'Qh5', 'Nf6', 'Qxf7#'],
-    caption: 'The queen, backed up by the bishop, checks the king on f7 and it has no escape: checkmate.',
+    fen: '7k/8/6K1/8/8/8/8/Q7 w - - 0 1',
+    moves: ['Qa8#'],
+    caption: 'The queen checks along the top row and the king covers the other squares: no escape, checkmate.',
   },
   stalemate: {
     fen: 'k7/8/1K6/8/8/8/8/2Q5 w - - 0 1',

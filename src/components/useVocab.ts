@@ -4,6 +4,7 @@ import { conceptsOf, QUIET_WORDS } from '../chess/concepts'
 import type { Color, Move } from '../chess/game'
 import { WORDS_BY_ID } from '../chess/glossary'
 import { openingFamily } from '../chess/openingInfo'
+import { PIECE_WORD, materialOf, mateNames, phaseNames } from '../chess/patterns'
 import type { EndReason } from '../chess/outcome'
 import { type TacticKind, VALUE, detectTactics, mainTactic, tacticHolds } from '../chess/tactics'
 import { type Sighting, isNew, learnOpening, loadLearned, recordWord, useLearned } from '../storage/learned'
@@ -11,6 +12,9 @@ import { isSlip } from './coachText'
 import type { MoveVerdict } from './useAnalysis'
 
 export type WordAt = { id: string; ply: number; how: Sighting }
+
+/** Everyday words taught by tag and flash card, but never worth pausing the game for. */
+const NO_PAUSE = new Set(['pawn', 'knight', 'bishop', 'rook', 'queen', 'king', 'minor-piece', 'major-piece'])
 
 /** A flash card: a chess word (or opening) met in this game. */
 export type LearnCardData =
@@ -71,10 +75,31 @@ export function wordsPerMove(
   myColor: Color,
   reached: (string | null)[],
 ): WordAt[][] {
+  // Words that belong to the game rather than one move (each piece's first
+  // move, the first capture, a phase starting) count only the first time.
+  const once = new Set<string>()
+  const firstTime = (id: string) => (once.has(id) ? false : (once.add(id), true))
   return moves.map((m, ply) => {
+    const byMe = m.color === myColor
+    const how: Sighting = byMe ? 'played' : 'seen'
+    const extra: WordAt[] = []
+    const add = (id: string, h: Sighting = how) => {
+      if (firstTime(id)) extra.push({ id, ply, how: h })
+    }
+    add(PIECE_WORD[m.piece])
+    if (m.captured) {
+      add('piece-values')
+      if (m.captured === 'n' || m.captured === 'b') add('minor-piece')
+      if (m.captured === 'r' || m.captured === 'q') add('major-piece')
+    }
+    // Someone is a piece (3+ points) ahead: "material" matters now.
+    if (Math.abs(materialOf(m.after, 'w') - materialOf(m.after, 'b')) >= 3) add('material', 'seen')
+    for (const id of mateNames(m, ply)) extra.push({ id, ply, how })
+    for (const id of phaseNames(m.after, ply)) add(id, 'seen')
+
     const v = verdicts[ply] ?? null
     if (!v) return []
-    const words = wordsForMove(m, v, m.color === myColor, ply, moves[ply - 1])
+    const words = [...wordsForMove(m, v, byMe, ply, moves[ply - 1]), ...extra]
     if (reached[ply]) words.push({ id: 'opening', ply, how: 'seen' })
     return words
   })
@@ -139,8 +164,14 @@ export function useVocab(
   }, [perPly, moves, reached, endReason, gameKey])
 
   /** The word to tag "New" on a move: its first one you haven't learned yet. */
-  const newWordAt = (ply: number): string | null =>
-    perPly[ply]?.find((w) => w.how !== 'missed' && !QUIET_WORDS.has(w.id) && isNew(learned.words[w.id]))?.id ?? null
+  const newWordAt = (ply: number, opts: { forPause?: boolean } = {}): string | null =>
+    perPly[ply]?.find(
+      (w) =>
+        w.how !== 'missed' &&
+        !QUIET_WORDS.has(w.id) &&
+        !(opts.forPause && NO_PAUSE.has(w.id)) &&
+        isNew(learned.words[w.id]),
+    )?.id ?? null
 
   // Flash cards: each word (and the opening) met this game, in game order.
   const cards = useMemo(

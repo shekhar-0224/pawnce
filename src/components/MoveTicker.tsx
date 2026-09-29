@@ -26,7 +26,7 @@ const TONE: Record<Quality, string> = {
   best: 'text-success',
   good: 'text-success',
   inaccuracy: 'text-warn',
-  mistake: 'text-warn',
+  mistake: 'text-danger',
   blunder: 'text-danger',
 }
 
