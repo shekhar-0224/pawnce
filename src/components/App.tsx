@@ -8,6 +8,7 @@ import { analyst, engine } from '../engine/stockfish'
 import { GameScreen } from './GameScreen'
 import { RecentGamesScreen } from './RecentGamesScreen'
 import { SavedGameSummary } from './SavedGameSummary'
+import { WordPage, WordsPage } from './WordsPage'
 import { newGameId } from '../storage/recentGames'
 import { type SidePref, StartScreen } from './StartScreen'
 
@@ -45,6 +46,7 @@ type Match = { gameId: string; myColor: Color }
  *   /play                 the game you're playing now
  *   /game/<id>/summary    a game's summary (?ply=12 opens the replay at a move)
  *   /games                recent games
+ *   /words, /words/<id>   your chess vocabulary, and one word
  */
 export default function App() {
   const navigate = useNavigate()
@@ -117,6 +119,8 @@ export default function App() {
                   />
                 }
               />
+              <Route path="/words" element={<WordsPage />} />
+              <Route path="/words/:wordId" element={<WordPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </motion.div>

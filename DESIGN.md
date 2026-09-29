@@ -142,20 +142,46 @@ are secondary.
 ## Vocabulary memory
 - Every chess word you meet is counted in this browser: seen (either side),
   played by you, and missed (a tactic you could have played instead of a
-  slip). Openings you meet are collected by family.
-- **New tag, no pop-ups.** The first times a word shows up, the coach adds a
-  lime `NEW` tag with a question ("What's a fork?"). Tapping it opens the
-  meaning and a tip right there, and the word counts as known. A word stays
-  New until tapped or met 3 times. Tags never queue: only the current move's
-  word is tagged. On phones the verdict strip shows the tag; tap the strip
-  to open the coach and the explainer.
-- **Game summary:** a "Words from this game" tile lists every word met
-  (new ones in lime) and opens a flash-card deck, one card per word or
-  opening: meaning, what happened in this game, a tip. "Got it" marks it
-  known.
-- **Home:** a "Your chess vocabulary" tile: "X of 29 words known", how many
-  are waiting to learn, a progress bar, and "See all words" (a sheet by
-  category: Known, New, Not met yet; tap one for its meaning and counts).
+  slip), plus the game and move where you first met it. Openings you meet
+  are collected by family. All 29 words can be met in games: hanging piece
+  (taking an undefended piece, not a recapture) and trade (a capture
+  answered by an equal recapture) are detected too.
+- **Learning in the moment.** When a move shows a word you haven't learned,
+  the game pauses (bot and clocks wait) and its flash card opens in a sheet,
+  with "In your game: …". "Got it · continue" marks it learned (it never
+  interrupts again); "Not now" continues. One card per move, after any
+  mistake card. A "Pause for new words" switch lives in the Menu (phones),
+  the side panel (desktop) and a "Turn off" link on the card. The coach
+  still shows the `NEW` tag with "What's a fork?".
+- **Flash cards** (like vocabulary cards): category and `NEW` pill, the word
+  large, a plain definition, an example board (the move highlighted in
+  lime; lime lines for what it hits, a faint lime arrow for a better move,
+  a red arrow for the reply), a caption, "In your game" with "See the move",
+  and a tip. Every word has a checked example position
+  (`src/chess/examples.ts`).
+- **Decks:** swipe left for the next card, right to go back (or the arrow
+  buttons); progress dots below. Seeing a card marks its word learned. At
+  the end, "Quiz me": up to 5 questions ("Which word does this board show?"
+  or "Which word means this?"), 4 choices from the same group where
+  possible, instant right/wrong with the explanation, then a score.
+- **Game summary:** "Words from this game" is a list (move number, word, one
+  line of meaning, `NEW` pill). Tapping a word jumps the replay to that move
+  (scrolling it into view on phones). While replaying, the words at the
+  current move are highlighted in the list, named on a chip over the board
+  and explained under it.
+- **Home:** "Your chess vocabulary" tile (X of 29 known, how many waiting,
+  word chips linking to each word, "See all words").
+- **/words:** every word by group with its definition and status (Known,
+  New, Not met yet); learned words link "First met: vs Frog · 4. O-O ›" to
+  that game's summary at that move. "Study all 29" and "Study the ones I've
+  met" open decks. **/words/<id>**: the word's card and seen / played /
+  missed counts.
+
+## Pages
+`/` home · `/play` the game · `/game/<id>/summary` a game's summary
+(`?ply=12` opens the replay at a move) · `/games` recent games (each opens
+its summary) · `/words` and `/words/<id>`. Games are saved in full in this
+browser (moves, grades, new words), so summaries reopen later.
 
 ## Move quality
 Compared with the best move on the whole board, by winning chances lost

@@ -178,8 +178,19 @@ and rook."
 
 - Every chess word you meet is counted in your browser: seen, played by you,
   or missed. A missed word is a tactic that was the better move when you
-  slipped.
-- A word shows a **NEW** tag until you tap its explainer or meet it 3 times.
+  slipped. Pawnce also remembers the game and move where you first met it.
+- Tactic words count only when the tactic works (see §6). **Hanging piece**
+  = taking a piece nobody defended (not a recapture). **Trade** = a capture
+  answered by an equal recapture on the same square. Game-ending words
+  (stalemate, repetition, 50-move rule, not enough pieces, flag, resign)
+  are counted when a game ends that way.
+- A word is **New** until you tap its explainer (or "Got it" on its card) or
+  meet it 3 times.
+- When a move shows a New word, the game pauses and opens its flash card
+  (one per move; switch off with "Pause for new words").
+- Every one of the 29 words has an example position on its flash card,
+  checked with the chess rules library, so you can learn words you haven't
+  met yet from the words page.
 
 (`src/components/useVocab.ts`, `src/storage/learned.ts`)
 
