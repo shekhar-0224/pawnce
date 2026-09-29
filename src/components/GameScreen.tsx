@@ -4,6 +4,7 @@ import type { Arrow } from 'react-chessboard'
 import { type TimeControl, timeControlName } from '../chess/clock'
 import { type Color, capturedPieces, colorToSide, otherColor } from '../chess/game'
 import { openingMoments, openingOf } from '../chess/openings'
+import { detectTactics, mainTactic, tacticHolds } from '../chess/tactics'
 import type { Bot } from '../engine/bots'
 import { readToken, withAlpha } from '../theme'
 import { BotAvatar, YouAvatar } from './BotAvatar'
@@ -17,6 +18,7 @@ import { LeaveDialog } from './LeaveDialog'
 import { MomentCard } from './MomentCard'
 import { MoveTicker } from './MoveTicker'
 import { Logo } from './Logo'
+import { PatternChip } from './PatternChip'
 import { PlayerBar } from './PlayerBar'
 import { GameSummary } from './GameSummary'
 import { SidePanel } from './SidePanel'
@@ -94,6 +96,21 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
     showBetterFor === myLastIndex ? (analysis.verdicts[myLastIndex]?.betterMove ?? null) : null
 
   const momentRefutation = moment?.verdict.refutation ?? null
+
+  // A tactic that really works (either side) flashes on the board: lines
+  // from the attacker to its targets and a "FORK!" chip, for about 1.5s.
+  const lastTactic = useMemo(() => {
+    if (!lastMove || !tacticHolds(lastVerdict?.quality)) return null
+    return mainTactic(detectTactics(lastMove.before, lastMove))
+  }, [lastMove, lastVerdict?.quality])
+  const [flashDonePly, setFlashDonePly] = useState(-1)
+  const flash = lastTactic && flashDonePly !== lastPly ? lastTactic : null
+  const flashMine = lastMove?.color === myColor
+  useEffect(() => {
+    if (!lastTactic) return
+    const t = setTimeout(() => setFlashDonePly(lastPly), 1600)
+    return () => clearTimeout(t)
+  }, [lastTactic, lastPly])
   const arrows = useMemo<Arrow[]>(() => {
     const lagoon = readToken('--accent-2', '#3fb8af')
     if (analysis.hints) {
@@ -116,6 +133,11 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
         color: withAlpha(danger, i === 0 ? 0.9 : 0.55),
       }))
     }
+    if (flash) {
+      const tone = flashMine ? readToken('--accent', '#c6f36b') : readToken('--danger', '#f2555a')
+      const [origin, ...targets] = flash.squares
+      return targets.map((t) => ({ startSquare: origin, endSquare: t, color: withAlpha(tone, 0.8) }))
+    }
     // After the bot moves: what it threatens next, in amber.
     if (analysis.threat) {
       const warn = readToken('--warn', '#f2b84b')
@@ -126,7 +148,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
       }))
     }
     return []
-  }, [analysis.hints, betterMove, momentRefutation, analysis.threat])
+  }, [analysis.hints, betterMove, momentRefutation, flash, flashMine, analysis.threat])
 
   // Give the final move a beat to land before the result card pops up.
   useEffect(() => {
@@ -282,6 +304,20 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
             onMove={g.play}
             arrows={arrows}
           />
+          <AnimatePresence>
+            {flash && !analysis.hints && !momentRefutation && (
+              <PatternChip
+                key={lastPly}
+                kind={flash.kind}
+                mine={flashMine}
+                atBottom={
+                  // Most of the tactic on the top half of the screen? Chip goes low.
+                  flash.squares.filter((sq) => (Number(sq[1]) >= 5) === (orientation === 'white')).length * 2 >
+                  flash.squares.length
+                }
+              />
+            )}
+          </AnimatePresence>
           {/* Phones: the teaching moment sits right under the board. */}
           <div className="mt-2 min-[900px]:hidden">{momentCard}</div>
         </div>

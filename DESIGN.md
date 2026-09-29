@@ -113,6 +113,11 @@ are secondary.
   amber: "Watch out: their knight threatens a fork on c2, hitting your king
   and rook." The board draws the threat in `--warn`: the move, then lines
   to its targets. Hints and teaching moments take priority on the board.
+- **Patterns show on the board.** When a tactic really works (graded good,
+  best or book), for either side, the board draws lines from the attacker to
+  its targets and a small mono chip ("FORK!", "PIN!") for about 1.5s: lime
+  for yours, red for the bot's. The chip sits on the half of the board away
+  from the tactic, so it never hides it.
 - The teaching-moment card never covers the board: under the board on
   phones, at the top of the side panel on desktop.
 
