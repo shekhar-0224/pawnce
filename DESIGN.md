@@ -80,6 +80,18 @@ formula); the draw share is sized for everyday players.
 - A mistake or blunder pauses the game (clock too) with a card over the lower
   board: what it cost, the better move, Take it back / Show better / Play on.
 
+## Naming comes first
+Every piece of feedback names a pattern in board terms; grades and numbers
+are secondary.
+- **Slips (inaccuracy, mistake, blunder)** are explained by the opponent's
+  best reply: what it captures, what it attacks, any tactic it creates, or a
+  forced mate. E.g. "The bishop on c8 can capture your queen on g4 for free."
+  Win % and pawns' worth sit underneath as one small mono line.
+- During a teaching moment the board draws that reply in `--danger`
+  (targets fainter); "Show better" swaps it for the better move in accent.
+- The teaching-moment card never covers the board: under the board on
+  phones, at the top of the side panel on desktop.
+
 ## Move quality
 Compared with the best move on the whole board, by winning chances lost
 (10 / 20 / 30 points) and score lost in pawns (0.8 / 1.5 / 3), keeping the

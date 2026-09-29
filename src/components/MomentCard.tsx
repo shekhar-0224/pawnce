@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import type { Move } from '../chess/game'
 import { plainName } from '../chess/naming'
 import { Button } from './Button'
-import type { MoveVerdict } from './useAnalysis'
+import { type MoveVerdict, costLine } from './useAnalysis'
 
 type Props = {
   move: Move
@@ -19,19 +19,14 @@ type Props = {
  */
 export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBetter, onPlayOn }: Props) {
   const blunder = verdict.quality === 'blunder'
-  const pawns = verdict.cpLoss / 100
-  const cost =
-    pawns >= 0.8
-      ? `It gives away about ${pawns >= 2 ? Math.round(pawns) : pawns.toFixed(1)} pawns' worth.`
-      : `Your winning chances drop from ${Math.round(verdict.winBefore)}% to ${Math.round(verdict.winAfter)}%.`
   return (
     <motion.div
       role="alertdialog"
       aria-label={blunder ? 'Blunder' : 'Mistake'}
-      className="absolute inset-x-2 bottom-2 z-30 rounded-card border border-border bg-surface/95 p-4 shadow-raised backdrop-blur sm:inset-x-4 sm:bottom-4"
-      initial={{ y: 24, opacity: 0 }}
+      className="rounded-card border border-danger/40 bg-surface p-4"
+      initial={{ y: 8, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 24, opacity: 0 }}
+      exit={{ y: 8, opacity: 0 }}
       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
     >
       <div className="flex items-start gap-3">
@@ -47,9 +42,11 @@ export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBet
             {blunder ? 'Blunder!' : 'Mistake'} <span className="text-muted">{move.san}</span>
           </p>
           <p className="text-sm text-muted">{plainName(move)}</p>
-          <p className="mt-1 text-[15px]">
-            {cost} {verdict.better ? `${verdict.better} was better.` : ''} The clock is paused.
+          <p className="mt-1 text-[15px] leading-snug">
+            {verdict.refutation?.text ?? 'This lets your opponent take over.'}
+            {verdict.better ? ` ${verdict.better} was better.` : ''}
           </p>
+          <p className="mt-1 font-mono text-xs text-muted">{costLine(verdict)} · clock paused</p>
         </div>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2">

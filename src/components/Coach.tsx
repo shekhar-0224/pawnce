@@ -4,7 +4,7 @@ import { type Quality, describeTactic, plainName, termsFor } from '../chess/nami
 import { detectTactics, mainTactic } from '../chess/tactics'
 import type { Bot } from '../engine/bots'
 import { ThinkingDots } from './ThinkingDots'
-import type { MoveVerdict } from './useAnalysis'
+import { type MoveVerdict, costLine } from './useAnalysis'
 
 type Props = {
   moves: Move[]
@@ -25,20 +25,6 @@ const BADGE: Record<Quality, { mark: string; word: string; tone: string }> = {
 }
 
 const pct = (n: number) => `${Math.round(n)}%`
-
-/** "It gives away about 3 pawns' worth. Winning chances: 41% → 7%." */
-function costOf(v: MoveVerdict): string {
-  const pawns = v.cpLoss / 100
-  const worth =
-    pawns >= 0.8
-      ? `It gives away about ${pawns >= 2 ? Math.round(pawns) : pawns.toFixed(1)} pawns' worth. `
-      : ''
-  const moved = Math.abs(v.winBefore - v.winAfter) >= 2
-  const chances = moved
-    ? `Your winning chances: ${pct(v.winBefore)} → ${pct(v.winAfter)}.`
-    : `Your winning chances were already ${pct(v.winBefore)}, but every piece still counts.`
-  return worth + chances
-}
 
 /**
  * The coach: talks about YOUR last move (how good it was, and why), then
@@ -110,8 +96,9 @@ function YourMove({
   const bad = verdict && ['inaccuracy', 'mistake', 'blunder'].includes(verdict.quality)
 
   let why: string | null = null
-  if (tactic) why = describeTactic(tactic, true, botName, move.piece)
-  else if (bad && verdict) why = costOf(verdict)
+  // A slip is explained by what the opponent can now do, in board terms.
+  if (bad && verdict) why = verdict.refutation?.text ?? null
+  else if (tactic) why = describeTactic(tactic, true, botName, move.piece)
   else if (term) why = term.explain
   else if (verdict?.quality === 'book') why = 'A well-known opening move that masters play all the time.'
 
@@ -136,6 +123,7 @@ function YourMove({
       </div>
       {!verdict && <p className="text-sm text-muted">Checking your move…</p>}
       {why && <p className="text-[15px] leading-snug">{why}</p>}
+      {bad && verdict && <p className="font-mono text-xs text-muted">{costLine(verdict)}</p>}
       {bad && verdict?.better && (
         <button
           type="button"

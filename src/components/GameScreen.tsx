@@ -86,6 +86,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
   const betterMove =
     showBetterFor === myLastIndex ? (analysis.verdicts[myLastIndex]?.betterMove ?? null) : null
 
+  const momentRefutation = moment?.verdict.refutation ?? null
   const arrows = useMemo<Arrow[]>(() => {
     const lagoon = readToken('--accent-2', '#3fb8af')
     if (analysis.hints) {
@@ -99,8 +100,17 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
       const leaf = readToken('--success', '#7bc67e')
       return [{ startSquare: betterMove.from, endSquare: betterMove.to, color: withAlpha(leaf, 0.9) }]
     }
+    // During a teaching moment: show what the opponent can now do, in red.
+    if (momentRefutation) {
+      const danger = readToken('--danger', '#f2555a')
+      return momentRefutation.arrows.map((a, i) => ({
+        startSquare: a.from,
+        endSquare: a.to,
+        color: withAlpha(danger, i === 0 ? 0.9 : 0.55),
+      }))
+    }
     return []
-  }, [analysis.hints, betterMove])
+  }, [analysis.hints, betterMove, momentRefutation])
 
   // Give the final move a beat to land before the result card pops up.
   useEffect(() => {
@@ -176,6 +186,30 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
     </PlayerBar>
   )
 
+  const momentCard = (
+    <AnimatePresence>
+      {moment && (
+        <MomentCard
+    key={lastPly}
+    move={moment.move}
+    verdict={moment.verdict}
+    showingBetter={betterMove !== null}
+    onTakeBack={() => {
+      setShowBetterFor(null)
+      g.takeBack()
+    }}
+    onShowBetter={() =>
+      setShowBetterFor((v) => (v === lastPly ? null : lastPly))
+    }
+    onPlayOn={() => {
+      setShowBetterFor(null)
+      setDismissedPly(lastPly)
+    }}
+  />
+      )}
+    </AnimatePresence>
+  )
+
   // The bar nearest each side of the board belongs to the player sitting there.
   const flipped = orientation !== colorToSide(myColor)
 
@@ -232,27 +266,8 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
             onMove={g.play}
             arrows={arrows}
           />
-          <AnimatePresence>
-            {moment && (
-              <MomentCard
-                key={lastPly}
-                move={moment.move}
-                verdict={moment.verdict}
-                showingBetter={betterMove !== null}
-                onTakeBack={() => {
-                  setShowBetterFor(null)
-                  g.takeBack()
-                }}
-                onShowBetter={() =>
-                  setShowBetterFor((v) => (v === lastPly ? null : lastPly))
-                }
-                onPlayOn={() => {
-                  setShowBetterFor(null)
-                  setDismissedPly(lastPly)
-                }}
-              />
-            )}
-          </AnimatePresence>
+          {/* Phones: the teaching moment sits right under the board. */}
+          <div className="mt-2 min-[900px]:hidden">{momentCard}</div>
         </div>
 
         {flipped ? botBar : youBar}
@@ -276,6 +291,9 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
             }
             hint={analysis.hints && <HintCard hints={analysis.hints} />}
             coach={
+              moment ? (
+                <div className="hidden min-[900px]:block">{momentCard}</div>
+              ) : (
               <Coach
                 moves={g.moves}
                 verdicts={analysis.verdicts}
@@ -286,6 +304,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
                   setShowBetterFor((v) => (v === myLastIndex ? null : myLastIndex))
                 }
               />
+              )
             }
             onNewGame={onNewGame}
             onResign={g.resign}
