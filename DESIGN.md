@@ -103,6 +103,10 @@ are secondary.
   re-announced. Later book moves read "Still in the Petrov's Defense: a
   standard move here." A book move that loses 80+ centipawns is graded
   normally, never "book".
+- **Hints are honest.** Each hint shows the move and its idea, no win %.
+  "Wins a free knight" only when the engine line (the move plus 3 moves
+  each) still has that material won. Otherwise: "Takes the pawn, but they
+  can win it back", "you come out a little ahead", or a plain trade.
 - The teaching-moment card never covers the board: under the board on
   phones, at the top of the side panel on desktop.
 

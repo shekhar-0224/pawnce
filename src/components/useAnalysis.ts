@@ -7,7 +7,7 @@ import { type Refutation, describeRefutation } from '../chess/refutation'
 import { loadOpenings, openingAt } from '../chess/openings'
 import type { Result } from '../chess/outcome'
 import { analyst } from '../engine/stockfish'
-import { cappedCp, winPercentFor, winPercentForMover } from '../engine/winChance'
+import { cappedCp, winPercentForMover } from '../engine/winChance'
 
 export const HINTS_PER_GAME = 2
 
@@ -24,8 +24,6 @@ export type Hint = {
   to: Square
   san: string
   idea: string
-  /** Your winning chances after this move, 0 to 100. */
-  winPct: number
 }
 
 /** The engine's verdict on one position. */
@@ -185,12 +183,11 @@ export function useAnalysis(
         to,
         san,
         idea: describeIdea(at, line.move, line),
-        winPct: winPercentFor(myColor, myColor, line),
       }
     })
     setHintsLeft((n) => n - 1)
     setHint({ fen: at, lines })
-  }, [myTurn, hintsLeft, hintLoadingFen, fen, myColor])
+  }, [myTurn, hintsLeft, hintLoadingFen, fen])
 
   // The rope: the latest judged position (it catches up after each move),
   // settling on the final result once the game ends.

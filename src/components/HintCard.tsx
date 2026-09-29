@@ -26,10 +26,7 @@ export function HintCard({ hints }: { hints: Hint[] }) {
               {h.rank + 1}
             </span>
             <div className="min-w-0 flex-1">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="font-mono font-semibold">{h.san}</span>
-                <span className="text-xs font-bold text-muted">you {Math.round(h.winPct)}%</span>
-              </div>
+              <span className="font-mono font-semibold">{h.san}</span>
               <p className="text-sm text-muted">{h.idea}</p>
             </div>
           </li>

@@ -24,6 +24,31 @@ function allSquares(game: Chess, color: Color): { square: Square; type: PieceSym
 const isHanging = (game: Chess, square: Square, owner: Color) =>
   game.isAttacked(square, otherColor(owner)) && game.attackers(square, owner).length === 0
 
+const material = (game: Chess, color: Color) =>
+  allSquares(game, color).reduce((sum, p) => sum + (p.type === 'k' ? 0 : VALUE[p.type]), 0)
+
+/** How many plies of the engine line to trust: the move, then 3 each. */
+const LOOKAHEAD = 7
+
+/**
+ * Material won (+) or lost (-) by `me` after following the engine line
+ * for up to 3 moves each. Null if the line is too short to tell.
+ */
+function materialSwing(fen: string, pv: string[], me: Color): number | null {
+  if (pv.length < 3) return null
+  const game = new Chess(fen)
+  const them = otherColor(me)
+  const start = material(game, me) - material(game, them)
+  for (const uci of pv.slice(0, LOOKAHEAD)) {
+    try {
+      game.move(parseUci(uci))
+    } catch {
+      break
+    }
+  }
+  return material(game, me) - material(game, them) - start
+}
+
 export function describeIdea(fen: string, uci: string, line: Line): string {
   const before = new Chess(fen)
   const me = before.turn()
@@ -58,21 +83,33 @@ export function describeIdea(fen: string, uci: string, line: Line): string {
 
   const check = after.inCheck()
 
-  // 3. Captures: free piece, winning trade, even trade
+  // 3. Captures: only call it "free" if the engine's line keeps it won
   if (move.captured) {
     const victim = PIECE_NAMES[move.captured]
     const reply = line.pv[1]
     const retaken = reply?.slice(2, 4) === capturedSquare(move)
     const withCheck = check ? ', with check' : ''
-    if (!retaken) return `Wins a free ${victim}${withCheck}.`
-    if (VALUE[move.captured] > VALUE[piece.type]) {
-      return `Wins material: your ${name} takes their ${victim}, worth more than it${withCheck}.`
+    const net = materialSwing(fen, line.pv, me)
+    const gained = VALUE[move.captured]
+    if (net === null) {
+      // Line too short to check: fall back to "is it taken back at once?"
+      if (!retaken) return `Takes the ${victim}${withCheck}.`
+    } else if (net >= gained) {
+      return retaken
+        ? `Wins the ${victim}${withCheck}: even after the trades, you stay ahead.`
+        : `Wins a free ${victim}${withCheck}.`
+    } else if (net > 0) {
+      return `Takes the ${victim}${withCheck}. After the trades, you come out a little ahead.`
+    } else if (net < 0) {
+      return `Takes the ${victim}, but gives some material back. The engine likes the position you get.`
+    } else if (!retaken) {
+      return `Takes the ${victim}${withCheck}, but they can win it back.`
     }
     if (move.captured === piece.type) return `Trades ${name}s. A fair swap that simplifies the game.`
     if (VALUE[move.captured] === VALUE[piece.type]) {
       return `Trades your ${name} for their ${victim}, an even swap.`
     }
-    return `Takes the ${victim}${withCheck}.`
+    return `Takes the ${victim}${withCheck}, but they can win it back.`
   }
 
   // 4. Tactics (fork, pin, skewer, discovered attack), then plain threats
