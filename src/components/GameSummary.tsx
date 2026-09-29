@@ -10,9 +10,9 @@ import type { Bot } from '../engine/bots'
 import { color } from '../theme'
 import { pieceSet } from '../theme/pieces'
 import { WORDS_BY_ID } from '../chess/glossary'
-import { learnWord } from '../storage/learned'
 import { Button } from './Button'
-import { LearnCard } from './LearnCard'
+import { gameContext } from './cardContext'
+import { type DeckItem, FlashDeck } from './FlashDeck'
 import { Sheet } from './Sheet'
 import type { LearnCardData } from './useVocab'
 import type { MoveVerdict } from './useAnalysis'
@@ -169,9 +169,26 @@ export function GameSummary(p: Props) {
   const current = ply >= 0 ? moves[ply] : null
   const currentVerdict = ply >= 0 ? verdicts[ply] : null
 
-  // The flash-card deck: null when closed, otherwise the card showing.
-  const [deckAt, setDeckAt] = useState<number | null>(null)
-  const deckCard = deckAt !== null ? p.cards[deckAt] : null
+  // The flash-card deck: each word (and opening) from this game.
+  const [deckOpen, setDeckOpen] = useState(false)
+  const deck = useMemo<DeckItem[]>(
+    () =>
+      p.cards.flatMap((c): DeckItem[] => {
+        const move = moves[c.ply]
+        if (!move) return []
+        const context = {
+          text: gameContext(c, move, verdicts[c.ply] ?? null, move.color === myColor, bot),
+          onJump: () => {
+            setDeckOpen(false)
+            setPly(c.ply)
+          },
+        }
+        return c.kind === 'word'
+          ? [{ card: { kind: 'word' as const, id: c.id }, context }]
+          : [{ card: { kind: 'opening' as const, name: c.name, fen: move.after, last: { from: move.from, to: move.to } }, context }]
+      }),
+    [p.cards, moves, verdicts, myColor, bot],
+  )
   const newSet = new Set(p.newThisGame)
 
   const resultTone =
@@ -311,7 +328,7 @@ export function GameSummary(p: Props) {
                   </span>
                 ))}
               </div>
-              <Button variant="primary" onClick={() => setDeckAt(0)}>
+              <Button variant="primary" onClick={() => setDeckOpen(true)}>
                 Review {p.cards.length} flash {p.cards.length === 1 ? 'card' : 'cards'}
               </Button>
             </>
@@ -392,22 +409,9 @@ export function GameSummary(p: Props) {
       </div>
 
       <AnimatePresence>
-        {deckCard && deckAt !== null && (
-          <Sheet key="deck" title="Flash cards" onClose={() => setDeckAt(null)}>
-            <LearnCard
-              key={deckAt}
-              card={deckCard}
-              moves={moves}
-              verdicts={verdicts}
-              myColor={myColor}
-              bot={bot}
-              progress={`${deckAt + 1} / ${p.cards.length}`}
-              actionLabel={deckAt + 1 < p.cards.length ? 'Got it · next' : 'Done'}
-              onGotIt={() => {
-                if (deckCard.kind === 'word') learnWord(deckCard.id)
-                setDeckAt(deckAt + 1 < p.cards.length ? deckAt + 1 : null)
-              }}
-            />
+        {deckOpen && deck.length > 0 && (
+          <Sheet key="deck" title="Flash cards" onClose={() => setDeckOpen(false)}>
+            <FlashDeck items={deck} onClose={() => setDeckOpen(false)} />
           </Sheet>
         )}
       </AnimatePresence>
