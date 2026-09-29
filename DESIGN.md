@@ -107,6 +107,12 @@ are secondary.
   "Wins a free knight" only when the engine line (the move plus 3 moves
   each) still has that material won. Otherwise: "Takes the pawn, but they
   can win it back", "you come out a little ahead", or a plain trade.
+- **Threat alerts.** After the bot moves, the engine checks what it would
+  play if it moved again. If that is a tactic, a mate threat, or wins
+  material (and the engine agrees it gains 1.2+ pawns), the coach warns in
+  amber: "Watch out: their knight threatens a fork on c2, hitting your king
+  and rook." The board draws the threat in `--warn`: the move, then lines
+  to its targets. Hints and teaching moments take priority on the board.
 - The teaching-moment card never covers the board: under the board on
   phones, at the top of the side panel on desktop.
 

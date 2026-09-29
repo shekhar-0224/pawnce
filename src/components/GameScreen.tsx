@@ -116,8 +116,17 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
         color: withAlpha(danger, i === 0 ? 0.9 : 0.55),
       }))
     }
+    // After the bot moves: what it threatens next, in amber.
+    if (analysis.threat) {
+      const warn = readToken('--warn', '#f2b84b')
+      return analysis.threat.arrows.map((a, i) => ({
+        startSquare: a.from,
+        endSquare: a.to,
+        color: withAlpha(warn, i === 0 ? 0.85 : 0.5),
+      }))
+    }
     return []
-  }, [analysis.hints, betterMove, momentRefutation])
+  }, [analysis.hints, betterMove, momentRefutation, analysis.threat])
 
   // Give the final move a beat to land before the result card pops up.
   useEffect(() => {
@@ -307,6 +316,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
                 myColor={myColor}
                 bot={bot}
                 openings={openings}
+                threat={analysis.threat}
                 showingBetter={betterMove !== null}
                 onToggleBetter={() =>
                   setShowBetterFor((v) => (v === myLastIndex ? null : myLastIndex))

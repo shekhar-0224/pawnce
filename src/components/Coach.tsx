@@ -3,6 +3,7 @@ import type { Color, Move } from '../chess/game'
 import { type Quality, TACTIC_LABELS, describeTactic, plainName, termsFor } from '../chess/naming'
 import { explainOpening } from '../chess/openingInfo'
 import { detectTactics, mainTactic, tacticHolds } from '../chess/tactics'
+import type { Threat } from '../chess/threats'
 import type { Bot } from '../engine/bots'
 import { ThinkingDots } from './ThinkingDots'
 import { type MoveVerdict, costLine } from './useAnalysis'
@@ -16,6 +17,8 @@ type Props = {
   onToggleBetter: () => void
   /** Per move: the opening name it newly reached, and the opening after it. */
   openings: { reached: (string | null)[]; current: (string | null)[] }
+  /** What the bot threatens next, if anything. */
+  threat: Threat | null
 }
 
 const BADGE: Record<Quality, { mark: string; word: string; tone: string }> = {
@@ -34,7 +37,7 @@ const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1)
  * The coach: talks about YOUR last move (how good it was, and why), then
  * the bot's reply, only saying more when it matters to you.
  */
-export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBetter, openings }: Props) {
+export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBetter, openings, threat }: Props) {
   // Your most recent move, and the bot's reply to it (if it has replied).
   let mine = -1
   for (let i = moves.length - 1; i >= 0; i--) {
@@ -84,6 +87,7 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
           verdict={replyVerdict ?? null}
           bot={bot}
           reached={openings.reached[mine + 1] ?? null}
+          threat={threat}
         />
       )}
     </section>
@@ -167,11 +171,13 @@ function BotReply({
   verdict,
   bot,
   reached,
+  threat,
 }: {
   move: Move
   verdict: MoveVerdict | null
   bot: Bot
   reached: string | null
+  threat: Threat | null
 }) {
   const tactic = mainTactic(detectTactics(move.before, move))
   const slipped = verdict && (verdict.quality === 'mistake' || verdict.quality === 'blunder')
@@ -194,6 +200,8 @@ function BotReply({
       text: `The ${bot.name} slipped! ${verdict.refutation?.text ?? 'Look for a strong move.'}`,
       tone: 'border border-accent/40 bg-accent/10 text-text',
     }
+  } else if (threat) {
+    note = { text: threat.text, tone: 'border border-warn/50 bg-warn/10 text-text' }
   } else if (helped && verdict) {
     note = {
       text: `Not the ${bot.name}'s best. That helped you: ${pct(100 - verdict.winBefore)} → ${pct(100 - verdict.winAfter)}.`,

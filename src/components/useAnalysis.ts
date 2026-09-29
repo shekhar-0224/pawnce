@@ -5,6 +5,7 @@ import { describeIdea } from '../chess/ideas'
 import { type Quality, classifyMove } from '../chess/naming'
 import { type Refutation, describeRefutation } from '../chess/refutation'
 import { loadOpenings, openingAt } from '../chess/openings'
+import { type Threat, describeThreat, passFen } from '../chess/threats'
 import type { Result } from '../chess/outcome'
 import { analyst } from '../engine/stockfish'
 import { cappedCp, winPercentForMover } from '../engine/winChance'
@@ -55,6 +56,9 @@ export type MoveVerdict = {
 
 const turnOf = (fen: string) => fen.split(' ')[1] as Color
 
+/** How much a "pass" must help the opponent (centipawns) to count as a threat. */
+const THREAT_CP = 120
+
 /**
  * Everything the full-strength `analyst` engine tells us: the live win %
  * (the rope), a grade for every move played, and the hint orbs.
@@ -71,6 +75,8 @@ export function useAnalysis(
   const [hintsLeft, setHintsLeft] = useState(HINTS_PER_GAME)
   const [hint, setHint] = useState<{ fen: string; lines: Hint[] } | null>(null)
   const [hintLoadingFen, setHintLoadingFen] = useState<string | null>(null)
+  // What the opponent would do if you passed, keyed by position.
+  const [passes, setPasses] = useState<Record<string, { threat: Threat | null; cp: number; mate: number | null }>>({})
 
   const fenRef = useRef(fen)
   useEffect(() => {
@@ -119,6 +125,38 @@ export function useAnalysis(
       evaluate(m.after)
     }
   }, [fen, moves, evaluate])
+
+  // Threat alerts: after the bot moves, ask what it would play if you passed.
+  const lastMove = moves[moves.length - 1]
+  const threatFen = myTurn && !result && lastMove && lastMove.color !== myColor ? fen : null
+  const passRequested = useRef(new Set<string>())
+  useEffect(() => {
+    if (!threatFen || passRequested.current.has(threatFen)) return
+    passRequested.current.add(threatFen)
+    const passed = passFen(threatFen)
+    if (!passed) return
+    analyst
+      .search({ fen: passed, movetimeMs: EVAL_MS, depth: 16 })
+      .then((res) => {
+        const line = res.lines[0]
+        if (!line || !res.bestMove) return
+        setPasses((p) => ({
+          ...p,
+          [threatFen]: { threat: describeThreat(passed, res.bestMove!, line.mate ?? null), cp: cappedCp(line), mate: line.mate ?? null },
+        }))
+      })
+      .catch(() => passRequested.current.delete(threatFen))
+  }, [threatFen])
+
+  // Only warn when passing would really cost you: the engine must agree.
+  let threat: Threat | null = null
+  const pass = threatFen ? passes[threatFen] : undefined
+  const now = threatFen ? evals[threatFen] : undefined
+  if (pass?.threat && now) {
+    const botCpNow = myColor === 'w' ? -now.cpWhite : now.cpWhite
+    const realMate = pass.mate !== null && pass.mate > 0
+    if (realMate || pass.cp - botCpNow >= THREAT_CP) threat = pass.threat
+  }
 
   // A grade for every move, once both positions around it are judged.
   const verdicts = useMemo<(MoveVerdict | null)[]>(
@@ -206,6 +244,8 @@ export function useAnalysis(
     verdicts,
     openingsReady,
     hintsLeft,
+    /** What the bot threatens next, if it's a real tactic or material grab. */
+    threat,
     hintLoading: hintLoadingFen === fen,
     /** Hints for the current position only; they vanish once you move. */
     hints: hint?.fen === fen ? hint.lines : null,
