@@ -169,3 +169,12 @@ const PRIORITY: TacticKind[] = [
 export function mainTactic(tactics: Tactic[]): Tactic | null {
   return [...tactics].sort((a, b) => PRIORITY.indexOf(a.kind) - PRIORITY.indexOf(b.kind))[0] ?? null
 }
+
+/**
+ * A tactic only deserves praise if the move holds up: graded good, best or
+ * book. Anything worse means it fails (the opponent has a good answer).
+ */
+export function tacticHolds(quality: string | null | undefined): boolean | null {
+  if (!quality) return null
+  return quality === 'good' || quality === 'best' || quality === 'book'
+}

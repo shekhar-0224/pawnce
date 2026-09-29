@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import type { Color, Move } from '../chess/game'
-import { type Quality, describeTactic, plainName, termsFor } from '../chess/naming'
-import { detectTactics, mainTactic } from '../chess/tactics'
+import { type Quality, TACTIC_LABELS, describeTactic, plainName, termsFor } from '../chess/naming'
+import { detectTactics, mainTactic, tacticHolds } from '../chess/tactics'
 import type { Bot } from '../engine/bots'
 import { ThinkingDots } from './ThinkingDots'
 import { type MoveVerdict, costLine } from './useAnalysis'
@@ -25,6 +25,7 @@ const BADGE: Record<Quality, { mark: string; word: string; tone: string }> = {
 }
 
 const pct = (n: number) => `${Math.round(n)}%`
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1)
 
 /**
  * The coach: talks about YOUR last move (how good it was, and why), then
@@ -95,10 +96,16 @@ function YourMove({
   const badge = verdict ? BADGE[verdict.quality] : null
   const bad = verdict && ['inaccuracy', 'mistake', 'blunder'].includes(verdict.quality)
 
+  // Only praise a tactic that holds up; if it fails, say why.
+  const holds = tacticHolds(verdict?.quality)
   let why: string | null = null
-  // A slip is explained by what the opponent can now do, in board terms.
-  if (bad && verdict) why = verdict.refutation?.text ?? null
-  else if (tactic) why = describeTactic(tactic, true, botName, move.piece)
+  if (tactic && holds === false) {
+    const name = TACTIC_LABELS[tactic.kind].toLowerCase()
+    why = verdict?.refutation
+      ? `That looks like a ${name}, but ${lowerFirst(verdict.refutation.text)}`
+      : `That looks like a ${name}, but it doesn't work here.`
+  } else if (bad && verdict) why = verdict.refutation?.text ?? null
+  else if (tactic && holds) why = describeTactic(tactic, true, botName, move.piece)
   else if (term) why = term.explain
   else if (verdict?.quality === 'book') why = 'A well-known opening move that masters play all the time.'
 
@@ -142,14 +149,21 @@ function BotReply({ move, verdict, bot }: { move: Move; verdict: MoveVerdict | n
   const slipped = verdict && (verdict.quality === 'mistake' || verdict.quality === 'blunder')
   const helped = verdict && verdict.quality === 'inaccuracy'
 
+  const holds = tacticHolds(verdict?.quality)
   let note: { text: string; tone: string } | null = null
-  if (tactic) {
+  if (tactic && holds) {
     note = { text: `Watch out! ${describeTactic(tactic, false, bot.name, move.piece)}`, tone: 'border border-danger/40 bg-danger/10 text-text' }
+  } else if (tactic && holds === false) {
+    const name = TACTIC_LABELS[tactic.kind].toLowerCase()
+    note = {
+      text: `The ${bot.name} tried a ${name}, but it doesn't work. ${verdict?.refutation?.text ?? 'Look for the strongest answer.'}`,
+      tone: 'border border-accent/40 bg-accent/10 text-text',
+    }
   } else if (move.san.endsWith('+')) {
     note = { text: 'Check! Your king is attacked: move it, block, or capture the attacker.', tone: 'border border-danger/40 bg-danger/10 text-text' }
   } else if (slipped && verdict) {
     note = {
-      text: `The ${bot.name} slipped! Your chances went from ${pct(100 - verdict.winBefore)} to ${pct(100 - verdict.winAfter)}. Look for a strong move.`,
+      text: `The ${bot.name} slipped! ${verdict.refutation?.text ?? 'Look for a strong move.'}`,
       tone: 'border border-accent/40 bg-accent/10 text-text',
     }
   } else if (helped && verdict) {

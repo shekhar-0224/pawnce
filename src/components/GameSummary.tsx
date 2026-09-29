@@ -5,7 +5,7 @@ import type { Color, Move } from '../chess/game'
 import { QUALITY_LABELS, QUALITY_MARKS, type Quality, TACTIC_LABELS, termsFor, plainName } from '../chess/naming'
 import type { Opening } from '../chess/openings'
 import type { Result } from '../chess/outcome'
-import { detectTactics, mainTactic, type TacticKind } from '../chess/tactics'
+import { detectTactics, mainTactic, tacticHolds, type TacticKind } from '../chess/tactics'
 import type { Bot } from '../engine/bots'
 import { color } from '../theme'
 import { pieceSet } from '../theme/pieces'
@@ -94,14 +94,15 @@ export function GameSummary(p: Props) {
         out.push({
           ply,
           tone: QUALITY_TONE[v.quality],
-          label: `${TACTIC_LABELS[tactic.kind]}, but a ${v.quality}`,
-          text: `${m.san}${v.better ? `; ${v.better} was better` : ''}.`,
+          label: `Looked like a ${TACTIC_LABELS[tactic.kind].toLowerCase()}`,
+          text: `${m.san} was a ${v.quality}${v.better ? `; ${v.better} was better` : ''}.`,
         })
         return
       }
-      if (mine && tactic) {
+      const holds = tacticHolds(v?.quality)
+      if (mine && tactic && holds) {
         out.push({ ply, tone: 'text-accent', label: `${TACTIC_LABELS[tactic.kind]}!`, text: `You played ${m.san}.` })
-      } else if (!mine && tactic) {
+      } else if (!mine && tactic && holds) {
         out.push({ ply, tone: 'text-danger', label: `${bot.name}'s ${TACTIC_LABELS[tactic.kind].toLowerCase()}`, text: `${m.san} hit you.` })
       }
       if (!v) return
@@ -134,9 +135,10 @@ export function GameSummary(p: Props) {
   const patterns = useMemo(() => {
     const tactics = new Map<TacticKind, { mine: number; theirs: number }>()
     const terms = new Map<string, number>()
-    for (const m of moves) {
+    moves.forEach((m, ply) => {
       const t = mainTactic(detectTactics(m.before, m))
-      if (t) {
+      // Count only tactics that actually worked.
+      if (t && tacticHolds(verdicts[ply]?.quality)) {
         const entry = tactics.get(t.kind) ?? { mine: 0, theirs: 0 }
         if (m.color === myColor) entry.mine++
         else entry.theirs++
@@ -145,9 +147,9 @@ export function GameSummary(p: Props) {
       for (const term of termsFor(m)) {
         if (term.id !== 'capture') terms.set(term.label, (terms.get(term.label) ?? 0) + 1)
       }
-    }
+    })
     return { tactics: [...tactics.entries()], terms: [...terms.entries()] }
-  }, [moves, myColor])
+  }, [moves, verdicts, myColor])
 
   // Replay position: -1 is the start, otherwise the position after that move.
   const [ply, setPly] = useState(moves.length - 1)

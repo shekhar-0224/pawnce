@@ -153,10 +153,12 @@ export function useAnalysis(
         const betterMove = better && before.best ? parseUci(before.best) : null
         const slip = quality === 'inaccuracy' || quality === 'mistake' || quality === 'blunder'
         const refutation =
-          slip && after.best ? describeRefutation(m.after, after.best, after.mate) : null
+          slip && after.best
+            ? describeRefutation(m.after, after.best, after.mate, m.color === myColor ? 'mover' : 'punisher')
+            : null
         return { quality, winBefore, winAfter, cpLoss, better, betterMove, refutation }
       }),
-    [moves, evals, openingsReady],
+    [moves, evals, openingsReady, myColor],
   )
 
   const requestHint = useCallback(async () => {

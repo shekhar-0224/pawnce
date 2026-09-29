@@ -89,6 +89,12 @@ are secondary.
   Win % and pawns' worth sit underneath as one small mono line.
 - During a teaching moment the board draws that reply in `--danger`
   (targets fainter); "Show better" swaps it for the better move in accent.
+- **Tactics are verified before praise.** "Fork!" (or any tactic) is
+  celebrated only when the move is graded good, best or book. Otherwise:
+  "That looks like a fork, but the queen on d8 can capture your knight on c7
+  for free." A bot tactic that fails reads "The Ant tried a fork, but it
+  doesn't work", plus how to punish it. Only working tactics count in the
+  ticker and the game summary.
 - The teaching-moment card never covers the board: under the board on
   phones, at the top of the side panel on desktop.
 
