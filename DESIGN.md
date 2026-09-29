@@ -80,6 +80,36 @@ formula); the draw share is sized for everyday players.
 - A mistake or blunder pauses the game (clock too) with a card over the lower
   board: what it cost, the better move, Take it back / Show better / Play on.
 
+## Naming comes first
+Every piece of feedback names a pattern in board terms; grades and numbers
+are secondary.
+- **Slips (inaccuracy, mistake, blunder)** are explained by the opponent's
+  best reply: what it captures, what it attacks, any tactic it creates, or a
+  forced mate. E.g. "The bishop on c8 can capture your queen on g4 for free."
+  Win % and pawns' worth sit underneath as one small mono line.
+- During a teaching moment the board draws that reply in `--danger`
+  (targets fainter); "Show better" swaps it for the better move in accent.
+- **Tactics are verified before praise.** "Fork!" (or any tactic) is
+  celebrated only when the move is graded good, best or book. Otherwise:
+  "That looks like a fork, but the queen on d8 can capture your knight on c7
+  for free." A bot tactic that fails reads "The Ant tried a fork, but it
+  doesn't work", plus how to punish it. Only working tactics count in the
+  ticker and the game summary.
+- **Openings are naming moments.** When a move enters a new opening family
+  the coach names it and says whose choice it was: "You're in the Petrov's
+  Defense. Black copies White and counter-attacks e4…" or "The Frog steered
+  into the Italian Game." A deeper variation of the same family only updates
+  the moves header ("Petrov's Defense · chosen by the Frog"); it is not
+  re-announced. Later book moves read "Still in the Petrov's Defense: a
+  standard move here." A book move that loses 80+ centipawns is graded
+  normally, never "book".
+- **Hints are honest.** Each hint shows the move and its idea, no win %.
+  "Wins a free knight" only when the engine line (the move plus 3 moves
+  each) still has that material won. Otherwise: "Takes the pawn, but they
+  can win it back", "you come out a little ahead", or a plain trade.
+- The teaching-moment card never covers the board: under the board on
+  phones, at the top of the side panel on desktop.
+
 ## Move quality
 Compared with the best move on the whole board, by winning chances lost
 (10 / 20 / 30 points) and score lost in pawns (0.8 / 1.5 / 3), keeping the

@@ -3,6 +3,8 @@
  * The data (about 3,800 openings) is loaded only when first needed, so the
  * start screen stays fast. Rebuild it with: node scripts/build-openings.mjs
  */
+import { openingFamily } from './openingInfo'
+
 export type Opening = { eco: string; name: string }
 
 type OpeningData = Record<string, string[]>
@@ -38,4 +40,28 @@ export function openingOf(fens: string[]): (Opening & { ply: number }) | null {
     if (o) return { ...o, ply: i }
   }
   return null
+}
+
+/**
+ * For each move: the opening name it newly reached (null if the name didn't
+ * change), and the opening the game is in after it.
+ */
+export function openingMoments(fens: string[]): { reached: (string | null)[]; current: (string | null)[] } {
+  const reached: (string | null)[] = []
+  const current: (string | null)[] = []
+  let last: string | null = null
+  let lastFamily: string | null = null
+  for (const fen of fens) {
+    const o = openingAt(fen)
+    // Only a new family is a naming moment; "Petrov's Defense: Classical
+    // Attack" after "Petrov's Defense" just updates the header.
+    const family = o ? openingFamily(o.name) : null
+    reached.push(o && family !== lastFamily ? o.name : null)
+    if (o) {
+      last = o.name
+      lastFamily = family
+    }
+    current.push(last)
+  }
+  return { reached, current }
 }

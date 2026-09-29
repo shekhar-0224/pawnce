@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import type { Color, Move } from '../chess/game'
 import { type Quality, QUALITY_MARKS, TACTIC_LABELS } from '../chess/naming'
-import { detectTactics, mainTactic } from '../chess/tactics'
+import { detectTactics, mainTactic, tacticHolds } from '../chess/tactics'
 import type { Bot } from '../engine/bots'
 import type { MoveVerdict } from './useAnalysis'
 
@@ -63,7 +63,7 @@ export function MoveTicker({ moves, verdicts, myColor, bot }: Props) {
                 {mine ? 'You' : bot.name}
               </span>
               <span className="shrink-0 font-mono text-sm font-semibold">{move.san}</span>
-              {tactic && (
+              {tactic && tacticHolds(v?.quality) && (
                 <span className="shrink-0 rounded bg-accent px-1.5 text-xs font-semibold text-on-accent">
                   {TACTIC_LABELS[tactic.kind]}!
                 </span>

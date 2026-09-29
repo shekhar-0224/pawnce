@@ -3,10 +3,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { type Color, type Move, type Square, parseUci } from '../chess/game'
 import { describeIdea } from '../chess/ideas'
 import { type Quality, classifyMove } from '../chess/naming'
+import { type Refutation, describeRefutation } from '../chess/refutation'
 import { loadOpenings, openingAt } from '../chess/openings'
 import type { Result } from '../chess/outcome'
 import { analyst } from '../engine/stockfish'
-import { cappedCp, winPercentFor, winPercentForMover } from '../engine/winChance'
+import { cappedCp, winPercentForMover } from '../engine/winChance'
 
 export const HINTS_PER_GAME = 2
 
@@ -23,8 +24,6 @@ export type Hint = {
   to: Square
   san: string
   idea: string
-  /** Your winning chances after this move, 0 to 100. */
-  winPct: number
 }
 
 /** The engine's verdict on one position. */
@@ -35,6 +34,8 @@ type Evaluation = {
   cpWhite: number
   /** The engine's best move here (UCI), if any. */
   best: string | null
+  /** Moves to a forced mate for the side to move (negative: it gets mated). */
+  mate: number | null
 }
 
 /** How one move went: its grade and the chances before and after, for the mover. */
@@ -48,6 +49,8 @@ export type MoveVerdict = {
   better: string | null
   /** The same move as squares, for drawing it on the board. */
   betterMove: { from: Square; to: Square } | null
+  /** For slips: what the opponent's best reply does, in board terms. */
+  refutation: Refutation | null
 }
 
 const turnOf = (fen: string) => fen.split(' ')[1] as Color
@@ -103,7 +106,8 @@ export function useAnalysis(
           winWhite = mated ? (whiteToMove ? 0 : 100) : 50
           cpWhite = mated ? (whiteToMove ? -2000 : 2000) : 0
         }
-        setEvals((e) => ({ ...e, [position]: { winWhite, cpWhite, best: res.bestMove } }))
+        const mate = line?.mate ?? null
+        setEvals((e) => ({ ...e, [position]: { winWhite, cpWhite, best: res.bestMove, mate } }))
       })
       .catch(() => requested.current.delete(position))
   }, [])
@@ -145,9 +149,14 @@ export function useAnalysis(
           }
         }
         const betterMove = better && before.best ? parseUci(before.best) : null
-        return { quality, winBefore, winAfter, cpLoss, better, betterMove }
+        const slip = quality === 'inaccuracy' || quality === 'mistake' || quality === 'blunder'
+        const refutation =
+          slip && after.best
+            ? describeRefutation(m.after, after.best, after.mate, m.color === myColor ? 'mover' : 'punisher')
+            : null
+        return { quality, winBefore, winAfter, cpLoss, better, betterMove, refutation }
       }),
-    [moves, evals, openingsReady],
+    [moves, evals, openingsReady, myColor],
   )
 
   const requestHint = useCallback(async () => {
@@ -174,12 +183,11 @@ export function useAnalysis(
         to,
         san,
         idea: describeIdea(at, line.move, line),
-        winPct: winPercentFor(myColor, myColor, line),
       }
     })
     setHintsLeft((n) => n - 1)
     setHint({ fen: at, lines })
-  }, [myTurn, hintsLeft, hintLoadingFen, fen, myColor])
+  }, [myTurn, hintsLeft, hintLoadingFen, fen])
 
   // The rope: the latest judged position (it catches up after each move),
   // settling on the final result once the game ends.
@@ -205,3 +213,11 @@ export function useAnalysis(
     requestHint,
   }
 }
+
+/** The small secondary line for a slip: "About 3 pawns · chances 41% → 7%". */
+export function costLine(v: MoveVerdict): string {
+  const pawns = v.cpLoss / 100
+  const worth = pawns >= 0.5 ? `About ${pawns >= 2 ? Math.round(pawns) : pawns.toFixed(1)} pawns · ` : ''
+  return `${worth}winning chances ${Math.round(v.winBefore)}% → ${Math.round(v.winAfter)}%`
+}
+
