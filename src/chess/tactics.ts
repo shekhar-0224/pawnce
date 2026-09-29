@@ -23,6 +23,8 @@ export type Tactic = {
    * piece, then the one behind it. Discovered: the piece attacked.
    */
   targets: PieceSymbol[]
+  /** Where the tactic happens: the attacking piece's square, then its targets. */
+  squares: Square[]
 }
 
 export const VALUE: Record<PieceSymbol, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 }
@@ -87,16 +89,22 @@ export function detectTactics(fenBefore: string, move: Pick<Move, 'from' | 'to' 
   const tactics: Tactic[] = []
 
   // Fork: the moved piece attacks two or more worthwhile targets.
-  const forked: PieceSymbol[] = []
+  const forked: { type: PieceSymbol; square: Square }[] = []
   for (const row of after.board()) {
     for (const p of row) {
       if (!p || p.color !== them) continue
       if (!after.attackers(p.square, me).includes(move.to)) continue
-      if (worthy(after, p.square, p.type, them, moved.type)) forked.push(p.type)
+      if (worthy(after, p.square, p.type, them, moved.type)) forked.push({ type: p.type, square: p.square })
     }
   }
   if (forked.length >= 2) {
-    tactics.push({ kind: 'fork', by: moved.type, targets: forked.sort((a, b) => VALUE[b] - VALUE[a]) })
+    forked.sort((a, b) => VALUE[b.type] - VALUE[a.type])
+    tactics.push({
+      kind: 'fork',
+      by: moved.type,
+      targets: forked.map((f) => f.type),
+      squares: [move.to, ...forked.map((f) => f.square)],
+    })
   }
 
   // Pins and skewers: a line piece lines up two enemy pieces.
@@ -105,13 +113,13 @@ export function detectTactics(fenBefore: string, move: Pick<Move, 'from' | 'to' 
     if (!first || !second || first.color !== them || second.color !== them) continue
     // Pins of pawns are too common to be worth teaching; only pieces count.
     if (first.type !== 'k' && first.type !== 'p' && (second.type === 'k' || (VALUE[second.type] > VALUE[first.type] && VALUE[second.type] >= 5))) {
-      tactics.push({ kind: 'pin', by: moved.type, targets: [first.type, second.type] })
+      tactics.push({ kind: 'pin', by: moved.type, targets: [first.type, second.type], squares: [move.to, first.square, second.square] })
     } else if (
       (first.type === 'k' || first.type === 'q' || first.type === 'r') &&
       VALUE[first.type] > VALUE[second.type] &&
       second.type !== 'p'
     ) {
-      tactics.push({ kind: 'skewer', by: moved.type, targets: [first.type, second.type] })
+      tactics.push({ kind: 'skewer', by: moved.type, targets: [first.type, second.type], squares: [move.to, first.square, second.square] })
     }
   }
 
@@ -130,9 +138,10 @@ export function detectTactics(fenBefore: string, move: Pick<Move, 'from' | 'to' 
             kind: movedGivesCheck ? 'double-check' : 'discovered-check',
             by: p.type,
             targets: ['k'],
+            squares: [p.square, target.square],
           })
         } else if (worthy(after, target.square, target.type, them, p.type)) {
-          tactics.push({ kind: 'discovered-attack', by: p.type, targets: [target.type] })
+          tactics.push({ kind: 'discovered-attack', by: p.type, targets: [target.type], squares: [p.square, target.square] })
         }
       }
     }

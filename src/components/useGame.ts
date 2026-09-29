@@ -152,6 +152,22 @@ export function useGame(
     setMoves(movesRef.current)
   }, [myColor, clockOn, timeControl.incrementMs, updateClock])
 
+  /**
+   * "Take back" from the bottom bar: undo your last move, plus the bot's
+   * reply if it already answered, so it's your turn again.
+   */
+  const takeBackRound = useCallback(() => {
+    const cur = movesRef.current
+    const last = cur[cur.length - 1]
+    if (!last) return
+    let n = 0
+    if (last.color === myColor) n = 1
+    else if (cur[cur.length - 2]?.color === myColor) n = 2
+    if (!n) return
+    movesRef.current = cur.slice(0, -n)
+    setMoves(movesRef.current)
+  }, [myColor])
+
   // Flag fall: when the side to move runs out of time, the game ends.
   useEffect(() => {
     if (!clockOn || isOver || clock.runningSince === null) return
@@ -260,6 +276,8 @@ export function useGame(
     clockOn,
     clock,
     takeBack,
+    takeBackRound,
+    canTakeBack: !isOver && moves.some((m) => m.color === myColor),
     resign: () => {
       stopClock()
       setResigned(true)
