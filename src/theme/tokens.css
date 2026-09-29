@@ -15,6 +15,13 @@
   --danger: #f2555a;
   --board-light: #dde4d6;
   --board-dark: #6f8f76;
+  /* Jungle pieces: day (White) and night (Black) tokens */
+  --piece-day: #f6f3e8;
+  --piece-day-edge: #b9b39c;
+  --piece-day-ink: #1f3a2a;
+  --piece-night: #16241c;
+  --piece-night-edge: #050806;
+  --piece-night-ink: #c6f36b;
   --last-move: rgba(198, 243, 107, 0.3);
 
   /* One accent in practice: these are aliases. */
