@@ -54,9 +54,10 @@ export function SavedGameSummary({ id, initialPly, onPlayAgain, onHome, onBack }
   const fens = useMemo(() => moves.map((m) => m.after), [moves])
   const reached = useMemo(() => (openingsReady ? openingMoments(fens).reached : []), [openingsReady, fens])
   const opening = openingsReady ? openingOf(fens) : null
+  const perPly = useMemo(() => wordsPerMove(moves, verdicts, myColor, reached), [moves, verdicts, myColor, reached])
   const cards = useMemo(
-    () => gameCards(wordsPerMove(moves, verdicts, myColor, reached), reached, record?.reason ?? null, moves.length),
-    [moves, verdicts, myColor, reached, record],
+    () => gameCards(perPly, reached, record?.reason ?? null, moves.length),
+    [perPly, reached, record, moves.length],
   )
 
   if (!record || !record.sans) {
@@ -83,6 +84,7 @@ export function SavedGameSummary({ id, initialPly, onPlayAgain, onHome, onBack }
       verdicts={verdicts}
       opening={opening}
       cards={cards}
+      wordsAt={perPly}
       newThisGame={record.newWords ?? []}
       result={record.result}
       title={record.title ?? (record.result === 'win' ? 'You win!' : record.result === 'loss' ? 'You lost' : 'Draw')}

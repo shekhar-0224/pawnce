@@ -151,5 +151,5 @@ export function useVocab(
   /** Words you met for the very first time in this game. */
   const newThisGame = cards.filter((c) => c.kind === 'word' && !before.words[c.id]).map((c) => (c as { id: string }).id)
 
-  return { newWordAt, cards, newThisGame }
+  return { newWordAt, cards, newThisGame, perPly }
 }

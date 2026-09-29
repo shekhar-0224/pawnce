@@ -582,6 +582,7 @@ export function GameScreen({
             verdicts={analysis.verdicts}
             opening={opening}
             cards={vocab.cards}
+            wordsAt={vocab.perPly}
             newThisGame={vocab.newThisGame}
             result={g.summary.result}
             title={g.summary.title}
