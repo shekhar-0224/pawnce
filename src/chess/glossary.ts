@@ -12,6 +12,8 @@ export type WordCategory =
   | 'Move quality'
   | 'Game phases'
   | 'Game endings'
+  | 'Pawns'
+  | 'Strategy'
   | 'Ideas'
 
 export type ChessWord = {
@@ -56,6 +58,12 @@ export const WORDS: ChessWord[] = [
   { id: 'discovered-check', name: 'Discovered check', category: 'Tactics', meaning: 'Moving a piece uncovers a check from the piece behind it.', tip: 'The moving piece is free to grab anything while the king deals with check.' },
   { id: 'double-check', name: 'Double check', category: 'Tactics', meaning: 'Two pieces give check at the same time.', tip: 'Blocking or capturing can’t stop both: the king has to move.' },
   { id: 'hanging-piece', name: 'Hanging piece', category: 'Tactics', meaning: 'A piece that is attacked and not defended, so it can be taken for free.', tip: 'Before every move, ask: is anything of mine or theirs hanging?' },
+  { id: 'battery', name: 'Battery', category: 'Tactics', meaning: 'Two pieces lined up on the same line, like a queen behind a bishop, or two rooks on one file, so their power adds up.', tip: 'Put the stronger piece behind: the front one attacks, the back one backs it up.' },
+  { id: 'trapped-piece', name: 'Trapped piece', category: 'Tactics', meaning: 'A piece that is attacked and has no safe square to run to.', tip: 'Pieces on the edge (a bishop on a7, a knight on h1) get trapped easily.' },
+  { id: 'removing-the-defender', name: 'Removing the defender', category: 'Tactics', meaning: 'Capturing (or chasing away) the piece that guards another, so that one becomes free to take.', tip: 'Ask: which of their pieces is doing an important job? Take it.' },
+  { id: 'mate-threat', name: 'Mate threat', category: 'Tactics', meaning: 'A move that threatens checkmate on the next move.', tip: 'After every enemy move, check: can they mate me now?' },
+  { id: 'perpetual-check', name: 'Perpetual check', category: 'Tactics', meaning: 'Checking the king again and again with no escape, so the game ends in a draw by repetition.', tip: 'Losing? Look for endless checks with your queen: a draw beats a loss.' },
+  { id: 'the-exchange', name: 'The exchange', category: 'Tactics', ask: 'What’s “the exchange”?', meaning: 'Trading a rook for a knight or bishop. The side that gets the rook “wins the exchange”.', tip: 'A rook is worth about 2 points more than a knight or bishop.' },
 
   // Checkmate patterns
   { id: 'back-rank-mate', name: 'Back-rank mate', category: 'Checkmate patterns', meaning: 'A rook or queen checkmates a king stuck on its back row behind its own pawns.', tip: 'Give your king an escape square (“luft”) with a pawn move like h3.' },
@@ -70,6 +78,9 @@ export const WORDS: ChessWord[] = [
   { id: 'inaccuracy', name: 'Inaccuracy', category: 'Move quality', meaning: 'A slightly weaker move that gives away a little of your advantage.', tip: 'Not a disaster, but there was something better.' },
   { id: 'mistake', name: 'Mistake', category: 'Move quality', meaning: 'A clearly weaker move that noticeably hurts your chances.', tip: 'Often a missed threat. Check what the opponent is attacking first.' },
   { id: 'blunder', name: 'Blunder', category: 'Move quality', meaning: 'A serious error, like giving away a piece or allowing checkmate.', tip: 'Before you move, check: can they capture something or give check?' },
+  { id: 'sacrifice', name: 'Sacrifice', category: 'Move quality', meaning: 'Giving up material on purpose to get something bigger: an attack, a better position, or mate.', tip: 'A good sacrifice is calculated. Check what you get back before you give.' },
+  { id: 'brilliant', name: 'Brilliant move', category: 'Move quality', ask: 'What’s a brilliant move?', meaning: 'A sacrifice that is also the very best move on the board.', tip: 'Brilliant moves often look wrong at first: that’s why they’re brilliant.' },
+  { id: 'miss', name: 'Miss', category: 'Move quality', ask: 'What’s a miss?', meaning: 'Your opponent made a big mistake, and you didn’t take advantage of it.', tip: 'When they slip, stop and look for captures and checks before you move.' },
 
   // Game phases
   { id: 'middlegame', name: 'Middlegame', category: 'Game phases', ask: 'What’s the middlegame?', meaning: 'The phase after the opening: the pieces are out and the real fight begins.', tip: 'Make a plan: attack a weakness, or improve your worst piece.' },
@@ -86,6 +97,23 @@ export const WORDS: ChessWord[] = [
   { id: 'fifty-moves', ask: 'What’s the 50-move rule?', name: '50-move rule', category: 'Game endings', meaning: 'Fifty moves each with no capture and no pawn move means a draw.', tip: 'Rare in practice, but good to know.' },
   { id: 'flag', ask: 'What does flagging mean?', name: 'Flag (time out)', category: 'Game endings', meaning: 'Running out of time on the clock loses the game.', tip: 'In fast games, a quick decent move beats a slow perfect one.' },
 
+  // Pawns
+  { id: 'passed-pawn', name: 'Passed pawn', category: 'Pawns', meaning: 'A pawn with no enemy pawns in front of it or on the files next to it: nothing can stop it but pieces.', tip: '“Passed pawns must be pushed.” Every step makes it more dangerous.' },
+  { id: 'doubled-pawns', name: 'Doubled pawns', category: 'Pawns', ask: 'What are doubled pawns?', meaning: 'Two pawns of the same color on the same file, one in front of the other.', tip: 'Doubled pawns can’t protect each other; they’re often a weakness.' },
+  { id: 'isolated-pawn', name: 'Isolated pawn', category: 'Pawns', meaning: 'A pawn with no friendly pawns on the files next to it, so no pawn can ever defend it.', tip: 'Block an isolated pawn with a piece, then attack it.' },
+  { id: 'backward-pawn', name: 'Backward pawn', category: 'Pawns', meaning: 'A pawn left behind its neighbors that can’t safely move forward, because an enemy pawn guards the square in front.', tip: 'The square in front of a backward pawn is a great home for your knight.' },
+  { id: 'pawn-chain', name: 'Pawn chain', category: 'Pawns', meaning: 'Pawns on a diagonal line, each one protecting the next.', tip: 'Attack a pawn chain at its base: the pawn at the back.' },
+
+  // Strategy
+  { id: 'open-file', name: 'Open file', category: 'Strategy', meaning: 'A column with no pawns on it, where rooks and queens can move freely.', tip: 'Put your rooks on open files first; they rule the board from there.' },
+  { id: 'seventh-rank', name: 'Seventh rank', category: 'Strategy', ask: 'What’s the seventh rank?', meaning: 'Your opponent’s second row, where their pawns start. A rook there attacks them and traps their king.', tip: 'A rook on the seventh rank is often worth a pawn.' },
+  { id: 'fianchetto', name: 'Fianchetto', category: 'Strategy', meaning: 'Developing a bishop to b2, g2, b7 or g7, behind a pawn moved one square, to aim down the long diagonal.', tip: 'Don’t trade your fianchettoed bishop lightly: it guards your king.' },
+  { id: 'outpost', name: 'Outpost', category: 'Strategy', meaning: 'A square in enemy territory, protected by your pawn, where no enemy pawn can ever attack your piece.', tip: 'Knights love outposts: a knight on d5 or e6 can dominate the game.' },
+  { id: 'bishop-pair', name: 'Bishop pair', category: 'Strategy', meaning: 'Having both bishops when your opponent doesn’t. Together they cover every square color.', tip: 'Open the position when you have the bishop pair.' },
+  { id: 'kingside-castling', name: 'Kingside castling', category: 'Strategy', meaning: 'Castling on the king’s side (O-O): the king goes to g1 (or g8).', tip: 'The quickest and most common way to get your king safe.' },
+  { id: 'queenside-castling', name: 'Queenside castling', category: 'Strategy', meaning: 'Castling on the queen’s side (O-O-O): the king goes to c1 (or c8) and the rook to d1 (or d8).', tip: 'It brings the rook to the center at once, but the king is a little less tucked away.' },
+  { id: 'connected-rooks', name: 'Connected rooks', category: 'Strategy', ask: 'What are connected rooks?', meaning: 'Both rooks on the same row or file with nothing between them, so they protect each other.', tip: 'Develop and castle; once your rooks connect, the opening is done.' },
+
   // Ideas
   { id: 'development', name: 'Development', category: 'Ideas', meaning: 'Bringing knights and bishops off the back row into play.', tip: 'In the opening, move each piece once before moving one twice.' },
   { id: 'center', name: 'The center', category: 'Ideas', meaning: 'The four middle squares (d4, e4, d5, e5), where pieces are most powerful.', tip: 'Pawns on e4 or d4 are a classic first move for this reason.' },
@@ -95,7 +123,7 @@ export const WORDS: ChessWord[] = [
 export const WORDS_BY_ID: Record<string, ChessWord> = Object.fromEntries(WORDS.map((w) => [w.id, w]))
 
 // Words that read as "What's a fork?" (the rest: "What's castling?").
-const COUNTABLE = new Set(['pawn', 'knight', 'bishop', 'rook', 'queen', 'king', 'minor-piece', 'major-piece', 'back-rank-mate', 'smothered-mate', 'ladder-mate', 'pawn-endgame', 'rook-endgame', 'capture', 'opening', 'fork', 'pin', 'skewer', 'discovered-attack', 'discovered-check', 'double-check', 'hanging-piece', 'book', 'inaccuracy', 'mistake', 'blunder', 'trade'])
+const COUNTABLE = new Set(['battery', 'trapped-piece', 'mate-threat', 'perpetual-check', 'sacrifice', 'passed-pawn', 'isolated-pawn', 'backward-pawn', 'pawn-chain', 'open-file', 'fianchetto', 'outpost', 'pawn', 'knight', 'bishop', 'rook', 'queen', 'king', 'minor-piece', 'major-piece', 'back-rank-mate', 'smothered-mate', 'ladder-mate', 'pawn-endgame', 'rook-endgame', 'capture', 'opening', 'fork', 'pin', 'skewer', 'discovered-attack', 'discovered-check', 'double-check', 'hanging-piece', 'book', 'inaccuracy', 'mistake', 'blunder', 'trade'])
 
 /** The question on a word's "New" tag, e.g. "What's a fork?". */
 export function askAbout(word: ChessWord): string {
@@ -111,6 +139,8 @@ export const WORD_CATEGORIES: WordCategory[] = [
   'Checkmate patterns',
   'Move quality',
   'Game phases',
+  'Pawns',
+  'Strategy',
   'Ideas',
   'Game endings',
 ]

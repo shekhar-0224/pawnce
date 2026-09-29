@@ -193,11 +193,38 @@ and rook."
   rook + queen, mate along the edge), and phases (middlegame from move 8
   with most minor pieces developed; endgame at 6 or fewer pieces besides
   kings and pawns; king-and-pawn and rook endgames).
+- New in batches 2 and 3:
+  - **Battery:** the moved queen/rook/bishop lines up with another of yours
+    on a file or diagonal.
+  - **Trapped piece:** your moved piece attacks an enemy piece that's in
+    danger and has no safe square.
+  - **Removing the defender:** you capture the only guard of another piece,
+    which is now attacked and undefended.
+  - **Mate threat:** if they ignored your move, you'd have mate in one.
+  - **Perpetual check:** a check that repeats the position a third time,
+    after three checks in a row by the same side.
+  - **The exchange:** a rook traded for a knight or bishop on one square.
+  - **Sacrifice:** you end up 2+ points down after their reply (and still
+    after your next move, so it isn't just a trade in progress), yet the
+    engine graded your move good or best. **Brilliant** = a sacrifice that
+    was the best move. **Miss** = the opponent just made a mistake or
+    blunder and your move didn't punish it.
+  - **Pawns:** passed (no enemy pawn ahead on its file or the next ones),
+    doubled, isolated (no friendly pawn on the next files), backward
+    (behind its neighbours with the square in front guarded by an enemy
+    pawn), pawn chain (three pawns on a diagonal).
+  - **Strategy:** open file (a rook/queen moves to a file with no pawns),
+    seventh rank (a rook reaches the opponent's second row), fianchetto (a
+    bishop from c1/f1 to b2/g2, or the black equivalents), outpost (a
+    knight in enemy territory, backed by a pawn, that no enemy pawn can
+    ever attack), bishop pair (one side has both bishops, the other
+    doesn't), kingside / queenside castling, connected rooks (both rooks
+    see each other).
 - A word is **New** until you tap its explainer (or "Got it" on its card) or
   meet it 3 times.
 - When a move shows a New word, the game pauses and opens its flash card
   (one per move; switch off with "Pause for new words").
-- Every one of the 48 words has an example position on its flash card,
+- Every one of the 70 words has an example position on its flash card,
   checked with the chess rules library, so you can learn words you haven't
   met yet from the words page.
 
