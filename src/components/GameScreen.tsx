@@ -29,6 +29,7 @@ import { SidePanel } from './SidePanel'
 import { ThinkingDots } from './ThinkingDots'
 import { HINT_ALPHAS, useAnalysis } from './useAnalysis'
 import { useGame } from './useGame'
+import { useVocab } from './useVocab'
 import { WinMeter } from './WinMeter'
 
 type Props = {
@@ -82,6 +83,8 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
         : { reached: [], current: [] },
     [analysis.openingsReady, g.moves],
   )
+
+  const vocab = useVocab(g.moves, analysis.verdicts, myColor, openings.reached, g.summary?.reason ?? null)
 
   const [orientation, setOrientation] = useState(colorToSide(myColor))
 
@@ -264,6 +267,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
       bot={bot}
       openings={openings}
       threat={analysis.threat}
+      newWordAt={vocab.newWordAt}
       showingBetter={betterMove !== null}
       onToggleBetter={() => setShowBetterFor((v) => (v === myLastIndex ? null : myLastIndex))}
     />
@@ -318,7 +322,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
         </div>
 
         {/* Phones: the board shrinks on short screens so nothing needs scrolling. */}
-        <div className="relative mx-auto w-full max-w-[max(260px,calc(100dvh-396px))] min-[900px]:max-w-none">
+        <div className="relative mx-auto w-full max-w-[max(180px,calc(100dvh-396px))] min-[900px]:max-w-none">
           <ChessBoard
             game={g.game}
             orientation={orientation}
@@ -342,23 +346,24 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
               />
             )}
           </AnimatePresence>
-          {/* Phones: the coach (or the teaching moment) sits right under the board. */}
-          <div className="mt-2 min-[900px]:hidden">
-            {moment ? (
-              momentCard
-            ) : (
-              <VerdictStrip
-                moves={g.moves}
-                verdicts={analysis.verdicts}
-                myColor={myColor}
-                bot={bot}
-                openings={openings}
-                threat={analysis.threat}
-                hints={analysis.hints}
-                onOpen={() => setSheet('coach')}
-              />
-            )}
-          </div>
+        </div>
+        {/* Phones: the coach (or the teaching moment) sits right under the board. */}
+        <div className="min-[900px]:hidden">
+          {moment ? (
+            momentCard
+          ) : (
+            <VerdictStrip
+              moves={g.moves}
+              verdicts={analysis.verdicts}
+              myColor={myColor}
+              bot={bot}
+              openings={openings}
+              threat={analysis.threat}
+              hints={analysis.hints}
+              newWordAt={vocab.newWordAt}
+              onOpen={() => setSheet('coach')}
+            />
+          )}
         </div>
 
         {flipped ? botBar : youBar}
@@ -464,6 +469,8 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
             moves={g.moves}
             verdicts={analysis.verdicts}
             opening={opening}
+            cards={vocab.cards}
+            newThisGame={vocab.newThisGame}
             result={g.summary.result}
             title={g.summary.title}
             detail={g.summary.detail}

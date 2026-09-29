@@ -6,6 +6,7 @@ import type { Threat } from '../chess/threats'
 import type { Bot } from '../engine/bots'
 import { BADGE, NOTE_TONES, botReplyNote, isSlip, yourMoveWhy } from './coachText'
 import { ThinkingDots } from './ThinkingDots'
+import { WordTag } from './WordTag'
 import { type MoveVerdict, costLine } from './useAnalysis'
 
 type Props = {
@@ -19,13 +20,15 @@ type Props = {
   openings: { reached: (string | null)[]; current: (string | null)[] }
   /** What the bot threatens next, if anything. */
   threat: Threat | null
+  /** The chess word to tag "New" on a move, if any. */
+  newWordAt: (ply: number) => string | null
 }
 
 /**
  * The coach: talks about YOUR last move (how good it was, and why), then
  * the bot's reply, only saying more when it matters to you.
  */
-export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBetter, openings, threat }: Props) {
+export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBetter, openings, threat, newWordAt }: Props) {
   // Your most recent move, and the bot's reply to it (if it has replied).
   let mine = -1
   for (let i = moves.length - 1; i >= 0; i--) {
@@ -62,6 +65,7 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
               reached={openings.reached[mine] ?? null}
               current={openings.current[mine] ?? null}
               botName={bot.name}
+              newWord={newWordAt(mine)}
               showingBetter={showingBetter}
               onToggleBetter={onToggleBetter}
             />
@@ -71,6 +75,8 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
 
       {reply && mine >= 0 && (
         <BotReply
+          key={reply.after}
+          newWord={newWordAt(mine + 1)}
           move={reply}
           verdict={replyVerdict ?? null}
           bot={bot}
@@ -88,9 +94,11 @@ function YourMove({
   reached,
   current,
   botName,
+  newWord,
   showingBetter,
   onToggleBetter,
 }: {
+  newWord: string | null
   move: Move
   verdict: MoveVerdict | null
   reached: string | null
@@ -124,6 +132,7 @@ function YourMove({
       </div>
       {!verdict && <p className="text-sm text-muted">Checking your move…</p>}
       {why && <p className="text-[15px] leading-snug">{why}</p>}
+      <WordTag id={newWord} />
       {bad && verdict && <p className="font-mono text-xs text-muted">{costLine(verdict)}</p>}
       {bad && verdict?.better && (
         <button
@@ -144,7 +153,9 @@ function BotReply({
   bot,
   reached,
   threat,
+  newWord,
 }: {
+  newWord: string | null
   move: Move
   verdict: MoveVerdict | null
   bot: Bot
@@ -161,6 +172,7 @@ function BotReply({
         <span className="text-muted"> · {plainName(move)}</span>
       </p>
       {note && <p className={`rounded-lg px-3 py-2 text-sm ${NOTE_TONES[note.tone]}`}>{note.text}</p>}
+      <WordTag id={newWord} />
     </div>
   )
 }

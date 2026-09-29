@@ -11,8 +11,10 @@ Tagline: **Play the move. Learn its name.**
 ## Layout principles
 - **Mobile first, frictionless.** Design for a phone first. While playing,
   the board, the win-chances line, the coach's verdict and the main actions
-  are all visible without scrolling (checked at 360x740, 375x667, 390x844);
-  the board shrinks on short phones to make room. Every tap target is 44px
+  are all visible without scrolling. Checked portrait phones 320x568 to
+  430x932, tablets 768x1024 to 1180x820, laptops and desktops 1280x720 to
+  2560x1440; the board shrinks on short phones to make room (down to 180px on
+  the smallest). Phones in landscape scroll; the store apps lock portrait. Every tap target is 44px
   or more. Leaving a game asks first (keep playing / resign and leave).
 - **Home screen: bento grid.** One large Play tile (headline, current setup,
   the Play button) plus smaller tiles for Opponent, Side, Clock and Recent
@@ -129,6 +131,24 @@ are secondary.
   from the tactic, so it never hides it.
 - The teaching-moment card never covers the board: under the board on
   phones, at the top of the side panel on desktop.
+
+## Vocabulary memory
+- Every chess word you meet is counted in this browser: seen (either side),
+  played by you, and missed (a tactic you could have played instead of a
+  slip). Openings you meet are collected by family.
+- **New tag, no pop-ups.** The first times a word shows up, the coach adds a
+  lime `NEW` tag with a question ("What's a fork?"). Tapping it opens the
+  meaning and a tip right there, and the word counts as known. A word stays
+  New until tapped or met 3 times. Tags never queue: only the current move's
+  word is tagged. On phones the verdict strip shows the tag; tap the strip
+  to open the coach and the explainer.
+- **Game summary:** a "Words from this game" tile lists every word met
+  (new ones in lime) and opens a flash-card deck, one card per word or
+  opening: meaning, what happened in this game, a tip. "Got it" marks it
+  known.
+- **Home:** a "Your chess vocabulary" tile: "X of 29 words known", how many
+  are waiting to learn, a progress bar, and "See all words" (a sheet by
+  category: Known, New, Not met yet; tap one for its meaning and counts).
 
 ## Move quality
 Compared with the best move on the whole board, by winning chances lost

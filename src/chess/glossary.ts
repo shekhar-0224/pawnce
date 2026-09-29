@@ -14,6 +14,8 @@ export type ChessWord = {
   meaning: string
   /** A short tip: how to spot it or use it. */
   tip: string
+  /** The question on the "New" tag, when "What's a …?" reads oddly. */
+  ask?: string
 }
 
 export const WORDS: ChessWord[] = [
@@ -36,7 +38,7 @@ export const WORDS: ChessWord[] = [
   { id: 'hanging-piece', name: 'Hanging piece', category: 'Tactics', meaning: 'A piece that is attacked and not defended, so it can be taken for free.', tip: 'Before every move, ask: is anything of mine or theirs hanging?' },
 
   // Move quality
-  { id: 'best', name: 'Best move', category: 'Move quality', meaning: 'The move the engine likes most in the position.', tip: 'You don’t need the best move every time. Avoiding blunders matters more.' },
+  { id: 'best', ask: 'What does “best move” mean?', name: 'Best move', category: 'Move quality', meaning: 'The move the engine likes most in the position.', tip: 'You don’t need the best move every time. Avoiding blunders matters more.' },
   { id: 'book', name: 'Book move', category: 'Move quality', meaning: 'A well-known opening move from the "book" of theory players have studied.', tip: 'Book moves are safe, tried and tested ways to start.' },
   { id: 'inaccuracy', name: 'Inaccuracy', category: 'Move quality', meaning: 'A slightly weaker move that gives away a little of your advantage.', tip: 'Not a disaster, but there was something better.' },
   { id: 'mistake', name: 'Mistake', category: 'Move quality', meaning: 'A clearly weaker move that noticeably hurts your chances.', tip: 'Often a missed threat. Check what the opponent is attacking first.' },
@@ -45,11 +47,11 @@ export const WORDS: ChessWord[] = [
   // Game endings
   { id: 'checkmate', name: 'Checkmate', category: 'Game endings', meaning: 'The king is in check and has no way out. The game is over.', tip: 'Usually takes two pieces working together, like a queen and a rook.' },
   { id: 'stalemate', name: 'Stalemate', category: 'Game endings', meaning: 'The player to move is not in check but has no legal move. It’s a draw.', tip: 'When winning, leave the enemy king a square to move to!' },
-  { id: 'resign', name: 'Resign', category: 'Game endings', meaning: 'Giving up the game before checkmate.', tip: 'Against a bot, playing on is great practice.' },
+  { id: 'resign', ask: 'What does resign mean?', name: 'Resign', category: 'Game endings', meaning: 'Giving up the game before checkmate.', tip: 'Against a bot, playing on is great practice.' },
   { id: 'threefold', name: 'Threefold repetition', category: 'Game endings', meaning: 'The same position happens three times, so the game is a draw.', tip: 'Losing? Repeating moves can save a draw.' },
   { id: 'insufficient', name: 'Insufficient material', category: 'Game endings', meaning: 'Neither side has enough pieces left to checkmate, so it’s a draw.', tip: 'A lone king, or king and one knight or bishop, can’t mate.' },
-  { id: 'fifty-moves', name: '50-move rule', category: 'Game endings', meaning: 'Fifty moves each with no capture and no pawn move means a draw.', tip: 'Rare in practice, but good to know.' },
-  { id: 'flag', name: 'Flag (time out)', category: 'Game endings', meaning: 'Running out of time on the clock loses the game.', tip: 'In fast games, a quick decent move beats a slow perfect one.' },
+  { id: 'fifty-moves', ask: 'What’s the 50-move rule?', name: '50-move rule', category: 'Game endings', meaning: 'Fifty moves each with no capture and no pawn move means a draw.', tip: 'Rare in practice, but good to know.' },
+  { id: 'flag', ask: 'What does flagging mean?', name: 'Flag (time out)', category: 'Game endings', meaning: 'Running out of time on the clock loses the game.', tip: 'In fast games, a quick decent move beats a slow perfect one.' },
 
   // Ideas
   { id: 'development', name: 'Development', category: 'Ideas', meaning: 'Bringing knights and bishops off the back row into play.', tip: 'In the opening, move each piece once before moving one twice.' },
@@ -58,5 +60,15 @@ export const WORDS: ChessWord[] = [
 ]
 
 export const WORDS_BY_ID: Record<string, ChessWord> = Object.fromEntries(WORDS.map((w) => [w.id, w]))
+
+// Words that read as "What's a fork?" (the rest: "What's castling?").
+const COUNTABLE = new Set(['capture', 'opening', 'fork', 'pin', 'skewer', 'discovered-attack', 'discovered-check', 'double-check', 'hanging-piece', 'book', 'inaccuracy', 'mistake', 'blunder', 'trade'])
+
+/** The question on a word's "New" tag, e.g. "What's a fork?". */
+export function askAbout(word: ChessWord): string {
+  if (word.ask) return word.ask
+  const name = word.name.toLowerCase()
+  return COUNTABLE.has(word.id) ? `What’s a ${name}?` : `What’s ${name}?`
+}
 
 export const WORD_CATEGORIES: WordCategory[] = ['Rules', 'Tactics', 'Move quality', 'Game endings', 'Ideas']

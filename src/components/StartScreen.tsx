@@ -3,6 +3,7 @@ import { type ReactNode, useState } from 'react'
 import { TIME_CONTROL_GROUPS, TIME_CONTROLS, type TimeControlId, timeControlName } from '../chess/clock'
 import { BOTS, BOT_LIST, type BotId } from '../engine/bots'
 import { loadRecentGames } from '../storage/recentGames'
+import { VocabularyTile } from './Vocabulary'
 import { BoardPreview } from './BoardPreview'
 import { BotAvatar } from './BotAvatar'
 import { Button } from './Button'
@@ -248,6 +249,11 @@ export function StartScreen({
               })}
             </ul>
           )}
+        </Tile>
+
+        {/* Vocabulary */}
+        <Tile label="Your chess vocabulary" id="vocab-heading" className="min-[900px]:col-span-12">
+          <VocabularyTile />
         </Tile>
       </div>
     </div>
