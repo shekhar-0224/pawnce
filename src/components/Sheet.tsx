@@ -1,10 +1,16 @@
 import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
 
-type Props = { title: string; onClose: () => void; children: ReactNode }
+type Props = {
+  title: string
+  onClose: () => void
+  children: ReactNode
+  /** Buttons pinned below the scrolling content, always in reach. */
+  footer?: ReactNode
+}
 
 /** A panel that slides up from the bottom of the screen (phones first). */
-export function Sheet({ title, onClose, children }: Props) {
+export function Sheet({ title, onClose, children, footer }: Props) {
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-end justify-center bg-bg/60 backdrop-blur-sm min-[900px]:items-center"
@@ -37,6 +43,7 @@ export function Sheet({ title, onClose, children }: Props) {
           </button>
         </div>
         <div className="pawnce-scroll min-h-0 overflow-y-auto p-5">{children}</div>
+        {footer && <div className="border-t border-border px-5 pt-3">{footer}</div>}
       </motion.div>
     </motion.div>
   )

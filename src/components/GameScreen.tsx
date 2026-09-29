@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Arrow } from 'react-chessboard'
 import { type TimeControl, timeControlName } from '../chess/clock'
 import { type Color, capturedPieces, colorToSide, otherColor } from '../chess/game'
@@ -11,12 +11,18 @@ import { BotAvatar, YouAvatar } from './BotAvatar'
 import { ChessBoard } from './ChessBoard'
 import { Clock } from './Clock'
 import { Coach } from './Coach'
+import { Button } from './Button'
+import { gameContext } from './cardContext'
+import { FlashCard } from './FlashCard'
+import { learnWord } from '../storage/learned'
+import { usePauseForWords } from '../storage/prefs'
 import { HintCard } from './HintCard'
 import { HintOrbs } from './HintOrbs'
 import { LeafBurst } from './LeafBurst'
 import { LeaveDialog } from './LeaveDialog'
 import { MomentCard } from './MomentCard'
 import { MoveTicker } from './MoveTicker'
+import { updateGame } from '../storage/recentGames'
 import { Logo } from './Logo'
 import { PatternChip } from './PatternChip'
 import { PlayerBar } from './PlayerBar'
@@ -36,15 +42,31 @@ type Props = {
   bot: Bot
   myColor: Color
   timeControl: TimeControl
+  /** This game's id: its saved record and its summary link. */
+  gameId: string
+  /** The game-over summary is showing (its own URL: /game/<id>/summary). */
+  summaryOpen: boolean
+  onOpenSummary: () => void
+  onCloseSummary: () => void
   onNewGame: () => void
   onChangeOpponent: () => void
 }
 
-export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOpponent }: Props) {
+export function GameScreen({
+  bot,
+  myColor,
+  timeControl,
+  gameId,
+  summaryOpen,
+  onOpenSummary,
+  onCloseSummary,
+  onNewGame,
+  onChangeOpponent,
+}: Props) {
   // Teaching moments: after your move the bot waits (and the clocks pause)
   // until your move is judged; a mistake or blunder pauses the game.
   const [hold, setHold] = useState(false)
-  const g = useGame(bot, myColor, timeControl, hold)
+  const g = useGame(bot, myColor, timeControl, gameId, hold)
   const analysis = useAnalysis(g.moves, g.fen, myColor, g.myTurn, g.summary?.result ?? null)
   const botColor = otherColor(myColor)
 
@@ -62,8 +84,6 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
     dismissedPly !== lastPly
       ? { move: lastMove, verdict: lastVerdict }
       : null
-  const shouldHold = awaitingJudgement || moment !== null
-  if (shouldHold !== hold) setHold(shouldHold) // settle before effects run
 
   // Never keep the bot waiting long if the judgement is slow.
   useEffect(() => {
@@ -84,7 +104,46 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
     [analysis.openingsReady, g.moves],
   )
 
-  const vocab = useVocab(g.moves, analysis.verdicts, myColor, openings.reached, g.summary?.reason ?? null)
+  const vocab = useVocab(g.moves, analysis.verdicts, myColor, openings.reached, g.summary?.reason ?? null, gameId)
+
+  // Learning in the moment: when a move shows a chess word you haven't
+  // learned yet, the game pauses and its flash card opens (one per move,
+  // after any mistake card; a learned word never interrupts again).
+  const [pauseForWords, setPauseForWords] = usePauseForWords()
+  const [wordDoneAt, setWordDoneAt] = useState(-1)
+  const newWord =
+    pauseForWords && lastVerdict && !g.isOver && !moment && wordDoneAt !== lastPly ? vocab.newWordAt(lastPly) : null
+  const [wordCard, setWordCard] = useState<{ ply: number; id: string } | null>(null)
+  // Keep the card on screen until it's dismissed, even once the word is learned.
+  if (newWord && !wordCard) setWordCard({ ply: lastPly, id: newWord })
+  if (wordCard && wordCard.ply !== lastPly && !newWord) setWordCard(null)
+  const dismissWord = (learn: boolean) => {
+    if (learn && wordCard) learnWord(wordCard.id)
+    setWordDoneAt(wordCard?.ply ?? lastPly)
+    setWordCard(null)
+  }
+
+  const shouldHold = awaitingJudgement || moment !== null || wordCard !== null
+  if (shouldHold !== hold) setHold(shouldHold) // settle before effects run
+
+  // Once the game is over, keep its saved record up to date as the last
+  // grades come in, so its summary can be reopened later from Recent games.
+  const summaryTitle = g.summary?.title
+  const summaryDetail = g.summary?.detail
+  const newWordsKey = vocab.newThisGame.join(',')
+  useEffect(() => {
+    if (!g.isOver) return
+    updateGame(gameId, {
+      verdicts: analysis.verdicts.map((v) =>
+        v
+          ? { quality: v.quality, winBefore: v.winBefore, winAfter: v.winAfter, cpLoss: v.cpLoss, better: v.better, betterMove: v.betterMove }
+          : null,
+      ),
+      newWords: newWordsKey ? newWordsKey.split(',') : [],
+      title: summaryTitle,
+      detail: summaryDetail,
+    })
+  }, [g.isOver, gameId, analysis.verdicts, newWordsKey, summaryTitle, summaryDetail])
 
   const [orientation, setOrientation] = useState(colorToSide(myColor))
 
@@ -94,7 +153,6 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
     if (g.moves.length > 0 && !g.isOver) setLeaving(true)
     else onChangeOpponent()
   }
-  const [showResult, setShowResult] = useState(false)
   // Phones: the full coach, the move list and the menu open as sheets.
   const [sheet, setSheet] = useState<'coach' | 'moves' | 'menu' | null>(null)
 
@@ -160,9 +218,14 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
   }, [analysis.hints, betterMove, momentRefutation, flash, flashMine, analysis.threat])
 
   // Give the final move a beat to land before the result card pops up.
+  // (Only once: closing the summary shouldn't reopen it.)
+  const openSummaryRef = useRef(onOpenSummary)
+  useEffect(() => {
+    openSummaryRef.current = onOpenSummary
+  })
   useEffect(() => {
     if (!g.isOver) return
-    const t = setTimeout(() => setShowResult(true), 900)
+    const t = setTimeout(() => openSummaryRef.current(), 900)
     return () => clearTimeout(t)
   }, [g.isOver])
 
@@ -290,10 +353,10 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
             <span aria-hidden className="text-lg leading-none">←</span>
             <Logo className="text-lg" />
           </button>
-          {g.isOver && !showResult ? (
+          {g.isOver && !summaryOpen ? (
             <button
               type="button"
-              onClick={() => setShowResult(true)}
+              onClick={onOpenSummary}
               className="min-h-9 cursor-pointer rounded-lg bg-accent px-3 text-sm font-semibold text-on-accent"
             >
               Game summary
@@ -397,6 +460,8 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
             onNewGame={onNewGame}
             onResign={g.resign}
             onFlip={() => setOrientation((o) => (o === 'white' ? 'black' : 'white'))}
+            pauseForWords={pauseForWords}
+            onTogglePause={() => setPauseForWords(!pauseForWords)}
           />
         </div>
       </div>
@@ -416,6 +481,51 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
       />
 
       <AnimatePresence>
+        {wordCard && lastMove && (
+          <Sheet
+            key={`word-${wordCard.ply}`}
+            title="New chess word"
+            onClose={() => dismissWord(false)}
+            footer={
+              <div className="flex flex-col gap-2">
+                <p className="text-center text-xs text-muted">
+                  The game is paused while you read.{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPauseForWords(false)
+                      dismissWord(false)
+                    }}
+                    className="cursor-pointer underline hover:text-text"
+                  >
+                    Turn off
+                  </button>
+                </p>
+                <div className="grid grid-cols-[auto_1fr] gap-2">
+                  <Button variant="ghost" onClick={() => dismissWord(false)}>
+                    Not now
+                  </Button>
+                  <Button variant="primary" onClick={() => dismissWord(true)}>
+                    Got it · continue
+                  </Button>
+                </div>
+              </div>
+            }
+          >
+            <FlashCard
+              card={{ kind: 'word', id: wordCard.id }}
+              context={{
+                text: gameContext(
+                  { kind: 'word', id: wordCard.id, ply: wordCard.ply },
+                  g.moves[wordCard.ply] ?? lastMove,
+                  analysis.verdicts[wordCard.ply] ?? null,
+                  (g.moves[wordCard.ply] ?? lastMove).color === myColor,
+                  bot,
+                ),
+              }}
+            />
+          </Sheet>
+        )}
         {sheet === 'coach' && (
           <Sheet key="coach" title="Coach" onClose={() => setSheet(null)}>
             <div className="flex flex-col gap-4">
@@ -433,6 +543,8 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
           <Sheet key="menu" title="Menu" onClose={() => setSheet(null)}>
             <MenuSheetBody
               isOver={g.isOver}
+              pauseForWords={pauseForWords}
+              onTogglePause={() => setPauseForWords(!pauseForWords)}
               onNewGame={onNewGame}
               onResign={() => {
                 setSheet(null)
@@ -461,7 +573,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
             }}
           />
         )}
-        {showResult && g.summary && (
+        {summaryOpen && g.summary && (
           <GameSummary
             key="summary"
             bot={bot}
@@ -470,17 +582,18 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
             verdicts={analysis.verdicts}
             opening={opening}
             cards={vocab.cards}
+            wordsAt={vocab.perPly}
             newThisGame={vocab.newThisGame}
             result={g.summary.result}
             title={g.summary.title}
             detail={g.summary.detail}
             onPlayAgain={onNewGame}
             onChangeOpponent={onChangeOpponent}
-            onClose={() => setShowResult(false)}
+            onClose={onCloseSummary}
           />
         )}
       </AnimatePresence>
-      {showResult && g.summary?.result === 'win' && <LeafBurst />}
+      {summaryOpen && g.summary?.result === 'win' && <LeafBurst />}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useMemo, useRef, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import type { Color, Move } from '../chess/game'
 import { QUALITY_LABELS, QUALITY_MARKS, type Quality, TACTIC_LABELS, termsFor, plainName } from '../chess/naming'
@@ -10,11 +10,11 @@ import type { Bot } from '../engine/bots'
 import { color } from '../theme'
 import { pieceSet } from '../theme/pieces'
 import { WORDS_BY_ID } from '../chess/glossary'
-import { learnWord } from '../storage/learned'
 import { Button } from './Button'
-import { LearnCard } from './LearnCard'
+import { gameContext } from './cardContext'
+import { type DeckItem, FlashDeck } from './FlashDeck'
 import { Sheet } from './Sheet'
-import type { LearnCardData } from './useVocab'
+import type { LearnCardData, WordAt } from './useVocab'
 import type { MoveVerdict } from './useAnalysis'
 
 type Props = {
@@ -25,6 +25,8 @@ type Props = {
   opening: (Opening & { ply: number }) | null
   /** Flash cards: every chess word (and opening) met in this game. */
   cards: LearnCardData[]
+  /** The chess words each move showed, for highlighting during the replay. */
+  wordsAt: WordAt[][]
   /** Word ids met for the very first time in this game. */
   newThisGame: string[]
   result: Result
@@ -33,6 +35,10 @@ type Props = {
   onPlayAgain: () => void
   onChangeOpponent: () => void
   onClose: () => void
+  /** The close button's text ("Back to board" for a live game). */
+  closeLabel?: string
+  /** Start the replay at this move (e.g. from a word's link). */
+  initialPly?: number
 }
 
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
@@ -161,13 +167,38 @@ export function GameSummary(p: Props) {
   }, [moves, verdicts, myColor])
 
   // Replay position: -1 is the start, otherwise the position after that move.
-  const [ply, setPly] = useState(moves.length - 1)
+  const [ply, setPly] = useState(p.initialPly ?? moves.length - 1)
   const current = ply >= 0 ? moves[ply] : null
+  // Words this move showed (everyday "capture" left out), one line each.
+  const wordsHere = (ply >= 0 ? (p.wordsAt[ply] ?? []) : []).filter(
+    (w, i, all) => w.id !== 'capture' && WORDS_BY_ID[w.id] && all.findIndex((x) => x.id === w.id) === i,
+  )
+  const replayRef = useRef<HTMLDivElement>(null)
+  const jumpTo = (target: number) => {
+    setPly(target)
+    // On phones the replay sits below the list: bring it into view.
+    if (window.matchMedia('(max-width: 899px)').matches) {
+      replayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
   const currentVerdict = ply >= 0 ? verdicts[ply] : null
 
-  // The flash-card deck: null when closed, otherwise the card showing.
-  const [deckAt, setDeckAt] = useState<number | null>(null)
-  const deckCard = deckAt !== null ? p.cards[deckAt] : null
+  // The flash-card deck: each word (and opening) from this game.
+  const [deckOpen, setDeckOpen] = useState(false)
+  const deck: DeckItem[] = p.cards.flatMap((c): DeckItem[] => {
+    const move = moves[c.ply]
+    if (!move) return []
+    const context = {
+      text: gameContext(c, move, verdicts[c.ply] ?? null, move.color === myColor, bot),
+      onJump: () => {
+        setDeckOpen(false)
+        jumpTo(c.ply)
+      },
+    }
+    return c.kind === 'word'
+      ? [{ card: { kind: 'word' as const, id: c.id }, context }]
+      : [{ card: { kind: 'opening' as const, name: c.name, fen: move.after, last: { from: move.from, to: move.to } }, context }]
+  })
   const newSet = new Set(p.newThisGame)
 
   const resultTone =
@@ -217,7 +248,12 @@ export function GameSummary(p: Props) {
 
         {/* Replay */}
         <Tile label="Replay" className="order-5 min-[900px]:order-none min-[900px]:col-span-7 min-[900px]:row-span-4">
-          <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-lg">
+          <div ref={replayRef} className="relative mx-auto w-full max-w-[420px] scroll-mt-4 overflow-hidden rounded-lg">
+            {wordsHere[0] && (
+              <span className="pointer-events-none absolute left-2 top-2 z-10 rounded-md bg-accent px-2 py-0.5 text-xs font-semibold text-on-accent">
+                {WORDS_BY_ID[wordsHere[0].id].name}
+              </span>
+            )}
             <Chessboard
               options={{
                 id: 'replay',
@@ -263,6 +299,19 @@ export function GameSummary(p: Props) {
                   <span className="font-mono font-semibold">{current.san}</span>
                   <span className="text-muted"> · {plainName(current)}</span>
                 </p>
+                {wordsHere.length > 0 && (
+                  <ul className="mt-2 flex flex-col gap-1.5 border-t border-border pt-2" aria-label="Words at this move">
+                    {wordsHere.map((w) => (
+                      <li key={w.id}>
+                        <span className="font-semibold text-accent">{WORDS_BY_ID[w.id].name}</span>
+                        <span className="text-muted">
+                          {w.how === 'missed' ? ' (missed) · ' : ' · '}
+                          {WORDS_BY_ID[w.id].meaning}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {currentVerdict && (
                   <p className={`mt-1 font-semibold ${QUALITY_TONE[currentVerdict.quality]}`}>
                     {QUALITY_MARKS[currentVerdict.quality] ?? ''} {QUALITY_LABELS[currentVerdict.quality]}
@@ -292,22 +341,39 @@ export function GameSummary(p: Props) {
                   <span className="text-muted"> this game</span>
                 </p>
               )}
-              <div className="flex flex-wrap gap-1.5">
-                {p.cards.map((c) => (
-                  <span
-                    key={c.kind === 'word' ? c.id : `o:${c.family}`}
-                    className={`rounded-md border px-2 py-1 text-xs ${
-                      c.kind === 'word' && newSet.has(c.id)
-                        ? 'border-accent/50 bg-accent/10 font-semibold text-accent'
-                        : 'border-border text-muted'
-                    }`}
-                  >
-                    {c.kind === 'word' ? WORDS_BY_ID[c.id]?.name : c.family}
-                    {c.kind === 'word' && newSet.has(c.id) && <span className="ml-1 font-mono text-[10px] uppercase">new</span>}
-                  </span>
-                ))}
-              </div>
-              <Button variant="primary" onClick={() => setDeckAt(0)}>
+              <ul className="-mx-2 flex max-h-80 flex-col overflow-y-auto">
+                {p.cards.map((c) => {
+                  const word = c.kind === 'word' ? WORDS_BY_ID[c.id] : null
+                  const here = ply === c.ply || (c.kind === 'word' && wordsHere.some((w) => w.id === c.id))
+                  const fresh = c.kind === 'word' && newSet.has(c.id)
+                  return (
+                    <li key={c.kind === 'word' ? c.id : `o:${c.family}`}>
+                      <button
+                        type="button"
+                        onClick={() => jumpTo(c.ply)}
+                        aria-current={here ? 'true' : undefined}
+                        className={`flex w-full cursor-pointer items-baseline gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors ${
+                          here ? 'bg-accent/10' : 'hover:bg-surface-2'
+                        }`}
+                      >
+                        <span className="w-9 shrink-0 font-mono text-xs text-muted">{moveNo(c.ply)}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-1.5">
+                            <span className={`font-semibold ${here ? 'text-accent' : ''}`}>{word ? word.name : c.kind === 'opening' ? c.name : ''}</span>
+                            {fresh && (
+                              <span className="rounded bg-accent px-1 font-mono text-[10px] font-bold uppercase text-on-accent">New</span>
+                            )}
+                          </span>
+                          <span className="block truncate text-xs text-muted">
+                            {word ? word.meaning : 'The opening this game followed.'}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+              <Button variant="primary" onClick={() => setDeckOpen(true)}>
                 Review {p.cards.length} flash {p.cards.length === 1 ? 'card' : 'cards'}
               </Button>
             </>
@@ -379,31 +445,18 @@ export function GameSummary(p: Props) {
             <Button variant="primary" onClick={p.onPlayAgain}>
               Play again
             </Button>
-            <Button onClick={p.onChangeOpponent}>Change opponent</Button>
+            <Button onClick={p.onChangeOpponent}>Home</Button>
             <Button variant="ghost" onClick={p.onClose}>
-              Back to board
+              {p.closeLabel ?? 'Back to board'}
             </Button>
           </div>
         </section>
       </div>
 
       <AnimatePresence>
-        {deckCard && deckAt !== null && (
-          <Sheet key="deck" title="Flash cards" onClose={() => setDeckAt(null)}>
-            <LearnCard
-              key={deckAt}
-              card={deckCard}
-              moves={moves}
-              verdicts={verdicts}
-              myColor={myColor}
-              bot={bot}
-              progress={`${deckAt + 1} / ${p.cards.length}`}
-              actionLabel={deckAt + 1 < p.cards.length ? 'Got it · next' : 'Done'}
-              onGotIt={() => {
-                if (deckCard.kind === 'word') learnWord(deckCard.id)
-                setDeckAt(deckAt + 1 < p.cards.length ? deckAt + 1 : null)
-              }}
-            />
+        {deckOpen && deck.length > 0 && (
+          <Sheet key="deck" title="Flash cards" onClose={() => setDeckOpen(false)}>
+            <FlashDeck items={deck} onClose={() => setDeckOpen(false)} />
           </Sheet>
         )}
       </AnimatePresence>

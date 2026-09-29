@@ -17,6 +17,8 @@ type Props = {
   /** Start a game with this setup (and remember it). */
   onPlay: (setup: GameSetup) => void
   onRecent: () => void
+  /** Open a finished game's summary. */
+  onOpenGame: (id: string) => void
 }
 
 const SIDES: { id: SidePref; label: string }[] = [
@@ -64,7 +66,7 @@ function Tile({
   )
 }
 
-export function StartScreen({ setup, onPlay, onRecent }: Props) {
+export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
   const bot = BOTS[setup.botId] ?? BOT_LIST[0]
   const tc = TIME_CONTROLS[setup.timeControl]
   const [recent] = useState(() => loadRecentGames().slice(0, 3))
@@ -147,16 +149,22 @@ export function StartScreen({ setup, onPlay, onRecent }: Props) {
               {recent.map((g) => {
                 const tag = RESULT_TAG[g.result] ?? RESULT_TAG.draw
                 return (
-                  <li key={g.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                    <span className="min-w-0 truncate">
-                      vs {BOTS[g.bot]?.name ?? 'Bot'}{' '}
-                      <span className="text-muted">
-                        · {g.moves} {g.moves === 1 ? 'move' : 'moves'}
+                  <li key={g.id}>
+                    <button
+                      type="button"
+                      onClick={() => onOpenGame(g.id)}
+                      className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 py-2 text-left text-sm hover:text-accent"
+                    >
+                      <span className="min-w-0 truncate">
+                        vs {BOTS[g.bot]?.name ?? 'Bot'}{' '}
+                        <span className="text-muted">
+                          · {g.moves} {g.moves === 1 ? 'move' : 'moves'}
+                        </span>
                       </span>
-                    </span>
-                    <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${tag.className}`}>
-                      {tag.label}
-                    </span>
+                      <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${tag.className}`}>
+                        {tag.label}
+                      </span>
+                    </button>
                   </li>
                 )
               })}

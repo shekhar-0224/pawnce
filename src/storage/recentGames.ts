@@ -6,7 +6,18 @@
 import type { TimeControlId } from '../chess/clock'
 import type { BotId } from '../engine/bots'
 import type { Side } from '../chess/game'
+import type { Quality } from '../chess/naming'
 import type { EndReason, Result } from '../chess/outcome'
+
+/** A move's grade, saved with the game so its summary can be reopened later. */
+export type SavedVerdict = {
+  quality: Quality
+  winBefore: number
+  winAfter: number
+  cpLoss: number
+  better: string | null
+  betterMove: { from: string; to: string } | null
+} | null
 
 export type SavedGame = {
   id: string
@@ -21,6 +32,15 @@ export type SavedGame = {
   /** Missing on games saved before clocks existed. */
   timeControl?: TimeControlId
   pgn: string
+  /** Every move in SAN, in order (games saved before summaries existed lack these). */
+  sans?: string[]
+  /** Each move's grade, filled in as the engine finishes judging. */
+  verdicts?: SavedVerdict[]
+  /** Chess words met for the very first time in this game. */
+  newWords?: string[]
+  /** The summary headline and one-line explanation. */
+  title?: string
+  detail?: string
 }
 
 const KEY = 'pawnce.recentGames.v1'
@@ -37,12 +57,34 @@ export function loadRecentGames(): SavedGame[] {
   }
 }
 
-export function saveGame(game: Omit<SavedGame, 'id'>): void {
+/** A fresh id for a game, used in its link: /game/<id>/summary. */
+export function newGameId(): string {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+}
+
+export function loadGame(id: string): SavedGame | null {
+  return loadRecentGames().find((g) => g.id === id) ?? null
+}
+
+/** Save a finished game (or replace it, if a game with that id exists). */
+export function saveGame(game: SavedGame): void {
   try {
-    const entry: SavedGame = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, ...game }
-    const next = [entry, ...loadRecentGames()].slice(0, MAX)
+    const next = [game, ...loadRecentGames().filter((g) => g.id !== game.id)].slice(0, MAX)
     localStorage.setItem(KEY, JSON.stringify(next))
   } catch {
     // Storage unavailable: the game just isn't remembered.
+  }
+}
+
+/** Add details to a saved game, e.g. grades that finished after the game ended. */
+export function updateGame(id: string, patch: Partial<SavedGame>): void {
+  try {
+    const games = loadRecentGames()
+    const i = games.findIndex((g) => g.id === id)
+    if (i < 0) return
+    games[i] = { ...games[i], ...patch }
+    localStorage.setItem(KEY, JSON.stringify(games))
+  } catch {
+    // Not saved; the summary will just show fewer grades later.
   }
 }

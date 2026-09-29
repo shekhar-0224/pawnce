@@ -34,7 +34,7 @@ function formatDate(iso: string) {
   return Number.isNaN(d.getTime()) ? '' : dateFormat.format(d)
 }
 
-export function RecentGamesScreen({ onBack }: { onBack: () => void }) {
+export function RecentGamesScreen({ onBack, onOpen }: { onBack: () => void; onOpen: (id: string) => void }) {
   const [games] = useState(loadRecentGames)
 
   return (
@@ -57,27 +57,32 @@ export function RecentGamesScreen({ onBack }: { onBack: () => void }) {
             const bot = BOTS[g.bot] ?? BOTS.ant
             const badge = BADGE[g.result] ?? BADGE.draw
             return (
-              <li
-                key={g.id}
-                className="flex items-center gap-3 rounded-card border border-border bg-surface p-3 sm:gap-4 sm:p-4"
-              >
-                <BotAvatar bot={bot} size={44} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold">
-                    vs. {bot.name} <span className="text-muted">({bot.level})</span>
-                  </p>
-                  <p className="truncate text-sm text-muted">
-                    {g.myColor === 'white' ? 'White' : 'Black'} · {REASON[g.reason] ?? ''} ·{' '}
-                    {g.moves} {g.moves === 1 ? 'move' : 'moves'}
-                    {g.timeControl && TIME_CONTROLS[g.timeControl]?.speed
-                      ? ` · ${TIME_CONTROLS[g.timeControl].label}`
-                      : ''}
-                  </p>
-                  <p className="text-xs text-muted/80">{formatDate(g.date)}</p>
-                </div>
-                <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${badge.className}`}>
-                  {badge.label}
-                </span>
+              <li key={g.id}>
+                <button
+                  type="button"
+                  onClick={() => onOpen(g.id)}
+                  aria-label={`vs. ${bot.name}, ${badge.label}: open summary`}
+                  className="flex w-full cursor-pointer items-center gap-3 rounded-card border border-border bg-surface p-3 text-left hover:border-muted/40 sm:gap-4 sm:p-4"
+                >
+                  <BotAvatar bot={bot} size={44} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold">
+                      vs. {bot.name} <span className="text-muted">({bot.level})</span>
+                    </p>
+                    <p className="truncate text-sm text-muted">
+                      {g.myColor === 'white' ? 'White' : 'Black'} · {REASON[g.reason] ?? ''} ·{' '}
+                      {g.moves} {g.moves === 1 ? 'move' : 'moves'}
+                      {g.timeControl && TIME_CONTROLS[g.timeControl]?.speed
+                        ? ` · ${TIME_CONTROLS[g.timeControl].label}`
+                        : ''}
+                    </p>
+                    <p className="text-xs text-muted/80">{formatDate(g.date)}</p>
+                  </div>
+                  <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${badge.className}`}>
+                    {badge.label}
+                  </span>
+                  <span aria-hidden className="text-muted">›</span>
+                </button>
               </li>
             )
           })}
