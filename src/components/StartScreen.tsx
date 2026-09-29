@@ -258,7 +258,7 @@ export function StartScreen({
       </div>
 
       <footer className="pb-2 text-center text-xs text-muted/70">
-        Jungle piece art from{' '}
+        Bot animals from{' '}
         <a className="underline hover:text-text" href="https://game-icons.net" target="_blank" rel="noreferrer">
           game-icons.net
         </a>{' '}

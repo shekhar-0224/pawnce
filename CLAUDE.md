@@ -55,14 +55,15 @@ A solo, non-developer founder working with Claude Code. So:
 - Tagline: "Play the move. Learn its name."
 - Pieces keep standard names everywhere in the UI (Knight, Rook, fork, check).
   The jungle theme is visual only.
-- Planned jungle set: Knight = frog, Bishop = snake, Rook = rhino,
-  Queen = jaguar, King = silverback gorilla, Pawns = army ants.
-  Two sides: day jungle vs. night jungle.
+- Pieces keep classic shapes (instantly readable), styled in Pawnce colors:
+  ivory vs. near-black with lime details. The jungle shows in the bots
+  (Ant, Frog, Jaguar avatars) and the overall theme, not in piece shapes.
 - Clear feedback moments (teaching-moment card, "Fork!" tags), never cluttered.
 
 ## Current phase
 Phases 1 to 5 are built, plus a learning round, the minimal redesign and
 "naming first" (threat alerts, verified tactics, openings, vocabulary memory).
-Now: Phase 7, one step at a time: (1) jungle token pieces [done],
+Now: Phase 7, one step at a time: (1) pieces [done: classic shapes in
+Pawnce colors; animal pieces were tried and dropped as hard to read],
 (2) motion and the "FORK!" moment, (3) sounds with mute, (4) branding refresh.
 Phase 6 (friends) comes after.

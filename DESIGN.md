@@ -157,20 +157,19 @@ harsher. Tags: Best and Good in accent, Book in muted, Inaccuracy and
 Mistake in `--warn`, Blunder in `--danger`. Marks: ★ ?! ? ??.
 
 ## Pieces
-Jungle **tokens**: each piece is its animal on a round disc, loaded only
-through `src/theme/pieces.ts` (art in `src/theme/jungle/`), swappable there.
-- Knight = frog, Bishop = snake (rattlesnake), Rook = rhino, Queen = jaguar
-  (big-cat head), King = silverback gorilla, Pawns = army ants (drawn a little
-  smaller).
-- Day jungle (White): cream disc `--piece-day`, dark green ink
-  `--piece-day-ink`. Night jungle (Black): deep green disc `--piece-night`,
-  lime ink `--piece-night-ink`. A 2.5% lower rim (`--piece-*-edge`) gives a
-  hint of depth; no gradients.
-- Art: Game Icons (game-icons.net), CC BY 3.0, credited in the home footer
-  and CREDITS.md.
-- The UI always uses standard piece names (Knight, Rook, check, fork); the
-  jungle is visual only. Bots use their animal on a night token as avatar
-  (Ant = ant, Frog = frog, Jaguar = big cat). No emoji in the UI.
+**Classic Staunton shapes, Pawnce colors.** Players read pieces by shape, so
+the shapes stay classic (the cburnett set, GPL/GFDL/BSD); Pawnce makes them
+its own with color. Loaded only through `src/theme/pieces.ts` (shapes in
+`src/theme/classic/`), swappable there.
+- White: ivory `--piece-light` with forest-green ink `--piece-light-ink`.
+- Black: near-black green `--piece-dark`, outline `--piece-dark-ink`, thin
+  lime details `--piece-dark-detail`.
+- A soft drop shadow (0 1.5px 1px, 28% black) seats each piece on the board.
+- The UI always uses standard piece names (Knight, Rook, check, fork).
+- The jungle lives in the bots: Ant, Frog and Jaguar show their animal on a
+  night token (Game Icons, CC BY 3.0, credited on home and in CREDITS.md).
+  An earlier animal-piece set was dropped: swapping shapes made the board
+  hard to read. No emoji in the UI.
 
 ## Motion
 Quick and quiet: 150 to 250ms, ease-out. Pieces slide 200ms; captures
