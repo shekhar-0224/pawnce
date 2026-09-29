@@ -95,6 +95,14 @@ are secondary.
   for free." A bot tactic that fails reads "The Ant tried a fork, but it
   doesn't work", plus how to punish it. Only working tactics count in the
   ticker and the game summary.
+- **Openings are naming moments.** When a move enters a new opening family
+  the coach names it and says whose choice it was: "You're in the Petrov's
+  Defense. Black copies White and counter-attacks e4…" or "The Frog steered
+  into the Italian Game." A deeper variation of the same family only updates
+  the moves header ("Petrov's Defense · chosen by the Frog"); it is not
+  re-announced. Later book moves read "Still in the Petrov's Defense: a
+  standard move here." A book move that loses 80+ centipawns is graded
+  normally, never "book".
 - The teaching-moment card never covers the board: under the board on
   phones, at the top of the side panel on desktop.
 

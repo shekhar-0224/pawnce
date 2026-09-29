@@ -139,7 +139,8 @@ export function classifyMove(opts: {
   best: string | null
   inBook: boolean
 }): Quality {
-  if (opts.inBook) return 'book'
+  // A book move that still drops material (0.8+ pawns) is graded normally.
+  if (opts.inBook && opts.cpLoss < 80) return 'book'
   const drop = opts.winBefore - opts.winAfter
   const byChances: Quality =
     drop >= 30 ? 'blunder' : drop >= 20 ? 'mistake' : drop >= 10 ? 'inaccuracy' : 'good'

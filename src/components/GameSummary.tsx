@@ -297,7 +297,7 @@ export function GameSummary(p: Props) {
               <span className="font-semibold">{p.opening.name}</span>
               <span className="text-muted">
                 {' '}
-                ({moves[p.opening.ply]?.color === myColor ? 'your choice' : `${bot.name}'s choice`})
+                ({moves[p.opening.ply]?.color === myColor ? 'chosen by you' : `chosen by the ${bot.name}`})
               </span>
             </p>
           )}

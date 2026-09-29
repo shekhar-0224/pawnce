@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Arrow } from 'react-chessboard'
 import { type TimeControl, timeControlName } from '../chess/clock'
 import { type Color, capturedPieces, colorToSide, otherColor } from '../chess/game'
-import { openingOf } from '../chess/openings'
+import { openingMoments, openingOf } from '../chess/openings'
 import type { Bot } from '../engine/bots'
 import { readToken, withAlpha } from '../theme'
 import { BotAvatar, YouAvatar } from './BotAvatar'
@@ -67,6 +67,13 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
 
   const opening = useMemo(
     () => (analysis.openingsReady ? openingOf(g.moves.map((m) => m.after)) : null),
+    [analysis.openingsReady, g.moves],
+  )
+  const openings = useMemo(
+    () =>
+      analysis.openingsReady
+        ? openingMoments(g.moves.map((m) => m.after))
+        : { reached: [], current: [] },
     [analysis.openingsReady, g.moves],
   )
 
@@ -299,6 +306,7 @@ export function GameScreen({ bot, myColor, timeControl, onNewGame, onChangeOppon
                 verdicts={analysis.verdicts}
                 myColor={myColor}
                 bot={bot}
+                openings={openings}
                 showingBetter={betterMove !== null}
                 onToggleBetter={() =>
                   setShowBetterFor((v) => (v === myLastIndex ? null : myLastIndex))

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import type { Color, Move } from '../chess/game'
 import { type Quality, TACTIC_LABELS, describeTactic, plainName, termsFor } from '../chess/naming'
+import { explainOpening } from '../chess/openingInfo'
 import { detectTactics, mainTactic, tacticHolds } from '../chess/tactics'
 import type { Bot } from '../engine/bots'
 import { ThinkingDots } from './ThinkingDots'
@@ -13,6 +14,8 @@ type Props = {
   bot: Bot
   showingBetter: boolean
   onToggleBetter: () => void
+  /** Per move: the opening name it newly reached, and the opening after it. */
+  openings: { reached: (string | null)[]; current: (string | null)[] }
 }
 
 const BADGE: Record<Quality, { mark: string; word: string; tone: string }> = {
@@ -31,7 +34,7 @@ const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1)
  * The coach: talks about YOUR last move (how good it was, and why), then
  * the bot's reply, only saying more when it matters to you.
  */
-export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBetter }: Props) {
+export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBetter, openings }: Props) {
   // Your most recent move, and the bot's reply to it (if it has replied).
   let mine = -1
   for (let i = moves.length - 1; i >= 0; i--) {
@@ -48,7 +51,9 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
       {mine < 0 ? (
         <p className="text-[15px]">
           {reply
-            ? `The ${bot.name} opened. Your move! A good start: put a pawn or knight toward the center.`
+            ? openings.reached[0]
+              ? `The ${bot.name} opened with ${reply.san}: the ${openings.reached[0]}. ${explainOpening(openings.reached[0])} Your move!`
+              : `The ${bot.name} opened with ${reply.san}. Your move! A good start: put a pawn or knight toward the center.`
             : 'Your move! A good start: put a pawn in the middle, like e4 or d4.'}
         </p>
       ) : (
@@ -63,6 +68,8 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
             <YourMove
               move={moves[mine]}
               verdict={verdicts[mine]}
+              reached={openings.reached[mine] ?? null}
+              current={openings.current[mine] ?? null}
               botName={bot.name}
               showingBetter={showingBetter}
               onToggleBetter={onToggleBetter}
@@ -72,7 +79,12 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
       )}
 
       {reply && mine >= 0 && (
-        <BotReply move={reply} verdict={replyVerdict ?? null} bot={bot} />
+        <BotReply
+          move={reply}
+          verdict={replyVerdict ?? null}
+          bot={bot}
+          reached={openings.reached[mine + 1] ?? null}
+        />
       )}
     </section>
   )
@@ -81,12 +93,16 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
 function YourMove({
   move,
   verdict,
+  reached,
+  current,
   botName,
   showingBetter,
   onToggleBetter,
 }: {
   move: Move
   verdict: MoveVerdict | null
+  reached: string | null
+  current: string | null
   botName: string
   showingBetter: boolean
   onToggleBetter: () => void
@@ -106,8 +122,10 @@ function YourMove({
       : `That looks like a ${name}, but it doesn't work here.`
   } else if (bad && verdict) why = verdict.refutation?.text ?? null
   else if (tactic && holds) why = describeTactic(tactic, true, botName, move.piece)
+  else if (reached) why = `You're in the ${reached}. ${explainOpening(reached)}`
   else if (term) why = term.explain
-  else if (verdict?.quality === 'book') why = 'A well-known opening move that masters play all the time.'
+  else if (verdict?.quality === 'book')
+    why = current ? `Still in the ${current}: a standard move here.` : 'A standard opening move.'
 
   return (
     <div className="flex flex-col gap-2">
@@ -144,7 +162,17 @@ function YourMove({
   )
 }
 
-function BotReply({ move, verdict, bot }: { move: Move; verdict: MoveVerdict | null; bot: Bot }) {
+function BotReply({
+  move,
+  verdict,
+  bot,
+  reached,
+}: {
+  move: Move
+  verdict: MoveVerdict | null
+  bot: Bot
+  reached: string | null
+}) {
   const tactic = mainTactic(detectTactics(move.before, move))
   const slipped = verdict && (verdict.quality === 'mistake' || verdict.quality === 'blunder')
   const helped = verdict && verdict.quality === 'inaccuracy'
@@ -169,6 +197,11 @@ function BotReply({ move, verdict, bot }: { move: Move; verdict: MoveVerdict | n
   } else if (helped && verdict) {
     note = {
       text: `Not the ${bot.name}'s best. That helped you: ${pct(100 - verdict.winBefore)} → ${pct(100 - verdict.winAfter)}.`,
+      tone: 'border border-border bg-surface-2 text-text',
+    }
+  } else if (reached) {
+    note = {
+      text: `The ${bot.name} steered into the ${reached}. ${explainOpening(reached)}`,
       tone: 'border border-border bg-surface-2 text-text',
     }
   }

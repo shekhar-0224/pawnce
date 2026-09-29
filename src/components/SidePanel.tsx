@@ -64,7 +64,7 @@ export function SidePanel({
               {opening.name}
               <span className="text-muted/70">
                 {' · '}
-                {moves[opening.ply]?.color === myColor ? 'your choice' : `${bot.name}'s choice`}
+                {moves[opening.ply]?.color === myColor ? 'chosen by you' : `chosen by the ${bot.name}`}
               </span>
             </span>
           )}
