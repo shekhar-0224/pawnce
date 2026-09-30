@@ -85,6 +85,11 @@ export default function App() {
   const onGamePage = location.pathname === '/play' || (!!match && summaryId === match.gameId)
   const pageKey = onGamePage ? `game-${match?.gameId ?? 'new'}` : location.pathname
 
+  // Leaving the game page ends the live match (leaving mid-game resigns it
+  // first). From then on, its link opens the saved summary and replay, not
+  // a fresh board.
+  if (match && !onGamePage) setMatch(null)
+
   const gameHost = (
     <GameHost
       match={match}
