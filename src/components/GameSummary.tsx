@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { type ReactNode, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import { moveAccuracy } from '../chess/accuracy'
 import type { Color, Move } from '../chess/game'
@@ -58,23 +58,6 @@ const QUALITY_TONE: Record<Quality, string> = {
 type Moment = { ply: number; tone: string; label: string; text: string }
 
 const moveNo = (ply: number) => `${Math.floor(ply / 2) + 1}${ply % 2 === 0 ? '.' : '…'}`
-
-function Tile({
-  label,
-  className = '',
-  children,
-}: {
-  label: string
-  className?: string
-  children: ReactNode
-}) {
-  return (
-    <section className={`flex min-w-0 flex-col gap-3 card p-5 ${className}`}>
-      <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</h2>
-      {children}
-    </section>
-  )
-}
 
 /** The game-over screen: result, key moments, patterns, a replay, play again. */
 export function GameSummary(p: Props) {
@@ -167,13 +150,17 @@ export function GameSummary(p: Props) {
   const wordsHere = (ply >= 0 ? (p.wordsAt[ply] ?? []) : []).filter(
     (w, i, all) => w.id !== 'capture' && WORDS_BY_ID[w.id] && all.findIndex((x) => x.id === w.id) === i,
   )
-  const replayRef = useRef<HTMLDivElement>(null)
+  // Phones show one tab at a time (Replay included); wide screens keep the replay beside the tabs.
+  type Tab = 'moments' | 'words' | 'patterns' | 'replay'
+  const [tab, setTab] = useState<Tab>(p.initialPly !== undefined ? 'replay' : 'words')
+  const [sideTab, setSideTab] = useState<Exclude<Tab, 'replay'>>('words')
+  const pickTab = (t: Tab) => {
+    setTab(t)
+    if (t !== 'replay') setSideTab(t)
+  }
   const jumpTo = (target: number) => {
     setPly(target)
-    // On phones the replay sits below the list: bring it into view.
-    if (window.matchMedia('(max-width: 899px)').matches) {
-      replayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    if (window.matchMedia('(max-width: 899px)').matches) setTab('replay')
   }
   const currentVerdict = ply >= 0 ? verdicts[ply] : null
 
@@ -197,9 +184,18 @@ export function GameSummary(p: Props) {
 
   const counts = stats.counts
 
+  const slips = (counts.inaccuracy ?? 0) + (counts.mistake ?? 0) + (counts.blunder ?? 0)
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'words', label: `Words${p.cards.length ? ` ${p.cards.length}` : ''}` },
+    { id: 'moments', label: 'Moments' },
+    { id: 'patterns', label: 'Patterns' },
+    { id: 'replay', label: 'Replay' },
+  ]
+  const shown = tab === 'replay' ? sideTab : tab
+
   return (
     <motion.div
-      className="fixed inset-0 z-40 overflow-y-auto bg-bg"
+      className="fixed inset-0 z-40 flex flex-col bg-bg"
       role="dialog"
       aria-modal="true"
       aria-labelledby="summary-title"
@@ -208,56 +204,176 @@ export function GameSummary(p: Props) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="px-4">
+      <div className="shrink-0 px-4">
         <TopBar title="Game summary" onBack={p.onClose} backLabel={p.closeLabel ?? 'Board'} onHome={p.onChangeOpponent} />
       </div>
-      <div className="mx-auto grid w-full max-w-6xl gap-3 px-4 pb-5 min-[900px]:grid-cols-12 min-[900px]:px-8 min-[900px]:pb-8">
-        {/* Result: a bright banner with Pawny */}
-        <motion.section
-          className="order-1 flex min-w-0 flex-col gap-4 overflow-hidden rounded-[var(--radius-card)] p-5 text-white min-[900px]:order-none min-[900px]:col-span-5"
-          style={{
-            background: `var(--${p.result === 'win' ? 'accent' : p.result === 'loss' ? 'danger' : 'warn'})`,
-            boxShadow: `0 6px 0 var(--${p.result === 'win' ? 'accent' : p.result === 'loss' ? 'danger' : 'warn'}-edge)`,
-          }}
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 320, damping: 18 }}
-        >
-          <div className="flex items-center gap-4">
-            <Mascot size={84} mood={p.result === 'win' ? 'happy' : p.result === 'loss' ? 'sad' : 'wow'} />
-            <div className="min-w-0">
-              <h1 id="summary-title" className="text-3xl font-black leading-tight">
-                {p.title}
-              </h1>
-              <p className="mt-1 font-bold text-white/90">{p.detail}</p>
+      {/* One screen: lists scroll inside their panel, the page never does. */}
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-3 px-4 pb-3 min-[900px]:grid min-[900px]:grid-cols-[minmax(0,1fr)_auto] min-[900px]:grid-rows-[minmax(0,1fr)_auto] min-[900px]:gap-x-5 min-[900px]:px-8 min-[900px]:pb-5">
+        <div className={`flex min-h-0 flex-col gap-3 min-[900px]:col-start-1 min-[900px]:row-start-1 min-[900px]:flex-1 ${tab === 'replay' ? 'flex-none' : 'flex-1'}`}>
+          {/* Result: a bright banner with Pawny and the three numbers */}
+          <motion.section
+            className="flex shrink-0 flex-col gap-3 overflow-hidden rounded-[var(--radius-card)] p-3.5 text-white min-[900px]:p-5"
+            style={{ background: `var(--${p.result === 'win' ? 'accent' : p.result === 'loss' ? 'danger' : 'warn'})`, boxShadow: `0 5px 0 var(--${p.result === 'win' ? 'accent' : p.result === 'loss' ? 'danger' : 'warn'}-edge)` }}
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 18 }}
+          >
+            <div className="flex items-center gap-3">
+              <span className="shrink-0 min-[900px]:[&>svg]:h-auto min-[900px]:[&>svg]:w-20">
+                <Mascot size={52} bounce={false} mood={p.result === 'win' ? 'happy' : p.result === 'loss' ? 'sad' : 'wow'} />
+              </span>
+              <div className="min-w-0">
+                <h1 id="summary-title" className="text-2xl font-black leading-tight min-[900px]:text-3xl">
+                  {p.title}
+                </h1>
+                <p className="line-clamp-2 text-sm font-bold text-white/90">{p.detail}</p>
+              </div>
             </div>
-          </div>
-          <dl className="grid grid-cols-3 gap-2 text-center">
-            {[
-              ['Accuracy', stats.accuracy !== null ? `${stats.accuracy}%` : '–', 'text-text'],
-              ['Good moves', String((counts.best ?? 0) + (counts.good ?? 0) + (counts.book ?? 0)), 'text-accent'],
-              ['Slips', String((counts.inaccuracy ?? 0) + (counts.mistake ?? 0) + (counts.blunder ?? 0)), 'text-danger'],
-            ].map(([label, value, tone], i) => (
-              <motion.div
-                key={label}
-                className="rounded-2xl bg-surface px-2 py-2"
-                initial={{ y: 12, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.15 + i * 0.08, type: 'spring', stiffness: 400, damping: 20 }}
-              >
-                <dt className="text-[11px] font-extrabold uppercase tracking-wide text-muted">{label}</dt>
-                <dd className={`text-2xl font-black ${tone}`}>{value}</dd>
-              </motion.div>
-            ))}
-          </dl>
-          <p className="text-xs font-bold text-white/85">
-            Slips: {counts.inaccuracy ?? 0} inaccuracies · {counts.mistake ?? 0} mistakes · {counts.blunder ?? 0} blunders
-          </p>
-        </motion.section>
+            <dl className={`grid grid-cols-3 gap-2 text-center ${tab === 'replay' ? 'max-[899px]:hidden' : ''}`}>
+              {[
+                ['Accuracy', stats.accuracy !== null ? `${stats.accuracy}%` : '–', 'text-text'],
+                ['Good moves', String((counts.best ?? 0) + (counts.good ?? 0) + (counts.book ?? 0)), 'text-accent'],
+                ['Slips', String(slips), 'text-danger'],
+              ].map(([label, value, tone]) => (
+                <div key={label} className="rounded-xl bg-surface px-1 py-1.5" title={label === 'Slips' ? `${counts.inaccuracy ?? 0} inaccuracies · ${counts.mistake ?? 0} mistakes · ${counts.blunder ?? 0} blunders` : undefined}>
+                  <dt className="text-[10px] font-extrabold uppercase tracking-wide text-muted">{label}</dt>
+                  <dd className={`text-xl font-black ${tone}`}>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </motion.section>
 
-        {/* Replay */}
-        <Tile label="Replay" className="order-5 min-[900px]:order-none min-[900px]:col-span-7 min-[900px]:row-span-4">
-          <div ref={replayRef} className="relative mx-auto w-full max-w-[420px] scroll-mt-4 overflow-hidden rounded-lg">
+          <div role="tablist" aria-label="Summary" className="grid shrink-0 grid-cols-4 gap-1 rounded-2xl bg-surface-2 p-1 min-[900px]:grid-cols-3">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={tab === t.id}
+                onClick={() => pickTab(t.id)}
+                className={`cursor-pointer rounded-xl px-1 py-1.5 text-xs font-extrabold ${t.id === 'replay' ? 'min-[900px]:hidden' : ''} ${
+                  t.id === tab ? 'bg-surface text-text shadow-sm' : 'text-muted hover:text-text'
+                } ${
+                  t.id === shown
+                    ? 'min-[900px]:bg-surface min-[900px]:text-text min-[900px]:shadow-sm'
+                    : 'min-[900px]:bg-transparent min-[900px]:text-muted min-[900px]:shadow-none'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* The chosen list (hidden on phones while the replay is open) */}
+          <section
+            aria-label={shown === 'words' ? 'Words from this game' : shown === 'moments' ? 'Key moments' : 'Patterns played'}
+            className={`card min-h-0 flex-1 flex-col gap-2 p-3 min-[900px]:flex min-[900px]:p-4 ${tab === 'replay' ? 'hidden' : 'flex'}`}
+          >
+            {shown === 'moments' &&
+              (moments.length === 0 ? (
+                <p className="text-sm text-muted">A quiet game: no big swings or tactics.</p>
+              ) : (
+                <ul className="pawnce-scroll -mx-1 flex min-h-0 flex-col gap-0.5 overflow-y-auto">
+                  {moments.map((mo, i) => (
+                    <li key={i}>
+                      <button
+                        type="button"
+                        onClick={() => jumpTo(mo.ply)}
+                        className={`flex w-full cursor-pointer items-baseline gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-surface-2 ${ply === mo.ply ? 'bg-surface-2' : ''}`}
+                      >
+                        <span className="w-10 shrink-0 font-mono text-xs text-muted">{moveNo(mo.ply)}</span>
+                        <span className={`shrink-0 font-semibold ${mo.tone}`}>{mo.label}</span>
+                        <span className="min-w-0 truncate text-muted">{mo.text}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ))}
+
+            {shown === 'words' && (
+              <>
+                <p className="shrink-0 text-sm">
+                  <span className="font-semibold">Words from this game</span>
+                  {p.newThisGame.length > 0 && (
+                    <span className="text-accent">
+                      {' '}
+                      · {p.newThisGame.length} new
+                    </span>
+                  )}
+                </p>
+                {p.cards.length === 0 ? (
+                  <p className="text-sm text-muted">No new chess words this time. Play on!</p>
+                ) : (
+                  <>
+                    <ul className="pawnce-scroll -mx-2 flex min-h-0 flex-1 flex-col overflow-y-auto">
+                      {p.cards.map((c) => {
+                        const word = c.kind === 'word' ? WORDS_BY_ID[c.id] : null
+                        const here = ply === c.ply || (c.kind === 'word' && wordsHere.some((w) => w.id === c.id))
+                        const fresh = c.kind === 'word' && newSet.has(c.id)
+                        return (
+                          <li key={c.kind === 'word' ? c.id : `o:${c.family}`}>
+                            <button
+                              type="button"
+                              onClick={() => jumpTo(c.ply)}
+                              aria-current={here ? 'true' : undefined}
+                              className={`flex w-full cursor-pointer items-baseline gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${here ? 'bg-accent/10' : 'hover:bg-surface-2'}`}
+                            >
+                              <span className="w-9 shrink-0 font-mono text-xs text-muted">{moveNo(c.ply)}</span>
+                              <span className="min-w-0 flex-1">
+                                <span className="flex items-center gap-1.5">
+                                  <span className={`font-semibold ${here ? 'text-accent' : ''}`}>{word ? word.name : c.kind === 'opening' ? c.name : ''}</span>
+                                  {fresh && <span className="rounded bg-accent px-1 font-mono text-[10px] font-bold uppercase text-on-accent">New</span>}
+                                </span>
+                                <span className="block truncate text-xs text-muted">{word ? word.meaning : 'The opening this game followed.'}</span>
+                              </span>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                    <Button variant="learn" className="shrink-0" onClick={() => setDeckOpen(true)}>
+                      Review {p.cards.length} flash {p.cards.length === 1 ? 'card' : 'cards'}
+                    </Button>
+                  </>
+                )}
+              </>
+            )}
+
+            {shown === 'patterns' && (
+              <div className="pawnce-scroll flex min-h-0 flex-col gap-2 overflow-y-auto">
+                {p.opening && (
+                  <p className="text-sm">
+                    <span className="text-muted">Opening · </span>
+                    <span className="font-semibold">{p.opening.name}</span>
+                    <span className="text-muted"> ({moves[p.opening.ply]?.color === myColor ? 'chosen by you' : `chosen by the ${bot.name}`})</span>
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-1.5">
+                  {patterns.tactics.map(([kind, n]) => (
+                    <span key={kind} className="rounded-md border border-border px-2 py-1 text-xs">
+                      <span className="font-semibold">{TACTIC_LABELS[kind]}</span>
+                      <span className="text-muted">
+                        {n.mine ? ` · you ${n.mine}` : ''}
+                        {n.theirs ? ` · ${bot.name} ${n.theirs}` : ''}
+                      </span>
+                    </span>
+                  ))}
+                  {patterns.terms.map(([label, n]) => (
+                    <span key={label} className="rounded-md border border-border px-2 py-1 text-xs text-muted">
+                      {label} ×{n}
+                    </span>
+                  ))}
+                  {patterns.tactics.length === 0 && patterns.terms.length === 0 && <span className="text-sm text-muted">No special patterns this game.</span>}
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Replay: its own tab on phones, always beside the list on wide screens. Sized to fit the screen. */}
+        <section aria-label="Replay" className={`card min-h-0 flex-1 flex-col items-center gap-2 p-3 min-[900px]:col-start-2 min-[900px]:row-span-2 min-[900px]:row-start-1 min-[900px]:flex min-[900px]:flex-none min-[900px]:p-4 ${tab === 'replay' ? 'flex' : 'hidden'}`}>
+          <h2 className="hidden self-start text-[11px] font-semibold uppercase tracking-[0.08em] text-muted min-[900px]:block">Replay</h2>
+          <div className="relative w-[min(100%,calc(100dvh-400px))] shrink-0 overflow-hidden rounded-lg min-[900px]:w-[min(560px,calc(100dvh-330px),calc(100vw-560px))]">
             {wordsHere[0] && (
               <span className="pointer-events-none absolute left-2 top-2 z-10 rounded-md bg-accent px-2 py-0.5 text-xs font-semibold text-on-accent">
                 {WORDS_BY_ID[wordsHere[0].id].name}
@@ -273,13 +389,11 @@ export function GameSummary(p: Props) {
                 animationDurationInMs: 150,
                 lightSquareStyle: { backgroundColor: color.boardLight },
                 darkSquareStyle: { backgroundColor: color.boardDark },
-                squareStyles: current
-                  ? { [current.from]: { background: color.lastMove }, [current.to]: { background: color.lastMove } }
-                  : {},
+                squareStyles: current ? { [current.from]: { background: color.lastMove }, [current.to]: { background: color.lastMove } } : {},
               }}
             />
           </div>
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex w-full items-center justify-between gap-2">
             <div className="flex gap-1">
               <Button onClick={() => setPly(-1)} aria-label="First move" className="px-3" disabled={ply < 0}>
                 ⏮
@@ -300,16 +414,23 @@ export function GameSummary(p: Props) {
               </Button>
             </div>
           </div>
-          <div className="min-h-16 rounded-lg border border-border p-3 text-sm">
+          <div className="pawnce-scroll min-h-0 w-full flex-1 overflow-y-auto rounded-lg border border-border p-2.5 text-sm">
             {current ? (
               <>
                 <p>
-                  <span className="font-semibold">{current.color === myColor ? 'You' : bot.name}</span>{' '}
-                  <span className="font-mono font-semibold">{current.san}</span>
+                  <span className="font-semibold">{current.color === myColor ? 'You' : bot.name}</span> <span className="font-mono font-semibold">{current.san}</span>
                   <span className="text-muted"> · {plainName(current)}</span>
                 </p>
+                {currentVerdict && (
+                  <p className={`font-semibold ${QUALITY_TONE[currentVerdict.quality]}`}>
+                    {QUALITY_MARKS[currentVerdict.quality] ?? ''} {QUALITY_LABELS[currentVerdict.quality]}
+                    {currentVerdict.better && currentVerdict.quality !== 'good' && currentVerdict.quality !== 'best' && currentVerdict.quality !== 'book' && (
+                      <span className="font-normal text-muted"> · better was {currentVerdict.better}</span>
+                    )}
+                  </p>
+                )}
                 {wordsHere.length > 0 && (
-                  <ul className="mt-2 flex flex-col gap-1.5 border-t border-border pt-2" aria-label="Words at this move">
+                  <ul className="mt-1.5 flex flex-col gap-1 border-t border-border pt-1.5" aria-label="Words at this move">
                     {wordsHere.map((w) => (
                       <li key={w.id}>
                         <span className="font-semibold text-accent">{WORDS_BY_ID[w.id].name}</span>
@@ -321,139 +442,16 @@ export function GameSummary(p: Props) {
                     ))}
                   </ul>
                 )}
-                {currentVerdict && (
-                  <p className={`mt-1 font-semibold ${QUALITY_TONE[currentVerdict.quality]}`}>
-                    {QUALITY_MARKS[currentVerdict.quality] ?? ''} {QUALITY_LABELS[currentVerdict.quality]}
-                    {currentVerdict.better && currentVerdict.quality !== 'good' && currentVerdict.quality !== 'best' && currentVerdict.quality !== 'book' && (
-                      <span className="font-normal text-muted"> · better was {currentVerdict.better}</span>
-                    )}
-                  </p>
-                )}
               </>
             ) : (
               <p className="text-muted">The starting position. Step through the game with the arrows.</p>
             )}
           </div>
-        </Tile>
-
-        {/* Words from this game */}
-        <Tile label="Words from this game" className="order-3 min-[900px]:order-none min-[900px]:col-span-5">
-          {p.cards.length === 0 ? (
-            <p className="text-sm text-muted">No new chess words this time. Play on!</p>
-          ) : (
-            <>
-              {p.newThisGame.length > 0 && (
-                <p className="text-sm">
-                  <span className="font-semibold text-accent">
-                    {p.newThisGame.length} new {p.newThisGame.length === 1 ? 'word' : 'words'}
-                  </span>
-                  <span className="text-muted"> this game</span>
-                </p>
-              )}
-              <ul className="-mx-2 flex max-h-80 flex-col overflow-y-auto">
-                {p.cards.map((c) => {
-                  const word = c.kind === 'word' ? WORDS_BY_ID[c.id] : null
-                  const here = ply === c.ply || (c.kind === 'word' && wordsHere.some((w) => w.id === c.id))
-                  const fresh = c.kind === 'word' && newSet.has(c.id)
-                  return (
-                    <li key={c.kind === 'word' ? c.id : `o:${c.family}`}>
-                      <button
-                        type="button"
-                        onClick={() => jumpTo(c.ply)}
-                        aria-current={here ? 'true' : undefined}
-                        className={`flex w-full cursor-pointer items-baseline gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors ${
-                          here ? 'bg-accent/10' : 'hover:bg-surface-2'
-                        }`}
-                      >
-                        <span className="w-9 shrink-0 font-mono text-xs text-muted">{moveNo(c.ply)}</span>
-                        <span className="min-w-0 flex-1">
-                          <span className="flex items-center gap-1.5">
-                            <span className={`font-semibold ${here ? 'text-accent' : ''}`}>{word ? word.name : c.kind === 'opening' ? c.name : ''}</span>
-                            {fresh && (
-                              <span className="rounded bg-accent px-1 font-mono text-[10px] font-bold uppercase text-on-accent">New</span>
-                            )}
-                          </span>
-                          <span className="block truncate text-xs text-muted">
-                            {word ? word.meaning : 'The opening this game followed.'}
-                          </span>
-                        </span>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-              <Button variant="primary" onClick={() => setDeckOpen(true)}>
-                Review {p.cards.length} flash {p.cards.length === 1 ? 'card' : 'cards'}
-              </Button>
-            </>
-          )}
-        </Tile>
-
-        {/* Key moments */}
-        <Tile label="Key moments" className="order-4 min-[900px]:order-none min-[900px]:col-span-5">
-          {moments.length === 0 ? (
-            <p className="text-sm text-muted">A quiet game: no big swings or tactics.</p>
-          ) : (
-            <ul className="flex max-h-64 flex-col gap-1 overflow-y-auto pr-1">
-              {moments.map((mo, i) => (
-                <li key={i}>
-                  <button
-                    type="button"
-                    onClick={() => setPly(mo.ply)}
-                    className={`flex w-full items-baseline gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-surface-2 ${
-                      ply === mo.ply ? 'bg-surface-2' : ''
-                    }`}
-                  >
-                    <span className="w-10 shrink-0 font-mono text-xs text-muted">{moveNo(mo.ply)}</span>
-                    <span className={`shrink-0 font-semibold ${mo.tone}`}>{mo.label}</span>
-                    <span className="min-w-0 truncate text-muted">{mo.text}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Tile>
-
-        {/* Patterns played */}
-        <Tile label="Patterns played" className="order-6 min-[900px]:order-none min-[900px]:col-span-5">
-          {p.opening && (
-            <p className="text-sm">
-              <span className="text-muted">Opening · </span>
-              <span className="font-semibold">{p.opening.name}</span>
-              <span className="text-muted">
-                {' '}
-                ({moves[p.opening.ply]?.color === myColor ? 'chosen by you' : `chosen by the ${bot.name}`})
-              </span>
-            </p>
-          )}
-          <div className="flex flex-wrap gap-1.5">
-            {patterns.tactics.map(([kind, n]) => (
-              <span key={kind} className="rounded-md border border-border px-2 py-1 text-xs">
-                <span className="font-semibold">{TACTIC_LABELS[kind]}</span>
-                <span className="text-muted">
-                  {n.mine ? ` · you ${n.mine}` : ''}
-                  {n.theirs ? ` · ${bot.name} ${n.theirs}` : ''}
-                </span>
-              </span>
-            ))}
-            {patterns.terms.map(([label, n]) => (
-              <span key={label} className="rounded-md border border-border px-2 py-1 text-xs text-muted">
-                {label} ×{n}
-              </span>
-            ))}
-            {patterns.tactics.length === 0 && patterns.terms.length === 0 && (
-              <span className="text-sm text-muted">No special patterns this game.</span>
-            )}
-          </div>
-        </Tile>
-
-        {/* Play again */}
-        <section className="order-2 flex flex-col gap-2 card p-5 min-[900px]:order-last min-[900px]:col-span-12 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between">
-          <p className="text-sm text-muted">Ready for another? Every game teaches something new.</p>
-          <Button variant="primary" className="uppercase min-[900px]:min-w-56" onClick={p.onPlayAgain}>
-            Play again
-          </Button>
         </section>
+
+        <Button variant="primary" className="shrink-0 uppercase min-[900px]:col-start-1 min-[900px]:row-start-2" onClick={p.onPlayAgain}>
+          Play again
+        </Button>
       </div>
 
       <AnimatePresence>

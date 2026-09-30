@@ -39,7 +39,7 @@ export function RecentGamesScreen({ onOpen }: { onOpen: (id: string) => void }) 
   const [games] = useState(loadRecentGames)
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pb-10">
+    <div className="mx-auto flex h-dvh w-full max-w-2xl flex-col px-4 pb-3">
       <TopBar title="Recent games" />
 
       {games.length === 0 ? (
@@ -48,7 +48,7 @@ export function RecentGamesScreen({ onOpen }: { onOpen: (id: string) => void }) 
           <p className="mt-1 text-muted">Finish a game and it will show up here.</p>
         </div>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="pawnce-scroll -mx-1 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-1 pb-1">
           {games.map((g) => {
             const bot = BOTS[g.bot] ?? BOTS.ant
             const badge = BADGE[g.result] ?? BADGE.draw
