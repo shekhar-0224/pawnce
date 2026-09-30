@@ -59,20 +59,55 @@ export function FlashCard({ card, context, progress, fill = false, children }: P
         <ExampleBoard id={`op-${card.name}`} fen={card.fen} last={card.last} />
       ) : null
     return (
-      <article aria-label={`Flash card: ${name}`} className="card flex h-full min-h-0 flex-col gap-2 p-3 min-[480px]:p-4">
-        <header className="flex shrink-0 items-center justify-between gap-2">
+      <article
+        aria-label={`Flash card: ${name}`}
+        className="card flex h-full min-h-0 flex-col gap-2 p-3 min-[480px]:p-4 [@media(max-height:600px)_and_(orientation:landscape)]:flex-row [@media(max-height:600px)_and_(orientation:landscape)]:gap-4"
+      >
+        {/* Short screens (landscape phones, small laptops): board left at full height, words right. */}
+        <div className="contents [@media(max-height:600px)_and_(orientation:landscape)]:order-2 [@media(max-height:600px)_and_(orientation:landscape)]:flex [@media(max-height:600px)_and_(orientation:landscape)]:w-[46%] [@media(max-height:600px)_and_(orientation:landscape)]:shrink-0 [@media(max-height:600px)_and_(orientation:landscape)]:flex-col [@media(max-height:600px)_and_(orientation:landscape)]:gap-2">
+        <header className="order-1 flex shrink-0 items-center justify-between gap-2">
           <p className="flex min-w-0 items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-muted">
             <span className="truncate">{word ? word.category : 'Opening'}</span>
             {fresh && <span className="rounded bg-accent px-1 py-px text-[9px] text-on-accent">New</span>}
           </p>
           {progress && <p className="shrink-0 font-mono text-[11px] font-bold text-muted">{progress}</p>}
         </header>
-        <div className="shrink-0">
+        <div className="order-2 shrink-0">
           <h2 className="font-display text-2xl font-black leading-tight min-[480px]:text-3xl">{name}</h2>
-          <p className="mt-0.5 line-clamp-2 text-sm font-bold leading-snug text-muted">{meaning}</p>
+          <p className="mt-0.5 line-clamp-3 text-sm font-bold leading-snug text-muted">{meaning}</p>
         </div>
 
-        <div ref={boardBox} className="relative flex min-h-0 flex-1 items-center justify-center">
+        <footer className="order-4 flex shrink-0 items-center gap-2 [@media(max-height:600px)_and_(orientation:landscape)]:mt-auto [@media(max-height:600px)_and_(orientation:landscape)]:flex-wrap">
+          {context ? (
+            <button
+              type="button"
+              onClick={context.onJump}
+              disabled={!context.onJump}
+              className="flex min-h-10 min-w-0 flex-1 cursor-pointer items-center gap-1 rounded-xl bg-surface-2 px-2.5 py-1.5 text-left text-xs font-bold leading-snug disabled:cursor-default"
+            >
+              <span className="line-clamp-2 min-w-0">
+                <span className="text-muted">In your game: </span>
+                {context.text}
+              </span>
+              {context.onJump && <span aria-hidden className="ml-auto shrink-0 text-accent">›</span>}
+            </button>
+          ) : (
+            <p className="line-clamp-2 min-w-0 flex-1 text-xs font-bold leading-snug text-muted">{ex?.caption ?? ''}</p>
+          )}
+          {word && (
+            <button
+              type="button"
+              aria-expanded={tipOpen}
+              onClick={() => setTipOpen((o) => !o)}
+              className={`min-h-10 shrink-0 cursor-pointer rounded-xl border-2 px-3 text-xs font-black ${tipOpen ? 'border-warn bg-warn/15 text-text' : 'border-border text-muted hover:bg-surface-2'}`}
+            >
+              💡 Tip
+            </button>
+          )}
+        </footer>
+        </div>
+
+        <div ref={boardBox} className="relative order-3 flex min-h-0 min-w-0 flex-1 items-center justify-center [@media(max-height:600px)_and_(orientation:landscape)]:order-1">
           {boardEl && fit !== null && fit >= 100 && (
             <div className="w-[var(--fit)]" style={{ '--fit': `${Math.min(fit, 520)}px` } as CSSProperties}>
               {boardEl}
@@ -94,32 +129,6 @@ export function FlashCard({ card, context, progress, fill = false, children }: P
           </AnimatePresence>
         </div>
 
-        <footer className="flex shrink-0 items-center gap-2">
-          {context ? (
-            <button
-              type="button"
-              onClick={context.onJump}
-              disabled={!context.onJump}
-              className="flex min-h-10 min-w-0 flex-1 cursor-pointer items-center gap-1 rounded-xl bg-surface-2 px-2.5 text-left text-xs font-bold disabled:cursor-default"
-            >
-              <span className="shrink-0 text-muted">In your game:</span>
-              <span className="min-w-0 truncate">{context.text}</span>
-              {context.onJump && <span aria-hidden className="ml-auto shrink-0 text-accent">›</span>}
-            </button>
-          ) : (
-            <p className="line-clamp-2 min-w-0 flex-1 text-xs font-bold leading-snug text-muted">{ex?.caption ?? ''}</p>
-          )}
-          {word && (
-            <button
-              type="button"
-              aria-expanded={tipOpen}
-              onClick={() => setTipOpen((o) => !o)}
-              className={`min-h-10 shrink-0 cursor-pointer rounded-xl border-2 px-3 text-xs font-black ${tipOpen ? 'border-warn bg-warn/15 text-text' : 'border-border text-muted hover:bg-surface-2'}`}
-            >
-              💡 Tip
-            </button>
-          )}
-        </footer>
         {children}
       </article>
     )
