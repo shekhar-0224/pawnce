@@ -11,6 +11,8 @@ export type GameSetup = { botId: BotId; side: SidePref; timeControl: TimeControl
 type Props = {
   /** Last time's choices, shown as the current pick on each step. */
   initial: GameSetup
+  /** Start at this step (1 = side), e.g. when the opponent was already picked. */
+  startStep?: number
   onStart: (setup: GameSetup) => void
   onClose: () => void
 }
@@ -39,8 +41,8 @@ const option = (active: boolean) =>
  * Starting a game, one question at a time: opponent, side, clock. Each tap
  * moves to the next question; the last one starts the game.
  */
-export function NewGameFlow({ initial, onStart, onClose }: Props) {
-  const [step, setStep] = useState(0)
+export function NewGameFlow({ initial, startStep = 0, onStart, onClose }: Props) {
+  const [step, setStep] = useState(startStep)
   const [draft, setDraft] = useState<GameSetup>(initial)
 
   const choose = (patch: Partial<GameSetup>) => {
