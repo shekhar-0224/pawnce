@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { type Color, type Move, type Square, parseUci } from '../chess/game'
 import { describeIdea } from '../chess/ideas'
 import { type Quality, classifyMove } from '../chess/naming'
-import { type Refutation, describeLoss, describeRefutation } from '../chess/refutation'
+import { type Refutation, explainSlip } from '../chess/refutation'
 import { loadOpenings, openingAt } from '../chess/openings'
 import { type Threat, describeThreat, passFen } from '../chess/threats'
 import type { Result } from '../chess/outcome'
@@ -194,13 +194,17 @@ export function useAnalysis(
         const betterMove = better && before.best ? parseUci(before.best) : null
         const slip = quality === 'inaccuracy' || quality === 'mistake' || quality === 'blunder'
         const view = m.color === myColor ? 'mover' : 'punisher'
-        // Name what is really lost further down their line (net of trades);
-        // fall back to what their first reply does (and always for mates).
-        const refutation =
-          slip && after.best
-            ? ((after.mate === null && after.pv.length ? describeLoss(m.before, m, after.pv, view) : null) ??
-              describeRefutation(m.after, after.best, after.mate, view))
-            : null
+        // A mate, else what is really lost down their line (net of trades), else
+        // the win you missed. Their reply is only described when it wins something.
+        const refutation = slip
+          ? explainSlip({
+              fenBefore: m.before,
+              move: m,
+              after: { pv: after.pv, best: after.best, mate: after.mate },
+              before: { pv: before.pv[0] === m.lan ? [] : before.pv, mate: before.mate },
+              view,
+            })
+          : null
         return { quality, winBefore, winAfter, cpLoss, better, betterMove, refutation }
       }),
     [moves, evals, openingsReady, myColor, suggested],
