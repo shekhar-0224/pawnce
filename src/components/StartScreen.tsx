@@ -15,6 +15,7 @@ import { Logo } from './Logo'
 import { Mascot } from './Mascot'
 import { type GameSetup, NewGameFlow } from './NewGameFlow'
 import { Sheet } from './Sheet'
+import { ThemeToggle } from './ThemeToggle'
 
 export type SidePref = 'white' | 'black' | 'random'
 
@@ -376,6 +377,7 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
           <span className="hidden min-[400px]:inline-flex">
             <StatPill icon={<TrophyIcon />} value={wins} label={wins === 1 ? 'win' : 'wins'} hint="Games you’ve won against the bots." tone="text-info" />
           </span>
+          <ThemeToggle />
         </div>
       </header>
 

@@ -236,7 +236,7 @@ export function GameSummary(p: Props) {
             ].map(([label, value, tone], i) => (
               <motion.div
                 key={label}
-                className="rounded-2xl bg-white px-2 py-2"
+                className="rounded-2xl bg-surface px-2 py-2"
                 initial={{ y: 12, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.15 + i * 0.08, type: 'spring', stiffness: 400, damping: 20 }}
