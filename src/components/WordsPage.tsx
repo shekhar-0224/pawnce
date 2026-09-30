@@ -38,6 +38,8 @@ function firstMet(s: WordStats | undefined): { label: string; href: string } | n
 export function WordsPage() {
   const learned = useLearned()
   const [deck, setDeck] = useState<DeckItem[] | null>(null)
+  const [openWord, setOpenWord] = useState<string | null>(null)
+  const navigate = useNavigate()
   const [search, setSearch] = useSearchParams()
   const known = PATTERN_WORDS.filter((w) => statusOf(learned, w.id) === 'known').length
   const met = PATTERN_WORDS.filter((w) => statusOf(learned, w.id) !== 'unmet')
@@ -105,9 +107,13 @@ export function WordsPage() {
           return (
             <li key={w.id} className="flex flex-col gap-0.5 px-4 py-2.5">
               <div className="flex items-center justify-between gap-3">
-                <Link to={`/words/${w.id}`} className={`font-extrabold hover:text-accent ${st === 'unmet' ? 'text-muted' : ''}`}>
+                <button
+                  type="button"
+                  onClick={() => setOpenWord(w.id)}
+                  className={`cursor-pointer text-left font-extrabold hover:text-accent ${st === 'unmet' ? 'text-muted' : ''}`}
+                >
                   {w.name} <span aria-hidden className="text-muted">›</span>
-                </Link>
+                </button>
                 <span className="shrink-0 text-xs font-bold">
                   {st === 'known' && <span className="text-accent">✓ {tab === 'Basics' ? 'Known' : 'Learned'}</span>}
                   {st === 'waiting' && <span className="rounded bg-learn px-1.5 py-px text-[10px] font-black uppercase text-white">Seen</span>}
@@ -131,6 +137,11 @@ export function WordsPage() {
             <FlashDeck items={deck} onClose={() => setDeck(null)} />
           </Sheet>
         )}
+        {openWord && WORDS_BY_ID[openWord] && (
+          <Sheet key={`word-${openWord}`} title={WORDS_BY_ID[openWord].name} wide onClose={() => setOpenWord(null)}>
+            <WordDetail id={openWord} onJump={(href) => navigate(href)} />
+          </Sheet>
+        )}
       </AnimatePresence>
     </div>
   )
@@ -140,7 +151,6 @@ export function WordsPage() {
 export function WordPage() {
   const { wordId = '' } = useParams()
   const navigate = useNavigate()
-  const learned = useLearned()
   const word = WORDS_BY_ID[wordId]
   if (!word) {
     return (
@@ -152,14 +162,28 @@ export function WordPage() {
       </div>
     )
   }
+  return (
+    <div className="mx-auto flex h-dvh w-full max-w-2xl flex-col px-4">
+      <TopBar title={word.name} />
+      <div className="pawnce-scroll -mx-4 min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+        <WordDetail id={word.id} onJump={(href) => navigate(href)} />
+      </div>
+    </div>
+  )
+}
+
+/** One word: its flash card, your history with it, and where you first met it. Used as a page and in a bottom sheet. */
+export function WordDetail({ id, onJump }: { id: string; onJump: (href: string) => void }) {
+  const learned = useLearned()
+  const word = WORDS_BY_ID[id]
+  if (!word) return null
   const s = learned.words[word.id]
   const where = firstMet(s)
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pb-4">
-      <TopBar title={word.name} />
+    <div>
       <FlashCard
         card={{ kind: 'word', id: word.id }}
-        context={where ? { text: `you first met it ${where.label}.`, onJump: () => navigate(where.href) } : undefined}
+        context={where ? { text: `you first met it ${where.label}.`, onJump: () => onJump(where.href) } : undefined}
       />
       <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
         {[

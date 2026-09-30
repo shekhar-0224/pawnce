@@ -92,15 +92,15 @@ export function VerdictStrip({ moves, verdicts, myColor, bot, openings, threat, 
           <span className={`grid size-6 shrink-0 place-items-center rounded-md font-mono text-xs font-bold ${badge ? badge.tone : 'bg-surface-2'}`}>
             {badge ? badge.mark : <ThinkingDots />}
           </span>
-          <span className="min-w-0 shrink-0 truncate">
+          <span className="min-w-0 truncate">
             <span className="font-mono font-semibold">{moves[mine].san}</span>
-            {badge && <span className="text-muted"> was {badge.word}</span>}
+            {badge && <span className={`text-muted ${newWord ? "max-[399px]:hidden" : ""}`}> was {badge.word}</span>}
           </span>
           {newWord && WORDS_BY_ID[newWord] ? (
             // A new chess word takes the reply's spot (tap the strip to learn it).
-            <span className="ml-auto flex min-w-0 shrink items-center gap-1 text-xs">
+            <span className="ml-auto flex shrink-0 items-center gap-1 text-xs">
               <span className="rounded bg-accent px-1 py-px font-mono text-[10px] font-bold uppercase text-on-accent">New</span>
-              <span className="truncate font-semibold text-accent">{WORDS_BY_ID[newWord].name}</span>
+              <span className="whitespace-nowrap font-semibold text-accent">{WORDS_BY_ID[newWord].name}</span>
             </span>
           ) : reply && (
             <span className="ml-auto shrink-0 text-xs text-muted">

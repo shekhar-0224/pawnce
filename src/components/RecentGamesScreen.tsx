@@ -58,14 +58,14 @@ export function RecentGamesScreen({ onOpen }: { onOpen: (id: string) => void }) 
                   type="button"
                   onClick={() => onOpen(g.id)}
                   aria-label={`vs. ${bot.name}, ${badge.label}: open summary`}
-                  className="flex w-full cursor-pointer items-center gap-3 card p-3 text-left hover:border-muted/40 sm:gap-4 sm:p-4"
+                  className="flex w-full cursor-pointer items-center gap-2.5 card p-2.5 text-left hover:border-muted/40 sm:gap-4 sm:p-4"
                 >
-                  <BotAvatar bot={bot} size={44} />
+                  <BotAvatar bot={bot} size={40} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">
-                      vs. {bot.name} <span className="text-muted">({bot.level})</span>
+                    <p className="font-semibold leading-tight">
+                      vs {bot.name} <span className="text-xs font-bold text-muted">· {bot.level}</span>
                     </p>
-                    <p className="truncate text-sm text-muted">
+                    <p className="line-clamp-2 text-sm leading-snug text-muted">
                       {g.myColor === 'white' ? 'White' : 'Black'} · {REASON[g.reason] ?? ''} ·{' '}
                       {g.moves} {g.moves === 1 ? 'move' : 'moves'}
                       {g.timeControl && TIME_CONTROLS[g.timeControl]?.speed

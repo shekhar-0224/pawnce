@@ -28,9 +28,12 @@ function Stat({ label, value, sub, tone = 'text-text' }: { label: string; value:
 /** /report: your report card as a page (links). Home opens the same content in a bottom sheet. */
 export function ReportPage() {
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col px-4 pb-4">
+    <div className="mx-auto flex h-dvh w-full max-w-3xl flex-col px-4">
       <TopBar title="Report card" />
-      <ReportBody />
+      {/* Fits most screens; on tiny or landscape phones only this part scrolls. */}
+      <div className="pawnce-scroll -mx-4 min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+        <ReportBody />
+      </div>
     </div>
   )
 }

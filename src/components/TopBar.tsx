@@ -36,7 +36,7 @@ export function TopBar({ title, onBack, backLabel = 'Back', onHome, showHome = t
           {backLabel}
         </button>
       </div>
-      <h1 className="min-w-0 truncate text-center text-lg font-black">{title}</h1>
+      <h1 className="min-w-0 truncate text-center text-lg font-black max-[359px]:text-base">{title}</h1>
       <div className="flex justify-end">
         {showHome && (
           <button type="button" onClick={onHome ?? (() => navigate('/'))} className={btn} aria-label="Home">
