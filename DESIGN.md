@@ -158,16 +158,17 @@ are secondary.
   move, a phase starting, a pawn structure appearing, most strategy words)
   count once per game. Piece names and the two castling sides never pause
   the game. Detection: `src/chess/patterns.ts` and `useVocab.ts`.
-- **Learning in the moment, without blocking.** Pop-up cards (the game waits,
-  bot and clocks paused) are only for big moments: a **new opening** (its
-  name, idea and board) or a **major move** word: castling, en passant,
-  promotion, the tactics (fork, pin, skewer, discovered attack/check, double
-  check, trapped piece, removing the defender, perpetual check, the
-  exchange), sacrifice, brilliant, and checkmates (plain and named). "Got it
-  · continue" marks it learned; "Not now" continues. Everything else (move
-  grades, pieces, pawns, strategy, phases) is taught quietly: the `NEW` tag
-  in the coach and the summary flash cards. A "Pause for new words" switch
-  (Menu / side panel / "Turn off" on the card) turns pop-ups off.
+- **Learning in the moment, without blocking.** A pop-up card (the game
+  waits) is rare: **at most one per move, never on move 1, never on a move
+  that shows the mistake/blunder card**, and only for these words, most
+  important first: Scholar's / Fool's / smothered / back-rank / ladder mate,
+  checkmate, double check, fork, skewer, pin, discovered attack, castling,
+  en passant, promotion (and underpromotion). If a move shows several new
+  words, the most important of these pops up and the rest are chips.
+  Everything else, openings included, is a non-blocking `NEW` chip in the
+  coach ("What's a fork?", tap to open) and a card in the end-of-game
+  summary. "Pause for new words" (Menu / side panel / "Turn off") switches
+  pop-ups off.
 - **Mistakes and blunders are alerts, not pauses:** a red card beside the
   board (under it on phones, above the coach on desktop) explains the slip
   and offers Take it back (your move, plus the bot's reply if it already

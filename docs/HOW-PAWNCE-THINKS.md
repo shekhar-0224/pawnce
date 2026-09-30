@@ -222,8 +222,13 @@ and rook."
     see each other).
 - A word is **New** until you tap its explainer (or "Got it" on its card) or
   meet it 3 times.
-- When a move shows a New word, the game pauses and opens its flash card
-  (one per move; switch off with "Pause for new words").
+- **What can pause the game:** only a New word from this list, at most one
+  per move, never on move 1 and never on a move that shows the
+  mistake/blunder card: named checkmates (Scholar's, Fool's, smothered,
+  back-rank, ladder), checkmate, double check, fork, skewer, pin,
+  discovered attack, castling, en passant, promotion, underpromotion. The
+  most important new word wins; the rest are NEW chips. Switch off with
+  "Pause for new words".
 - Every one of the 70 words has an example position on its flash card,
   checked with the chess rules library, so you can learn words you haven't
   met yet from the words page.

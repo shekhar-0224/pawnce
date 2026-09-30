@@ -111,21 +111,20 @@ export function GameScreen({
 
   const vocab = useVocab(g.moves, analysis.verdicts, myColor, openings.reached, g.summary?.reason ?? null, gameId)
 
-  // Pop-ups are for big moments only: a new opening, or a major move (a
-  // tactic, a sacrifice, a named checkmate, castling, promotion…). Every
-  // other word is taught quietly (New tag, summary flash cards).
+  // Pop-ups are rare: at most one per move, never on move 1, never on a
+  // move that already shows the mistake card, and only for major moves
+  // (tactics, checkmates, castling, en passant, promotion). Every other new
+  // word, openings included, is a NEW chip in the coach and a summary card.
   const [pauseForWords, setPauseForWords] = usePauseForWords()
   const [wordDoneAt, setWordDoneAt] = useState(-1)
-  const canPop = pauseForWords && lastVerdict && !g.isOver && wordDoneAt !== lastPly
-  const newOpening = canPop ? vocab.newOpeningAt(lastPly) : null
-  const newWord = canPop && !newOpening ? vocab.newWordAt(lastPly, { forPause: true }) : null
+  const canPop = pauseForWords && lastVerdict && !g.isOver && lastPly >= 2 && !moment && wordDoneAt !== lastPly
+  const newWord = canPop ? vocab.pauseWordAt(lastPly) : null
   const [wordCard, setWordCard] = useState<
     { ply: number; kind: 'word'; id: string } | { ply: number; kind: 'opening'; name: string } | null
   >(null)
   // Keep the card on screen until it's dismissed, even once the word is learned.
-  if (!wordCard && newOpening) setWordCard({ ply: lastPly, kind: 'opening', name: newOpening })
-  else if (!wordCard && newWord) setWordCard({ ply: lastPly, kind: 'word', id: newWord })
-  if (wordCard && wordCard.ply !== lastPly && !newWord && !newOpening) setWordCard(null)
+  if (!wordCard && newWord) setWordCard({ ply: lastPly, kind: 'word', id: newWord })
+  if (wordCard && wordCard.ply !== lastPly && !newWord) setWordCard(null)
   const dismissWord = (learn: boolean) => {
     if (learn && wordCard?.kind === 'word') learnWord(wordCard.id)
     setWordDoneAt(wordCard?.ply ?? lastPly)
@@ -342,7 +341,7 @@ export function GameScreen({
       bot={bot}
       openings={openings}
       threat={analysis.threat}
-      newWordAt={vocab.newWordAt}
+      newWordsAt={vocab.newWordsAt}
       showingBetter={betterMove !== null}
       onToggleBetter={() => setShowBetterFor((v) => (v === myLastIndex ? null : myLastIndex))}
     />

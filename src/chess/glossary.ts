@@ -129,7 +129,8 @@ const COUNTABLE = new Set(['battery', 'trapped-piece', 'mate-threat', 'perpetual
 export function askAbout(word: ChessWord): string {
   if (word.ask) return word.ask
   const name = word.name.toLowerCase()
-  return COUNTABLE.has(word.id) ? `What’s a ${name}?` : `What’s ${name}?`
+  if (!COUNTABLE.has(word.id)) return `What’s ${name}?`
+  return `What’s ${/^[aeiou]/.test(name) ? 'an' : 'a'} ${name}?`
 }
 
 export const WORD_CATEGORIES: WordCategory[] = [

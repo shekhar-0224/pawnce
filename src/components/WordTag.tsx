@@ -58,3 +58,22 @@ export function WordTag({ id }: { id: string | null }) {
     </div>
   )
 }
+
+/**
+ * All the NEW chips for one move. Chips stay on screen for that move even
+ * after you tap them (the parent remounts this per move).
+ */
+export function WordChips({ ids, skip }: { ids: string[]; skip?: string | null }) {
+  const [held, setHeld] = useState<string[]>([])
+  const fresh = ids.filter((id) => id !== skip && !held.includes(id))
+  if (fresh.length) setHeld([...held, ...fresh])
+  const shown = held.filter((id) => id !== skip).slice(0, 4)
+  if (!shown.length) return null
+  return (
+    <div className="flex flex-col gap-2">
+      {shown.map((id) => (
+        <WordTag key={id} id={id} />
+      ))}
+    </div>
+  )
+}
