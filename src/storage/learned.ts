@@ -43,6 +43,9 @@ export const isKnown = (s: WordStats | undefined) => !!s && (!!s.tapped || s.see
 /** Show the "New" tag: never tapped, and met at most 3 times. */
 export const isNew = (s: WordStats | undefined) => !s || (!s.tapped && s.seen <= KNOWN_AFTER)
 
+/** A pattern counts as learned once you've played it yourself, not just seen it. */
+export const isLearnedPattern = (s: WordStats | undefined) => !!s && s.played >= 1
+
 let cache: Learned | null = null
 const listeners = new Set<() => void>()
 

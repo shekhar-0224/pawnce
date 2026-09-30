@@ -11,6 +11,7 @@ import { color } from '../theme'
 import { pieceSet } from '../theme/pieces'
 import { WORDS_BY_ID } from '../chess/glossary'
 import { Button } from './Button'
+import { Mascot } from './Mascot'
 import { gameContext } from './cardContext'
 import { type DeckItem, FlashDeck } from './FlashDeck'
 import { Sheet } from './Sheet'
@@ -75,7 +76,7 @@ function Tile({
   children: ReactNode
 }) {
   return (
-    <section className={`flex min-w-0 flex-col gap-3 rounded-card border border-border bg-surface p-5 ${className}`}>
+    <section className={`flex min-w-0 flex-col gap-3 card p-5 ${className}`}>
       <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</h2>
       {children}
     </section>
@@ -201,8 +202,6 @@ export function GameSummary(p: Props) {
   })
   const newSet = new Set(p.newThisGame)
 
-  const resultTone =
-    p.result === 'win' ? 'text-accent' : p.result === 'loss' ? 'text-danger' : 'text-muted'
   const counts = stats.counts
 
   return (
@@ -217,36 +216,48 @@ export function GameSummary(p: Props) {
       transition={{ duration: 0.2 }}
     >
       <div className="mx-auto grid w-full max-w-6xl gap-3 px-4 py-5 min-[900px]:grid-cols-12 min-[900px]:px-8 min-[900px]:py-8">
-        {/* Result */}
-        <Tile label="Result" className="order-1 min-[900px]:order-none min-[900px]:col-span-5">
-          <h1 id="summary-title" className={`text-3xl font-bold ${resultTone}`}>
-            {p.title}
-          </h1>
-          <p className="text-muted">{p.detail}</p>
-          <dl className="mt-1 grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-lg border border-border p-2">
-              <dt className="text-[11px] text-muted">Accuracy</dt>
-              <dd className="font-mono text-xl font-semibold">{stats.accuracy ?? '–'}{stats.accuracy !== null && '%'}</dd>
+        {/* Result: a bright banner with Pawny */}
+        <motion.section
+          className="order-1 flex min-w-0 flex-col gap-4 overflow-hidden rounded-[var(--radius-card)] p-5 text-white min-[900px]:order-none min-[900px]:col-span-5"
+          style={{
+            background: `var(--${p.result === 'win' ? 'accent' : p.result === 'loss' ? 'danger' : 'warn'})`,
+            boxShadow: `0 6px 0 var(--${p.result === 'win' ? 'accent' : p.result === 'loss' ? 'danger' : 'warn'}-edge)`,
+          }}
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 320, damping: 18 }}
+        >
+          <div className="flex items-center gap-4">
+            <Mascot size={84} mood={p.result === 'win' ? 'happy' : p.result === 'loss' ? 'sad' : 'wow'} />
+            <div className="min-w-0">
+              <h1 id="summary-title" className="text-3xl font-black leading-tight">
+                {p.title}
+              </h1>
+              <p className="mt-1 font-bold text-white/90">{p.detail}</p>
             </div>
-            <div className="rounded-lg border border-border p-2">
-              <dt className="text-[11px] text-muted">Best / good</dt>
-              <dd className="font-mono text-xl font-semibold text-accent">
-                {(counts.best ?? 0) + (counts.good ?? 0) + (counts.book ?? 0)}
-              </dd>
-            </div>
-            <div className="rounded-lg border border-border p-2">
-              <dt className="text-[11px] text-muted">Slips</dt>
-              <dd className="font-mono text-xl font-semibold">
-                <span className="text-warn">{counts.inaccuracy ?? 0}</span>
-                <span className="text-muted"> / </span>
-                <span className="text-danger/80">{counts.mistake ?? 0}</span>
-                <span className="text-muted"> / </span>
-                <span className="text-danger">{counts.blunder ?? 0}</span>
-              </dd>
-            </div>
+          </div>
+          <dl className="grid grid-cols-3 gap-2 text-center">
+            {[
+              ['Accuracy', stats.accuracy !== null ? `${stats.accuracy}%` : '–', 'text-text'],
+              ['Good moves', String((counts.best ?? 0) + (counts.good ?? 0) + (counts.book ?? 0)), 'text-accent'],
+              ['Slips', String((counts.inaccuracy ?? 0) + (counts.mistake ?? 0) + (counts.blunder ?? 0)), 'text-danger'],
+            ].map(([label, value, tone], i) => (
+              <motion.div
+                key={label}
+                className="rounded-2xl bg-white px-2 py-2"
+                initial={{ y: 12, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.15 + i * 0.08, type: 'spring', stiffness: 400, damping: 20 }}
+              >
+                <dt className="text-[11px] font-extrabold uppercase tracking-wide text-muted">{label}</dt>
+                <dd className={`text-2xl font-black ${tone}`}>{value}</dd>
+              </motion.div>
+            ))}
           </dl>
-          <p className="text-xs text-muted">Slips: inaccuracies / mistakes / blunders.</p>
-        </Tile>
+          <p className="text-xs font-bold text-white/85">
+            Slips: {counts.inaccuracy ?? 0} inaccuracies · {counts.mistake ?? 0} mistakes · {counts.blunder ?? 0} blunders
+          </p>
+        </motion.section>
 
         {/* Replay */}
         <Tile label="Replay" className="order-5 min-[900px]:order-none min-[900px]:col-span-7 min-[900px]:row-span-4">
@@ -441,7 +452,7 @@ export function GameSummary(p: Props) {
         </Tile>
 
         {/* Play again */}
-        <section className="order-2 flex flex-col gap-2 rounded-card border border-border bg-surface p-5 min-[900px]:order-last min-[900px]:col-span-12 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between">
+        <section className="order-2 flex flex-col gap-2 card p-5 min-[900px]:order-last min-[900px]:col-span-12 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between">
           <p className="text-sm text-muted">Ready for another? Every game teaches something new.</p>
           <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-3">
             <Button variant="primary" onClick={p.onPlayAgain}>

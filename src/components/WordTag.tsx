@@ -42,7 +42,7 @@ export function WordTag({ id }: { id: string | null }) {
             transition={{ duration: 0.18 }}
             className="overflow-hidden"
           >
-            <div className="rounded-lg border border-border bg-bg/40 px-3 py-2 text-sm">
+            <div className="rounded-xl border-2 border-border bg-surface-2 px-3 py-2 text-sm">
               <p>
                 <span className="font-semibold">{word.name}: </span>
                 {word.meaning}
@@ -55,6 +55,25 @@ export function WordTag({ id }: { id: string | null }) {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+/**
+ * All the NEW chips for one move. Chips stay on screen for that move even
+ * after you tap them (the parent remounts this per move).
+ */
+export function WordChips({ ids, skip }: { ids: string[]; skip?: string | null }) {
+  const [held, setHeld] = useState<string[]>([])
+  const fresh = ids.filter((id) => id !== skip && !held.includes(id))
+  if (fresh.length) setHeld([...held, ...fresh])
+  const shown = held.filter((id) => id !== skip).slice(0, 4)
+  if (!shown.length) return null
+  return (
+    <div className="flex flex-col gap-2">
+      {shown.map((id) => (
+        <WordTag key={id} id={id} />
+      ))}
     </div>
   )
 }

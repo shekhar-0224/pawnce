@@ -11,6 +11,8 @@ export type GameSetup = { botId: BotId; side: SidePref; timeControl: TimeControl
 type Props = {
   /** Last time's choices, shown as the current pick on each step. */
   initial: GameSetup
+  /** Start at this step (1 = side), e.g. when the opponent was already picked. */
+  startStep?: number
   onStart: (setup: GameSetup) => void
   onClose: () => void
 }
@@ -31,16 +33,16 @@ const SPEED_NOTES: Record<string, string> = {
 }
 
 const option = (active: boolean) =>
-  `w-full cursor-pointer rounded-lg border text-left transition-colors ${
-    active ? 'border-accent bg-accent/10' : 'border-border bg-bg/40 hover:border-muted/40'
+  `press w-full cursor-pointer rounded-2xl border-2 text-left transition-colors ${
+    active ? 'border-accent bg-accent/10 [--edge:var(--accent)]' : 'border-border bg-surface hover:bg-surface-2'
   }`
 
 /**
  * Starting a game, one question at a time: opponent, side, clock. Each tap
  * moves to the next question; the last one starts the game.
  */
-export function NewGameFlow({ initial, onStart, onClose }: Props) {
-  const [step, setStep] = useState(0)
+export function NewGameFlow({ initial, startStep = 0, onStart, onClose }: Props) {
+  const [step, setStep] = useState(startStep)
   const [draft, setDraft] = useState<GameSetup>(initial)
 
   const choose = (patch: Partial<GameSetup>) => {
@@ -55,7 +57,7 @@ export function NewGameFlow({ initial, onStart, onClose }: Props) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-bg/60 backdrop-blur-sm min-[900px]:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#1c2a21]/45 backdrop-blur-[2px] min-[900px]:items-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

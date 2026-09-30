@@ -88,3 +88,17 @@ export function updateGame(id: string, patch: Partial<SavedGame>): void {
     // Not saved; the summary will just show fewer grades later.
   }
 }
+
+/** Days in a row (ending today or yesterday) with at least one finished game. */
+export function playStreak(games: SavedGame[], now = new Date()): number {
+  const day = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+  const days = new Set(games.map((g) => day(new Date(g.date))))
+  const cursor = new Date(now)
+  if (!days.has(day(cursor))) cursor.setDate(cursor.getDate() - 1)
+  let streak = 0
+  while (days.has(day(cursor))) {
+    streak++
+    cursor.setDate(cursor.getDate() - 1)
+  }
+  return streak
+}

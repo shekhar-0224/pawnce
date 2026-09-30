@@ -95,23 +95,29 @@ already won. So there are special rules:
 
 (`classifyMove` in `src/chess/naming.ts`)
 
-## 5. Teaching moments (the pause)
+## 5. Teaching moments (the mistake card)
 
 - After your move, the bot and clocks wait while your move is judged, for up
   to 2.5s.
-- A **mistake or blunder** pauses the game. The card explains the slip in
-  board terms and offers Take it back, Show better or Play on.
-- The explanation comes from the engine's best reply to your move, in order
+- A **mistake or blunder** shows a red card beside the board. It does not
+  pause the game. It explains the slip in board terms and offers Take back,
+  Show better or Got it.
+- **The real loss, not the first reply.** Pawnce walks the engine's line
+  (at least 4 moves, longer while captures continue) and adds up what each
+  side loses. Trades cancel out. It names the piece you actually end up
+  losing:
+  - "Your bishop on g5 is still attacked by the pawn on f6, and you didn't
+    move it." (it was already under attack, and your move ignored it)
+  - "Your queen on a6 can be taken by the pawn on b7 for free." (the piece
+    you just moved, and the cheapest thing that takes it)
+  - "Your knight on e5 gets lost: their best line starts … and wins it a few
+    moves later."
+- If their first reply is a capture you can take back evenly, it is never
+  presented as the problem.
+- If nothing is really lost (a mate threat, or a slow positional slip), the
+  explanation falls back to the engine's best reply, in order
   of importance:
-  1. a forced mate
-  2. capturing a piece (3+ points), for free if it's undefended
-  3. a tactic (fork, pin, skewer, discovered attack)
-  4. capturing a pawn
-  5. new attacks on your loose or valuable pieces
-  6. a check
-  7. otherwise "their strongest answer is…"
-
-(`src/chess/refutation.ts`, `src/components/GameScreen.tsx`)
+(`src/chess/refutation.ts`, tested in `src/chess/refutation.test.ts`; `src/components/GameScreen.tsx`)
 
 ## 6. Tactics (fork, pin, skewer…)
 
@@ -176,6 +182,13 @@ and rook."
 
 ## 10. Chess words (vocabulary)
 
+- **Basics vs Patterns.** 11 words are Basics: the six piece names, piece
+  values, book move, opening, check, capture. The other 59 are Patterns.
+  The home screen counts Patterns only: "Patterns learned: X of 59".
+- **A pattern is learned once you've played it yourself** (seen doesn't
+  count). A basic is known once you tap its tag or meet it 3 times.
+  (`BASIC_IDS` in `src/chess/glossary.ts`, `isLearnedPattern` in
+  `src/storage/learned.ts`)
 - Every chess word you meet is counted in your browser: seen, played by you,
   or missed. A missed word is a tactic that was the better move when you
   slipped. Pawnce also remembers the game and move where you first met it.
@@ -222,8 +235,13 @@ and rook."
     see each other).
 - A word is **New** until you tap its explainer (or "Got it" on its card) or
   meet it 3 times.
-- When a move shows a New word, the game pauses and opens its flash card
-  (one per move; switch off with "Pause for new words").
+- **What can pause the game:** only a New word from this list, at most one
+  per move, never on move 1 and never on a move that shows the
+  mistake/blunder card: named checkmates (Scholar's, Fool's, smothered,
+  back-rank, ladder), checkmate, double check, fork, skewer, pin,
+  discovered attack, castling, en passant, promotion, underpromotion. The
+  most important new word wins; the rest are NEW chips. Switch off with
+  "Pause for new words".
 - Every one of the 70 words has an example position on its flash card,
   checked with the chess rules library, so you can learn words you haven't
   met yet from the words page.

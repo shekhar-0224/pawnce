@@ -10,7 +10,7 @@ type Props = {
 export function LeaveDialog({ onKeepPlaying, onResignAndLeave }: Props) {
   return (
     <motion.div
-      className="fixed inset-0 z-50 grid place-items-center bg-bg/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 grid place-items-center bg-[#1c2a21]/45 p-4 backdrop-blur-[2px]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -21,7 +21,7 @@ export function LeaveDialog({ onKeepPlaying, onResignAndLeave }: Props) {
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="leave-title"
-        className="w-full max-w-sm rounded-card border border-border bg-surface p-5"
+        className="w-full max-w-sm card p-5"
         initial={{ y: 8, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 8, opacity: 0 }}

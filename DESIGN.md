@@ -158,13 +158,21 @@ are secondary.
   move, a phase starting, a pawn structure appearing, most strategy words)
   count once per game. Piece names and the two castling sides never pause
   the game. Detection: `src/chess/patterns.ts` and `useVocab.ts`.
-- **Learning in the moment.** When a move shows a word you haven't learned,
-  the game pauses (bot and clocks wait) and its flash card opens in a sheet,
-  with "In your game: …". "Got it · continue" marks it learned (it never
-  interrupts again); "Not now" continues. One card per move, after any
-  mistake card. A "Pause for new words" switch lives in the Menu (phones),
-  the side panel (desktop) and a "Turn off" link on the card. The coach
-  still shows the `NEW` tag with "What's a fork?".
+- **Learning in the moment, without blocking.** A pop-up card (the game
+  waits) is rare: **at most one per move, never on move 1, never on a move
+  that shows the mistake/blunder card**, and only for these words, most
+  important first: Scholar's / Fool's / smothered / back-rank / ladder mate,
+  checkmate, double check, fork, skewer, pin, discovered attack, castling,
+  en passant, promotion (and underpromotion). If a move shows several new
+  words, the most important of these pops up and the rest are chips.
+  Everything else, openings included, is a non-blocking `NEW` chip in the
+  coach ("What's a fork?", tap to open) and a card in the end-of-game
+  summary. "Pause for new words" (Menu / side panel / "Turn off") switches
+  pop-ups off.
+- **Mistakes and blunders are alerts, not pauses:** a red card beside the
+  board (under it on phones, above the coach on desktop) explains the slip
+  and offers Take it back (your move, plus the bot's reply if it already
+  answered), Show better and Got it. The game keeps going.
 - **Flash cards** (like vocabulary cards): category and `NEW` pill, the word
   large, a plain definition, an example board (the move highlighted in
   lime; lime lines for what it hits, a faint lime arrow for a better move,
@@ -181,10 +189,12 @@ are secondary.
   (scrolling it into view on phones). While replaying, the words at the
   current move are highlighted in the list, named on a chip over the board
   and explained under it.
-- **Home:** "Your chess vocabulary" tile (X of N known, how many waiting,
-  word chips linking to each word, "See all words").
-- **/words:** every word by group with its definition and status (Known,
-  New, Not met yet); learned words link "First met: vs Frog · 4. O-O ›" to
+- **Home:** words card: a ring and "Patterns learned: X of Y" (patterns
+  count only once you've played them), "N seen, not played yet", chips for
+  your patterns, then a small **Basics** row (piece names, piece values,
+  book move, opening, check, capture) with ticks, Practice and All words.
+- **/words:** every pattern by group with its definition and status
+  (Learned, Seen, Not met yet), then a compact Basics grid; learned words link "First met: vs Frog · 4. O-O ›" to
   that game's summary at that move. "Study all" and "Study the ones I've
   met" open decks. **/words/<id>**: the word's card and seen / played /
   missed counts.

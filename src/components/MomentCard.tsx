@@ -7,6 +7,8 @@ import { type MoveVerdict, costLine } from './useAnalysis'
 type Props = {
   move: Move
   verdict: MoveVerdict
+  /** The coach's sentence about the move ("That looks like a fork, but…"), if any. */
+  why?: string | null
   showingBetter: boolean
   onTakeBack: () => void
   onShowBetter: () => void
@@ -17,11 +19,11 @@ type Props = {
  * The game pauses (clock too) when you make a mistake or blunder, so you can
  * see what went wrong, try again, or carry on.
  */
-export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBetter, onPlayOn }: Props) {
+export function MomentCard({ move, verdict, why, showingBetter, onTakeBack, onShowBetter, onPlayOn }: Props) {
   const blunder = verdict.quality === 'blunder'
   return (
     <motion.div
-      role="alertdialog"
+      role="alert"
       aria-label={blunder ? 'Blunder' : 'Mistake'}
       className="rounded-card border border-danger/60 bg-danger/10 p-4"
       initial={{ y: 8, opacity: 0 }}
@@ -32,7 +34,7 @@ export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBet
       <div className="flex items-start gap-3">
         <span
           className={`grid size-10 shrink-0 place-items-center rounded-lg font-mono text-base font-bold ${
-            blunder ? 'bg-danger text-text' : 'bg-danger/25 text-danger'
+            blunder ? 'bg-danger text-white' : 'bg-danger/25 text-danger'
           }`}
         >
           {blunder ? '??' : '?'}
@@ -43,21 +45,21 @@ export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBet
           </p>
           <p className="text-sm text-muted">{plainName(move)}</p>
           <p className="mt-1 text-[15px] leading-snug">
-            {verdict.refutation?.text ?? 'This lets your opponent take over.'}
+            {why ?? verdict.refutation?.text ?? 'This lets your opponent take over.'}
             {verdict.better ? ` ${verdict.better} was better.` : ''}
           </p>
-          <p className="mt-1 font-mono text-xs text-muted">{costLine(verdict)} · clock paused</p>
+          <p className="mt-1 font-mono text-xs text-muted">{costLine(verdict)}</p>
         </div>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2">
         <Button variant="primary" onClick={onTakeBack} className="px-2 text-sm">
-          Take it back
+          Take back
         </Button>
         <Button onClick={onShowBetter} className="px-2 text-sm" disabled={!verdict.betterMove}>
           {showingBetter ? 'Hide move' : 'Show better'}
         </Button>
         <Button onClick={onPlayOn} className="px-2 text-sm">
-          Play on
+          Got it
         </Button>
       </div>
     </motion.div>

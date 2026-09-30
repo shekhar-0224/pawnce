@@ -13,12 +13,16 @@ import type { MoveVerdict } from './useAnalysis'
 
 export type WordAt = { id: string; ply: number; how: Sighting }
 
-/** Everyday words taught by tag and flash card, but never worth pausing the game for. */
-const NO_PAUSE = new Set([
-  'pawn', 'knight', 'bishop', 'rook', 'queen', 'king', 'minor-piece', 'major-piece',
-  // Castling already pauses for its own card.
-  'kingside-castling', 'queenside-castling',
-])
+/**
+ * The only words that pause the game, most important first. When several
+ * new words show up on one move, the first of these gets the pop-up and the
+ * rest become NEW chips. Every other word is always a chip.
+ */
+export const PAUSE_WORDS = [
+  'scholars-mate', 'fools-mate', 'smothered-mate', 'back-rank-mate', 'ladder-mate', 'checkmate',
+  'double-check', 'fork', 'skewer', 'pin', 'discovered-attack',
+  'castling', 'en-passant', 'promotion', 'underpromotion',
+]
 
 /** A flash card: a chess word (or opening) met in this game. */
 export type LearnCardData =
@@ -142,7 +146,8 @@ export function wordsPerMove(
       }
     }
     const words = [...wordsForMove(m, v, byMe, ply, moves[ply - 1]), ...extra]
-    if (reached[ply]) words.push({ id: 'opening', ply, how: 'seen' })
+    // The word "opening" itself: once per game.
+    if (reached[ply] && firstTime('opening')) words.push({ id: 'opening', ply, how: 'seen' })
     return words
   })
 }
@@ -206,14 +211,21 @@ export function useVocab(
   }, [perPly, moves, reached, endReason, gameKey])
 
   /** The word to tag "New" on a move: its first one you haven't learned yet. */
-  const newWordAt = (ply: number, opts: { forPause?: boolean } = {}): string | null =>
-    perPly[ply]?.find(
-      (w) =>
-        w.how !== 'missed' &&
-        !QUIET_WORDS.has(w.id) &&
-        !(opts.forPause && NO_PAUSE.has(w.id)) &&
-        isNew(learned.words[w.id]),
-    )?.id ?? null
+  /** New (not yet learned) words a move showed, in the order found. */
+  const newWordsAt = (ply: number): string[] => [
+    ...new Set(
+      (perPly[ply] ?? [])
+        .filter((w) => w.how !== 'missed' && !QUIET_WORDS.has(w.id) && isNew(learned.words[w.id]))
+        .map((w) => w.id),
+    ),
+  ]
+  /** The first new word on a move (for the phone strip's chip). */
+  const newWordAt = (ply: number): string | null => newWordsAt(ply)[0] ?? null
+  /** The one word worth pausing the game for on this move, if any. */
+  const pauseWordAt = (ply: number): string | null => {
+    const fresh = new Set(newWordsAt(ply))
+    return PAUSE_WORDS.find((id) => fresh.has(id)) ?? null
+  }
 
   // Flash cards: each word (and the opening) met this game, in game order.
   const cards = useMemo(
@@ -224,5 +236,11 @@ export function useVocab(
   /** Words you met for the very first time in this game. */
   const newThisGame = cards.filter((c) => c.kind === 'word' && !before.words[c.id]).map((c) => (c as { id: string }).id)
 
-  return { newWordAt, cards, newThisGame, perPly }
+  /** A move that enters an opening family you'd never met before this game. */
+  const newOpeningAt = (ply: number): string | null => {
+    const name = reached[ply]
+    return name && !before.openings[openingFamily(name)] ? name : null
+  }
+
+  return { newWordAt, newWordsAt, pauseWordAt, newOpeningAt, cards, newThisGame, perPly }
 }

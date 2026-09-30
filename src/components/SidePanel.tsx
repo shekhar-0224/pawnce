@@ -53,14 +53,14 @@ export function SidePanel({
 
   const botLabel = `${bot.name}`
   return (
-    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-card border border-border bg-surface">
-      <div className="pawnce-scroll flex min-h-0 flex-col gap-4 overflow-y-auto p-4">
+    <aside className="flex h-full min-h-0 flex-col overflow-hidden card">
+      <div className="pawnce-scroll flex min-h-0 flex-[3_1_0%] flex-col gap-4 overflow-y-auto p-4">
         {hint}
         {coach}
       </div>
-      <div className="border-t border-border px-4 py-3">{meter}</div>
+      <div className="shrink-0 border-t-2 border-border px-4 py-3">{meter}</div>
 
-      <section aria-label="Moves" className="flex min-h-0 flex-1 flex-col border-t border-border">
+      <section aria-label="Moves" className="flex min-h-[8.5rem] flex-[2_1_0%] flex-col border-t-2 border-border">
         <div className="flex items-baseline justify-between gap-3 px-4 pb-1 pt-3">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Moves</h2>
           {opening && (
@@ -88,14 +88,14 @@ export function SidePanel({
         role="switch"
         aria-checked={pauseForWords}
         onClick={onTogglePause}
-        className="flex min-h-10 cursor-pointer items-center justify-between gap-3 border-t border-border px-4 text-xs font-semibold text-muted hover:text-text"
+        className="flex min-h-10 shrink-0 cursor-pointer items-center justify-between gap-3 border-t-2 border-border px-4 text-xs font-semibold text-muted hover:text-text"
       >
         Pause for new words
         <span className={`relative h-5 w-9 rounded-full transition-colors ${pauseForWords ? 'bg-accent' : 'bg-border'}`}>
-          <span className={`absolute top-0.5 size-4 rounded-full bg-bg transition-all ${pauseForWords ? 'left-[18px]' : 'left-0.5'}`} />
+          <span className={`absolute top-0.5 size-4 rounded-full bg-white shadow transition-all ${pauseForWords ? 'left-[18px]' : 'left-0.5'}`} />
         </span>
       </button>
-      <div className="grid grid-cols-3 gap-2 border-t border-border p-3">
+      <div className="grid shrink-0 grid-cols-3 gap-2 border-t-2 border-border p-3">
         <Button onClick={onNewGame} variant={isOver ? 'primary' : 'secondary'} className="whitespace-nowrap px-2 text-sm">
           New game
         </Button>

@@ -3,7 +3,7 @@
  * reply does (captures, attacks, tactics, mate), e.g.
  * "the pawn on b7 can capture your queen on g4."
  */
-import { Chess, type Square } from 'chess.js'
+import { Chess, type Color, type Square } from 'chess.js'
 import { PIECE_NAMES, otherColor, parseUci } from './game'
 import { TACTIC_LABELS } from './naming'
 import { VALUE, detectTactics, mainTactic } from './tactics'
@@ -128,4 +128,184 @@ export function describeRefutation(
         : `Your strongest answer is ${piece} to ${reply.to}.`,
     arrows: [arrow],
   }
+}
+
+// ---------------------------------------------------------------------------
+// The real loss: walk the engine's line and find which of the mover's pieces
+// actually ends up lost once even trades are cancelled out.
+
+type Capture = { ply: number; square: Square; victim: string; victimColor: 'w' | 'b'; value: number; id: string | null; by: { type: string; from: Square } }
+
+/**
+ * @param fenBefore  the position before the bad move
+ * @param move       the bad move (from, to, promotion)
+ * @param pv         the engine's best line after the bad move (UCI), opponent first
+ * @param view       'mover' ("your bishop"), or 'punisher' ("their bishop")
+ * @returns an explanation naming the piece really lost, or null when no
+ *          piece (2+ points) is lost net of trades.
+ */
+export function describeLoss(
+  fenBefore: string,
+  move: { from: Square; to: Square; promotion?: string },
+  pv: string[],
+  view: 'mover' | 'punisher' = 'mover',
+): Refutation | null {
+  const before = new Chess(fenBefore)
+  const g = new Chess(fenBefore)
+  let mine
+  try {
+    mine = g.move({ from: move.from, to: move.to, promotion: move.promotion })
+  } catch {
+    return null
+  }
+  const me = mine.color
+  const them = otherColor(me)
+  const afterMove = new Chess(g.fen())
+  const P = view === 'mover' ? { Your: 'Your', your: 'your', you: 'you', the: 'the' } : { Your: 'Their', your: 'their', you: 'they', the: 'your' }
+
+  // Follow each of my pieces by where it stood right after my move.
+  const idAt = new Map<Square, string>()
+  for (const p of g.board().flat()) if (p && p.color === me) idAt.set(p.square, p.square)
+
+  // Walk at least 4 plies, and keep going while captures continue (max 10).
+  const captures: Capture[] = []
+  for (let i = 0; i < Math.min(pv.length, 10); i++) {
+    if (i >= 4 && !(() => {
+      try {
+        return !!new Chess(g.fen()).move(parseUci(pv[i])).captured
+      } catch {
+        return false
+      }
+    })()) break
+    let mv
+    try {
+      mv = g.move(parseUci(pv[i]))
+    } catch {
+      break
+    }
+    if (mv.captured) {
+      const sq = mv.isEnPassant() ? (`${mv.to[0]}${mv.from[1]}` as Square) : mv.to
+      const victimColor = mv.color === 'w' ? 'b' : 'w'
+      captures.push({
+        ply: i,
+        square: sq,
+        victim: mv.captured,
+        victimColor,
+        value: VALUE[mv.captured],
+        id: victimColor === me ? (idAt.get(sq) ?? null) : null,
+        by: { type: mv.piece, from: mv.from },
+      })
+      if (victimColor === me) idAt.delete(sq)
+    }
+    if (mv.color === me) {
+      const id = idAt.get(mv.from)
+      if (id) {
+        idAt.delete(mv.from)
+        idAt.set(mv.to, id)
+      }
+    }
+  }
+
+  // Cancel even trades: a capture answered later on the same square by an
+  // equal (or bigger) capture from the other side.
+  const used = new Set<number>()
+  captures.forEach((c, i) => {
+    if (used.has(i)) return
+    const k = captures.findIndex((n, j) => j > i && !used.has(j) && n.victimColor !== c.victimColor && n.square === c.square && n.value >= c.value)
+    if (k >= 0) {
+      used.add(i)
+      used.add(k)
+    }
+  })
+  const left = captures.filter((_, i) => !used.has(i))
+  const myLosses = left.filter((c) => c.victimColor === me).sort((a, b) => b.value - a.value)
+  const theirLosses = left.filter((c) => c.victimColor === them)
+  // Remaining equal-value losses on both sides also cancel out (same square first).
+  for (const t of theirLosses) {
+    const same = myLosses.findIndex((m) => m.value === t.value && m.square === t.square)
+    const k = same >= 0 ? same : myLosses.findIndex((m) => m.value === t.value)
+    if (k >= 0) myLosses.splice(k, 1)
+  }
+  // Net loss counts every capture in the line (and whatever my move took);
+  // the cancelling above only picks which piece to name.
+  const net =
+    captures.reduce((s, c) => s + (c.victimColor === me ? c.value : -c.value), 0) -
+    (mine.captured ? VALUE[mine.captured] : 0)
+  const lost = myLosses[0]
+  if (!lost || net < 2 || lost.value < 3) return null
+
+  // If their first reply could be taken back evenly, it isn't the real
+  // problem: prefer a piece that was already hanging and still is.
+  let pick: { victim: string; home: Square } = { victim: lost.victim, home: (lost.id ?? lost.square) as Square }
+  if (lost.ply === 0 && evenlyRecapturable(afterMove, pv[0], me)) {
+    const hanging = stillHanging(before, afterMove, me, [lost.square, move.to])
+    if (hanging) pick = hanging
+  }
+  const pieceName = PIECE_NAMES[pick.victim as keyof typeof PIECE_NAMES]
+  const home = pick.home
+  const arrows = [{ from: lost.by.from, to: lost.square }]
+
+  // Was it already attacked before the move, and left where it was?
+  if (home !== move.to) {
+    const attackers = before.attackers(home, them).filter((s) => afterMove.attackers(home, them).includes(s))
+    if (attackers.length && before.get(home)?.color === me) {
+      const cheapest = attackers.sort((a, b) => VALUE[before.get(a)!.type] - VALUE[before.get(b)!.type])[0]
+      return {
+        text: `${P.Your} ${pieceName} on ${home} is still attacked by ${P.the} ${PIECE_NAMES[before.get(cheapest)!.type]} on ${cheapest}, and ${P.you} didn’t move it.`,
+        arrows: [{ from: cheapest, to: home }],
+      }
+    }
+  }
+  // The piece just moved lands where it can be taken: name the cheapest taker.
+  if (home === move.to) {
+    const free = afterMove.attackers(move.to, me).length === 0
+    const takers = afterMove.attackers(move.to, them).sort((a, b) => VALUE[afterMove.get(a)!.type] - VALUE[afterMove.get(b)!.type])
+    const from = takers[0] ?? lost.by.from
+    const type = takers[0] ? afterMove.get(takers[0])!.type : lost.by.type
+    return {
+      text: `${P.Your} ${pieceName} on ${home} can be taken by ${P.the} ${PIECE_NAMES[type as keyof typeof PIECE_NAMES]} on ${from}${free ? ' for free' : ''}.`,
+      arrows: [{ from, to: home }],
+    }
+  }
+  // Otherwise it's lost a few moves into their best line.
+  const first = new Chess(afterMove.fen()).move(parseUci(pv[0]))
+  return {
+    text: `${P.Your} ${pieceName} on ${home} gets lost: their best line starts ${first.san} and wins it a few moves later.`,
+    arrows: [{ from: first.from, to: first.to }, ...arrows],
+  }
+}
+
+/** After `reply` (a capture), can `me` take back on that square without losing more than they took? */
+function evenlyRecapturable(fen: Chess, reply: string, me: Color): boolean {
+  const g = new Chess(fen.fen())
+  let mv
+  try {
+    mv = g.move(parseUci(reply))
+  } catch {
+    return false
+  }
+  if (!mv.captured) return false
+  return g.attackers(mv.to, me).length > 0 && VALUE[mv.piece] >= VALUE[mv.captured]
+}
+
+/**
+ * My most valuable piece (worth 3+) that was attacked before my move and is
+ * still attacked after it, from the same square, by something cheaper or
+ * while undefended.
+ */
+function stillHanging(before: Chess, after: Chess, me: Color, skip: Square[]): { victim: string; home: Square } | null {
+  const them = otherColor(me)
+  let best: { victim: string; home: Square; value: number } | null = null
+  for (const p of after.board().flat()) {
+    if (!p || p.color !== me || skip.includes(p.square) || VALUE[p.type] < 3 || p.type === 'k') continue
+    if (before.get(p.square)?.type !== p.type || before.get(p.square)?.color !== me) continue
+    const now = after.attackers(p.square, them)
+    if (!now.length || !before.attackers(p.square, them).length) continue
+    const cheapest = Math.min(...now.map((s) => VALUE[after.get(s)!.type]))
+    const defended = after.attackers(p.square, me).length > 0
+    if (cheapest < VALUE[p.type] || !defended) {
+      if (!best || VALUE[p.type] > best.value) best = { victim: p.type, home: p.square, value: VALUE[p.type] }
+    }
+  }
+  return best && { victim: best.victim, home: best.home }
 }

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { type Color, type Move, type Square, parseUci } from '../chess/game'
 import { describeIdea } from '../chess/ideas'
 import { type Quality, classifyMove } from '../chess/naming'
-import { type Refutation, describeRefutation } from '../chess/refutation'
+import { type Refutation, describeLoss, describeRefutation } from '../chess/refutation'
 import { loadOpenings, openingAt } from '../chess/openings'
 import { type Threat, describeThreat, passFen } from '../chess/threats'
 import type { Result } from '../chess/outcome'
@@ -37,6 +37,8 @@ type Evaluation = {
   best: string | null
   /** Moves to a forced mate for the side to move (negative: it gets mated). */
   mate: number | null
+  /** The engine's main line from here (UCI), best move first. */
+  pv: string[]
 }
 
 /** How one move went: its grade and the chances before and after, for the mover. */
@@ -115,7 +117,7 @@ export function useAnalysis(
           cpWhite = mated ? (whiteToMove ? -2000 : 2000) : 0
         }
         const mate = line?.mate ?? null
-        setEvals((e) => ({ ...e, [position]: { winWhite, cpWhite, best: res.bestMove, mate } }))
+        setEvals((e) => ({ ...e, [position]: { winWhite, cpWhite, best: res.bestMove, mate, pv: line?.pv ?? [] } }))
       })
       .catch(() => requested.current.delete(position))
   }, [])
@@ -191,9 +193,13 @@ export function useAnalysis(
         }
         const betterMove = better && before.best ? parseUci(before.best) : null
         const slip = quality === 'inaccuracy' || quality === 'mistake' || quality === 'blunder'
+        const view = m.color === myColor ? 'mover' : 'punisher'
+        // Name what is really lost further down their line (net of trades);
+        // fall back to what their first reply does (and always for mates).
         const refutation =
           slip && after.best
-            ? describeRefutation(m.after, after.best, after.mate, m.color === myColor ? 'mover' : 'punisher')
+            ? ((after.mate === null && after.pv.length ? describeLoss(m.before, m, after.pv, view) : null) ??
+              describeRefutation(m.after, after.best, after.mate, view))
             : null
         return { quality, winBefore, winAfter, cpLoss, better, betterMove, refutation }
       }),
@@ -240,6 +246,7 @@ export function useAnalysis(
         cpWhite: whiteToMove ? cappedCp(top) : -cappedCp(top),
         best: top.move,
         mate: top.mate ?? null,
+        pv: top.pv,
       },
     }))
   }, [myTurn, hintsLeft, hintLoadingFen, fen])

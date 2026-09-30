@@ -12,7 +12,7 @@ export function BotAvatar({ bot, size = 40 }: { bot: Bot; size?: number }) {
   return (
     <span
       aria-hidden
-      className="inline-grid shrink-0 place-items-center rounded-lg border border-border bg-surface-2 font-display font-bold text-text"
+      className="inline-grid shrink-0 place-items-center rounded-xl border-2 border-border bg-surface-2 font-display font-bold text-text"
       style={{ width: size, height: size, fontSize: size * 0.42, padding: animal ? size * 0.08 : 0 }}
     >
       {animal ? <JungleToken color="b" type={animal} /> : bot.name[0]}

@@ -47,7 +47,7 @@ export function RecentGamesScreen({ onBack, onOpen }: { onBack: () => void; onOp
       </div>
 
       {games.length === 0 ? (
-        <div className="rounded-card border border-border bg-surface p-8 text-center">
+        <div className="card p-8 text-center">
           <p className="text-lg font-semibold">No games yet</p>
           <p className="mt-1 text-muted">Finish a game and it will show up here.</p>
         </div>
@@ -62,7 +62,7 @@ export function RecentGamesScreen({ onBack, onOpen }: { onBack: () => void; onOp
                   type="button"
                   onClick={() => onOpen(g.id)}
                   aria-label={`vs. ${bot.name}, ${badge.label}: open summary`}
-                  className="flex w-full cursor-pointer items-center gap-3 rounded-card border border-border bg-surface p-3 text-left hover:border-muted/40 sm:gap-4 sm:p-4"
+                  className="flex w-full cursor-pointer items-center gap-3 card p-3 text-left hover:border-muted/40 sm:gap-4 sm:p-4"
                 >
                   <BotAvatar bot={bot} size={44} />
                   <div className="min-w-0 flex-1">

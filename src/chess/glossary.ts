@@ -129,7 +129,8 @@ const COUNTABLE = new Set(['battery', 'trapped-piece', 'mate-threat', 'perpetual
 export function askAbout(word: ChessWord): string {
   if (word.ask) return word.ask
   const name = word.name.toLowerCase()
-  return COUNTABLE.has(word.id) ? `What’s a ${name}?` : `What’s ${name}?`
+  if (!COUNTABLE.has(word.id)) return `What’s ${name}?`
+  return `What’s ${/^[aeiou]/.test(name) ? 'an' : 'a'} ${name}?`
 }
 
 export const WORD_CATEGORIES: WordCategory[] = [
@@ -144,3 +145,13 @@ export const WORD_CATEGORIES: WordCategory[] = [
   'Ideas',
   'Game endings',
 ]
+
+/**
+ * Basics: the first words every player needs (piece names and values, book
+ * move, opening, check, capture). Everything else is a Pattern, and patterns
+ * are what the home screen counts.
+ */
+export const BASIC_IDS = new Set(['pawn', 'knight', 'bishop', 'rook', 'queen', 'king', 'piece-values', 'book', 'opening', 'check', 'capture'])
+export const isBasic = (id: string) => BASIC_IDS.has(id)
+export const BASIC_WORDS = WORDS.filter((w) => isBasic(w.id))
+export const PATTERN_WORDS = WORDS.filter((w) => !isBasic(w.id))

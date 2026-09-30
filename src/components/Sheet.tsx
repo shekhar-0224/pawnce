@@ -13,7 +13,7 @@ type Props = {
 export function Sheet({ title, onClose, children, footer }: Props) {
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-bg/60 backdrop-blur-sm min-[900px]:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#1c2a21]/45 backdrop-blur-[2px] min-[900px]:items-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

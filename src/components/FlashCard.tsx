@@ -36,7 +36,7 @@ export function FlashCard({ card, context, progress, children }: Props) {
   return (
     <article
       aria-label={`Flash card: ${word ? word.name : card.kind === 'opening' ? card.name : ''}`}
-      className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 min-[480px]:p-5"
+      className="flex flex-col gap-3 card p-4 min-[480px]:p-5"
     >
       <header className="flex items-center justify-between gap-3">
         <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
@@ -70,7 +70,7 @@ export function FlashCard({ card, context, progress, children }: Props) {
       </figure>
 
       {context && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-bg/40 px-3 py-2 text-sm">
+        <div className="flex items-center justify-between gap-3 rounded-xl border-2 border-border bg-surface-2 px-3 py-2 text-sm">
           <p className="min-w-0">
             <span className="text-muted">In your game: </span>
             {context.text}
