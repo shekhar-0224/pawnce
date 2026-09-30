@@ -182,6 +182,13 @@ and rook."
 
 ## 10. Chess words (vocabulary)
 
+- **Basics vs Patterns.** 11 words are Basics: the six piece names, piece
+  values, book move, opening, check, capture. The other 59 are Patterns.
+  The home screen counts Patterns only: "Patterns learned: X of 59".
+- **A pattern is learned once you've played it yourself** (seen doesn't
+  count). A basic is known once you tap its tag or meet it 3 times.
+  (`BASIC_IDS` in `src/chess/glossary.ts`, `isLearnedPattern` in
+  `src/storage/learned.ts`)
 - Every chess word you meet is counted in your browser: seen, played by you,
   or missed. A missed word is a tactic that was the better move when you
   slipped. Pawnce also remembers the game and move where you first met it.

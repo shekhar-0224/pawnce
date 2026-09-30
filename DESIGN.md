@@ -189,10 +189,12 @@ are secondary.
   (scrolling it into view on phones). While replaying, the words at the
   current move are highlighted in the list, named on a chip over the board
   and explained under it.
-- **Home:** "Your chess vocabulary" tile (X of N known, how many waiting,
-  word chips linking to each word, "See all words").
-- **/words:** every word by group with its definition and status (Known,
-  New, Not met yet); learned words link "First met: vs Frog · 4. O-O ›" to
+- **Home:** words card: a ring and "Patterns learned: X of Y" (patterns
+  count only once you've played them), "N seen, not played yet", chips for
+  your patterns, then a small **Basics** row (piece names, piece values,
+  book move, opening, check, capture) with ticks, Practice and All words.
+- **/words:** every pattern by group with its definition and status
+  (Learned, Seen, Not met yet), then a compact Basics grid; learned words link "First met: vs Frog · 4. O-O ›" to
   that game's summary at that move. "Study all" and "Study the ones I've
   met" open decks. **/words/<id>**: the word's card and seen / played /
   missed counts.

@@ -145,3 +145,13 @@ export const WORD_CATEGORIES: WordCategory[] = [
   'Ideas',
   'Game endings',
 ]
+
+/**
+ * Basics: the first words every player needs (piece names and values, book
+ * move, opening, check, capture). Everything else is a Pattern, and patterns
+ * are what the home screen counts.
+ */
+export const BASIC_IDS = new Set(['pawn', 'knight', 'bishop', 'rook', 'queen', 'king', 'piece-values', 'book', 'opening', 'check', 'capture'])
+export const isBasic = (id: string) => BASIC_IDS.has(id)
+export const BASIC_WORDS = WORDS.filter((w) => isBasic(w.id))
+export const PATTERN_WORDS = WORDS.filter((w) => !isBasic(w.id))

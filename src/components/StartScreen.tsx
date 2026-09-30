@@ -2,9 +2,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { type ReactNode, useState } from 'react'
 import { Link } from 'react-router'
 import { TIME_CONTROLS, timeControlName } from '../chess/clock'
-import { WORDS } from '../chess/glossary'
+import { BASIC_WORDS, PATTERN_WORDS } from '../chess/glossary'
 import { BOTS, BOT_LIST } from '../engine/bots'
-import { isKnown, useLearned } from '../storage/learned'
+import { isKnown, isLearnedPattern, useLearned } from '../storage/learned'
 import { loadRecentGames, playStreak } from '../storage/recentGames'
 import { BotAvatar } from './BotAvatar'
 import { Button } from './Button'
@@ -111,8 +111,9 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
   const wins = games.filter((g) => g.result === 'win').length
   const streak = playStreak(games)
   const learned = useLearned()
-  const known = WORDS.filter((w) => isKnown(learned.words[w.id]))
-  const waiting = WORDS.filter((w) => learned.words[w.id] && !isKnown(learned.words[w.id]))
+  // Patterns count once you've played them yourself; seen-only ones wait for practice.
+  const known = PATTERN_WORDS.filter((w) => isLearnedPattern(learned.words[w.id]))
+  const waiting = PATTERN_WORDS.filter((w) => learned.words[w.id] && !isLearnedPattern(learned.words[w.id]))
   const [choosing, setChoosing] = useState<{ botId?: GameSetup['botId'] } | null>(null)
   const [deck, setDeck] = useState<DeckItem[] | null>(null)
 
@@ -196,39 +197,56 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
     <motion.section aria-labelledby="words-heading" className="card flex flex-col gap-4 p-5" {...pop(0.08)}>
       <div className="flex items-center gap-4">
         <div className="relative">
-          <ProgressRing value={known.length} total={WORDS.length} />
+          <ProgressRing value={known.length} total={PATTERN_WORDS.length} />
           <span className="absolute inset-0 grid place-items-center text-lg font-black text-learn">{known.length}</span>
         </div>
         <div className="min-w-0">
-          <h2 id="words-heading" className="text-xl font-black">
-            Your chess words
+          <h2 id="words-heading" className="text-lg font-black leading-tight">
+            <span className="block">Patterns learned:</span>{' '}
+            <span className="text-learn">
+              {known.length} of {PATTERN_WORDS.length}
+            </span>
           </h2>
           <p className="text-sm font-bold text-muted">
-            {known.length} of {WORDS.length} known
-            {waiting.length > 0 && (
-              <>
-                {' · '}
-                <span className="text-learn">{waiting.length} to practice</span>
-              </>
+            {waiting.length > 0 ? (
+              <span className="text-learn">{waiting.length} seen, not played yet</span>
+            ) : (
+              'Play a pattern yourself to learn it.'
             )}
           </p>
         </div>
       </div>
       {(waiting.length > 0 || known.length > 0) && (
         <div className="flex flex-wrap gap-1.5">
-          {[...waiting, ...known].slice(0, 8).map((w) => (
+          {[...known, ...waiting].slice(0, 8).map((w) => (
             <Link
               key={w.id}
               to={`/words/${w.id}`}
               className={`rounded-xl border-2 px-2.5 py-1 text-xs font-extrabold hover:brightness-95 ${
-                isKnown(learned.words[w.id]) ? 'border-border bg-surface-2 text-text' : 'border-learn/40 bg-learn/10 text-learn'
+                isLearnedPattern(learned.words[w.id]) ? 'border-accent/40 bg-accent/10 text-accent-edge' : 'border-learn/40 bg-learn/10 text-learn'
               }`}
             >
+              {isLearnedPattern(learned.words[w.id]) ? '✓ ' : ''}
               {w.name}
             </Link>
           ))}
         </div>
       )}
+      <div aria-label="Basics" role="group" className="flex flex-col gap-1.5 border-t-2 border-border pt-3">
+        <p className="text-[11px] font-black uppercase tracking-[0.08em] text-muted">Basics</p>
+        <div className="flex flex-wrap gap-1">
+          {BASIC_WORDS.map((w) => (
+            <Link
+              key={w.id}
+              to={`/words/${w.id}`}
+              className={`rounded-lg px-1.5 py-0.5 text-[11px] font-bold hover:bg-surface-2 ${isKnown(learned.words[w.id]) ? 'text-text' : 'text-muted'}`}
+            >
+              {isKnown(learned.words[w.id]) && <span className="text-accent">✓ </span>}
+              {w.name}
+            </Link>
+          ))}
+        </div>
+      </div>
       <div className="grid grid-cols-2 gap-2">
         <Button variant="learn" className="uppercase" onClick={practice}>
           {waiting.length > 0 ? `Practice ${waiting.length}` : known.length > 0 ? 'Review' : 'Learn 5 words'}
@@ -292,7 +310,7 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
         <Logo className="text-2xl" />
         <div className="flex items-center gap-2">
           <StatPill icon={<FlameIcon />} value={streak} label={`${streak}-day streak`} tone="text-warn" />
-          <StatPill icon={<BookIcon />} value={known.length} label={`${known.length} words known`} tone="text-learn" />
+          <StatPill icon={<BookIcon />} value={known.length} label={`${known.length} patterns learned`} tone="text-learn" />
           <span className="hidden min-[400px]:inline-flex">
             <StatPill icon={<TrophyIcon />} value={wins} label={`${wins} wins`} tone="text-info" />
           </span>
