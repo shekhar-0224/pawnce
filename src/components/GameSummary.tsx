@@ -468,7 +468,7 @@ export function GameSummary(p: Props) {
 
       <AnimatePresence>
         {deckOpen && deck.length > 0 && (
-          <Sheet key="deck" title="Flash cards" onClose={() => setDeckOpen(false)}>
+          <Sheet key="deck" title="Flash cards" wide onClose={() => setDeckOpen(false)}>
             <FlashDeck items={deck} onClose={() => setDeckOpen(false)} />
           </Sheet>
         )}

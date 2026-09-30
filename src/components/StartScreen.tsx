@@ -374,7 +374,7 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
           />
         )}
         {deck && (
-          <Sheet key="practice" title="Practice" onClose={() => setDeck(null)}>
+          <Sheet key="practice" title="Practice" wide onClose={() => setDeck(null)}>
             <FlashDeck items={deck} onClose={() => setDeck(null)} />
           </Sheet>
         )}

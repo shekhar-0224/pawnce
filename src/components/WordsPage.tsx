@@ -145,7 +145,7 @@ export function WordsPage() {
 
       <AnimatePresence>
         {deck && (
-          <Sheet key="deck" title="Flash cards" onClose={() => setDeck(null)}>
+          <Sheet key="deck" title="Flash cards" wide onClose={() => setDeck(null)}>
             <FlashDeck items={deck} onClose={() => setDeck(null)} />
           </Sheet>
         )}
