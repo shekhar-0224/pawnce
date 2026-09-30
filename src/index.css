@@ -17,6 +17,14 @@
   --color-danger: var(--danger);
   --color-success: var(--success);
   --color-on-accent: var(--on-accent);
+  --color-accent-edge: var(--accent-edge);
+  --color-info: var(--info);
+  --color-info-edge: var(--info-edge);
+  --color-learn: var(--learn);
+  --color-learn-edge: var(--learn-edge);
+  --color-warn-edge: var(--warn-edge);
+  --color-danger-edge: var(--danger-edge);
+  --color-border-edge: var(--border-edge);
 
   --font-display: var(--font-display);
   --font-body: var(--font-body);
@@ -36,7 +44,7 @@
 
   html {
     background: var(--bg);
-    color-scheme: dark;
+    color-scheme: light;
     -webkit-text-size-adjust: 100%;
   }
 
@@ -46,7 +54,7 @@
     color: var(--text);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
-    font-feature-settings: 'ss01', 'cv11';
+    font-weight: 600;
     -webkit-tap-highlight-color: transparent;
     overflow-x: hidden;
   }
@@ -59,7 +67,8 @@
   h1,
   h2,
   h3 {
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
+    font-weight: 900;
   }
 
   button {
@@ -71,6 +80,30 @@
 /* react-chessboard slides pieces with the default "ease" curve; we want ease-out. */
 [data-piece] {
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/*
+ * Chunky, pressable 3D surfaces (buttons, choice tiles): a darker "edge" under
+ * the element that disappears when pressed. Set --edge per element.
+ */
+.press {
+  box-shadow: 0 4px 0 var(--edge, var(--border-edge));
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out, filter 120ms;
+}
+.press:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--edge, var(--border-edge));
+}
+.press:disabled {
+  box-shadow: 0 4px 0 var(--border-edge);
+}
+
+/* Cards: white with a soft 2px bottom edge. */
+.card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: 0 2px 0 var(--border);
 }
 
 /* Thin, themed scrollbars (move list) */

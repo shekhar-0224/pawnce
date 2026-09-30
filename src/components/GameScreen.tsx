@@ -278,7 +278,7 @@ export function GameScreen({
           {g.myTurn && (
             <span
               className={`whitespace-nowrap rounded-md px-1.5 py-0.5 text-xs font-semibold ${
-                inCheck ? 'bg-danger text-text' : 'bg-accent text-on-accent'
+                inCheck ? 'bg-danger text-white' : 'bg-accent text-on-accent'
               }`}
             >
               {inCheck ? 'Check! Save your king' : 'Your move'}
@@ -463,10 +463,7 @@ export function GameScreen({
             }
             hint={analysis.hints && <HintCard hints={analysis.hints} />}
             coach={
-              <div className="flex flex-col gap-4">
-                {moment && <div className="hidden min-[900px]:block">{momentCard}</div>}
-                {coach}
-              </div>
+              moment ? <div className="hidden min-[900px]:block">{momentCard}</div> : coach
             }
             onNewGame={onNewGame}
             onResign={g.resign}

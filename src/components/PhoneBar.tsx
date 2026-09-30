@@ -19,7 +19,7 @@ export function PhoneBar({ hintsLeft, hintLoading, canHint, onHint, canTakeBack,
   return (
     <nav
       aria-label="Game actions"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-bg/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur min-[900px]:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur min-[900px]:hidden"
     >
       <div className="mx-auto flex max-w-lg gap-1">
         <button

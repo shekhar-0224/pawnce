@@ -212,18 +212,18 @@ function Quiz({ wordIds, onDone }: { wordIds: string[]; onDone: () => void }) {
       ) : (
         <>
           <h2 className="text-lg font-semibold">Which word means this?</h2>
-          <p className="rounded-lg border border-border bg-bg/40 px-3 py-2">{word.meaning}</p>
+          <p className="rounded-xl border-2 border-border bg-surface-2 px-3 py-2">{word.meaning}</p>
         </>
       )}
       <div role="radiogroup" aria-label="Answers" className="grid grid-cols-2 gap-2">
         {q.options.map((id) => {
           const right = id === q.id
           const tone = !picked
-            ? 'border-border hover:border-muted/40'
+            ? 'border-border bg-surface hover:bg-surface-2'
             : right
-              ? 'border-accent bg-accent/15 text-accent'
+              ? 'border-accent bg-accent/15 text-accent [--edge:var(--accent)]'
               : id === picked
-                ? 'border-danger bg-danger/15 text-danger'
+                ? 'border-danger bg-danger/15 text-danger [--edge:var(--danger)]'
                 : 'border-border opacity-60'
           return (
             <button
@@ -236,7 +236,7 @@ function Quiz({ wordIds, onDone }: { wordIds: string[]; onDone: () => void }) {
                 setPicked(id)
                 if (right) setScore((s) => s + 1)
               }}
-              className={`min-h-12 cursor-pointer rounded-lg border px-3 text-sm font-semibold disabled:cursor-default ${tone}`}
+              className={`press min-h-14 cursor-pointer rounded-2xl border-2 px-3 text-sm font-extrabold disabled:cursor-default ${tone}`}
             >
               {WORDS_BY_ID[id].name}
             </button>

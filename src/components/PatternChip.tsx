@@ -12,7 +12,7 @@ export function PatternChip({ kind, mine, atBottom }: { kind: TacticKind; mine: 
       <motion.span
         role="status"
         className={`rounded-lg px-3 py-1.5 font-mono text-sm font-bold uppercase tracking-[0.12em] shadow-lg ${
-          mine ? 'bg-accent text-on-accent' : 'bg-danger text-text'
+          mine ? 'bg-accent text-on-accent' : 'bg-danger text-white'
         }`}
         initial={{ opacity: 0, y: -8, scale: 0.9 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}

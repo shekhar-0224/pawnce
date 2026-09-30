@@ -76,11 +76,11 @@ export function MenuSheetBody({
         role="switch"
         aria-checked={pauseForWords}
         onClick={onTogglePause}
-        className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-surface-2 px-4 text-sm font-semibold"
+        className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-xl border-2 border-border bg-surface-2 px-4 text-sm font-semibold"
       >
         Pause for new words
         <span className={`relative h-6 w-10 rounded-full transition-colors ${pauseForWords ? 'bg-accent' : 'bg-border'}`}>
-          <span className={`absolute top-1 size-4 rounded-full bg-bg transition-all ${pauseForWords ? 'left-5' : 'left-1'}`} />
+          <span className={`absolute top-1 size-4 rounded-full bg-white shadow transition-all ${pauseForWords ? 'left-5' : 'left-1'}`} />
         </span>
       </button>
       <Button

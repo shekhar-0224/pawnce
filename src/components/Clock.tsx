@@ -27,7 +27,7 @@ export function Clock({ remainingMs, runningSince, label }: Props) {
   const low = ms < LOW_TIME_MS
 
   const tone = low
-    ? 'bg-danger text-text'
+    ? 'bg-danger text-white'
     : running
       ? 'bg-accent text-on-accent'
       : 'border border-border bg-surface text-muted'

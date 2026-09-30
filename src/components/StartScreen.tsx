@@ -50,7 +50,7 @@ function Tile({
   return (
     <motion.section
       aria-labelledby={id}
-      className={`flex min-w-0 flex-col gap-3 rounded-card border border-border bg-surface p-5 ${className}`}
+      className={`flex min-w-0 flex-col gap-3 card p-5 ${className}`}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
@@ -84,7 +84,7 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
         {/* Play: the big tile */}
         <motion.section
           aria-labelledby="play-heading"
-          className="flex min-w-0 flex-col gap-6 overflow-hidden rounded-card border border-border bg-surface p-6 min-[900px]:col-span-7 min-[900px]:row-span-2 min-[900px]:p-8 min-[1100px]:flex-row min-[1100px]:items-center min-[1100px]:gap-8"
+          className="flex min-w-0 flex-col gap-6 overflow-hidden card p-6 min-[900px]:col-span-7 min-[900px]:row-span-2 min-[900px]:p-8 min-[1100px]:flex-row min-[1100px]:items-center min-[1100px]:gap-8"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}

@@ -52,7 +52,7 @@ export function WordsPage() {
     <div className="mx-auto w-full max-w-2xl px-4 pb-12 pt-6 sm:pt-10">
       <PageHeader title="Your chess vocabulary" back={() => navigate('/')} />
 
-      <section className="mb-6 flex flex-col gap-3 rounded-card border border-border bg-surface p-5">
+      <section className="mb-6 flex flex-col gap-3 card p-5">
         <p>
           <span className="font-mono text-3xl font-semibold text-accent">{known}</span>
           <span className="text-muted"> of {WORDS.length} words known</span>
@@ -77,7 +77,7 @@ export function WordsPage() {
         {WORD_CATEGORIES.map((cat) => (
           <section key={cat} aria-label={cat}>
             <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{cat}</h2>
-            <ul className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface">
+            <ul className="flex flex-col divide-y divide-border card">
               {WORDS.filter((w) => w.category === cat).map((w) => {
                 const st = statusOf(learned, w.id)
                 const where = firstMet(learned.words[w.id])

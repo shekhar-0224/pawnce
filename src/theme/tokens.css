@@ -1,46 +1,61 @@
 /*
- * Pawnce design tokens. Every color in the app comes from here.
- * See DESIGN.md for what each one is for.
+ * Pawnce design tokens: bright, friendly and playful (think Duolingo, in a
+ * jungle). Every color in the app comes from here. See DESIGN.md.
+ * Each strong color has an "-edge": the darker 3D bottom of chunky buttons.
  */
 :root {
-  --bg: #0b100d;
-  --surface: #111814;
-  --surface-2: #172019;
-  --border: #222d26;
-  --text: #e9eeea;
-  --text-muted: #8c9a91;
-  --accent: #c6f36b;
-  --on-accent: #0b100d;
-  --warn: #f2b84b;
-  --danger: #f2555a;
-  --board-light: #dde4d6;
-  --board-dark: #6f8f76;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f4f7f1;
+  --border: #e3e8df;
+  --border-edge: #cfd7ca;
+  --text: #33413a;
+  --text-muted: #7b8a81;
+
+  /* Jungle green: the main action color */
+  --accent: #43c057;
+  --accent-edge: #2f9a41;
+  --on-accent: #ffffff;
+  /* Sky blue: hints and help */
+  --info: #1eaaf1;
+  --info-edge: #1686c0;
+  /* Grape: chess words and learning */
+  --learn: #9b6bff;
+  --learn-edge: #7a48e0;
+  /* Sunshine: inaccuracies, streak-like highlights */
+  --warn: #ffb400;
+  --warn-edge: #d99500;
+  /* Coral red: mistakes and blunders */
+  --danger: #ff5b5b;
+  --danger-edge: #d93d3d;
+
+  --board-light: #eef2d9;
+  --board-dark: #74b25e;
   /* Pieces: classic shapes in ivory (White) and night green (Black) */
-  --piece-light: #f4f0e3;
-  --piece-light-ink: #1c3326;
-  --piece-dark: #101a13;
-  --piece-dark-ink: #050806;
-  --piece-dark-detail: #c6f36b;
-  /* Bot avatars: jungle animals on a night token */
-  --piece-night: #16241c;
-  --piece-night-edge: #050806;
-  --piece-night-ink: #c6f36b;
+  --piece-light: #fbfaf3;
+  --piece-light-ink: #23392b;
+  --piece-dark: #1c2a21;
+  --piece-dark-ink: #0b120d;
+  --piece-dark-detail: #b8f06a;
+  /* Bot avatars: jungle animals on a token */
+  --piece-night: #23392b;
+  --piece-night-edge: #0f1a13;
+  --piece-night-ink: #b8f06a;
   --piece-day: #f6f3e8;
   --piece-day-edge: #b9b39c;
   --piece-day-ink: #1f3a2a;
-  --last-move: rgba(198, 243, 107, 0.3);
+  --last-move: rgba(255, 214, 0, 0.42);
 
-  /* One accent in practice: these are aliases. */
   --success: var(--accent);
-  --accent-2: var(--accent);
+  --accent-2: var(--info);
 
-  --radius-card: 12px;
-  --radius-control: 8px;
+  --radius-card: 20px;
+  --radius-control: 16px;
 
-  --shadow-soft: none;
-  --shadow-raised: 0 12px 32px rgba(0, 0, 0, 0.35);
+  --shadow-soft: 0 2px 0 var(--border-edge);
+  --shadow-raised: 0 18px 40px rgba(35, 57, 43, 0.18);
 
-  --font-display: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-body: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Nunito', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Nunito', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }

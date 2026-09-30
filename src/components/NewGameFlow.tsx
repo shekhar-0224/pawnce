@@ -31,8 +31,8 @@ const SPEED_NOTES: Record<string, string> = {
 }
 
 const option = (active: boolean) =>
-  `w-full cursor-pointer rounded-lg border text-left transition-colors ${
-    active ? 'border-accent bg-accent/10' : 'border-border bg-bg/40 hover:border-muted/40'
+  `press w-full cursor-pointer rounded-2xl border-2 text-left transition-colors ${
+    active ? 'border-accent bg-accent/10 [--edge:var(--accent)]' : 'border-border bg-surface hover:bg-surface-2'
   }`
 
 /**
@@ -55,7 +55,7 @@ export function NewGameFlow({ initial, onStart, onClose }: Props) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-bg/60 backdrop-blur-sm min-[900px]:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#1c2a21]/45 backdrop-blur-[2px] min-[900px]:items-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

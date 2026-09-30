@@ -25,10 +25,10 @@ export function WinMeter({ myWinPct, botName, final, compact = false }: Props) {
           : outcomeChances(myWinPct ?? 50)
   const r = (n: number) => Math.round(n)
   const bar = (
-    <div className="flex h-1.5 min-w-0 flex-1 gap-0.5 overflow-hidden rounded-sm" aria-hidden>
+    <div className="flex h-3 min-w-0 flex-1 gap-0.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
       <motion.div className="bg-accent" initial={false} animate={{ flexGrow: c.win }} transition={spring} style={{ flexBasis: 0 }} />
       <motion.div className="bg-muted/40" initial={false} animate={{ flexGrow: c.draw }} transition={spring} style={{ flexBasis: 0 }} />
-      <motion.div className="bg-board-light" initial={false} animate={{ flexGrow: c.loss }} transition={spring} style={{ flexBasis: 0 }} />
+      <motion.div className="bg-[var(--piece-dark)]" initial={false} animate={{ flexGrow: c.loss }} transition={spring} style={{ flexBasis: 0 }} />
     </div>
   )
   if (compact) {
@@ -40,7 +40,7 @@ export function WinMeter({ myWinPct, botName, final, compact = false }: Props) {
         <span className="shrink-0 text-muted">You</span>
         <span className="shrink-0 font-mono font-semibold text-accent">{r(c.win)}%</span>
         {bar}
-        <span className="shrink-0 font-mono font-semibold text-board-light">{r(c.loss)}%</span>
+        <span className="shrink-0 font-mono font-semibold text-text">{r(c.loss)}%</span>
         <span className="shrink-0 text-muted">{botName}</span>
       </section>
     )
@@ -61,7 +61,7 @@ export function WinMeter({ myWinPct, botName, final, compact = false }: Props) {
         </div>
         <div className="text-right">
           <p className="text-xs font-medium text-muted">{botName}</p>
-          <p className="font-mono text-2xl font-semibold leading-none text-board-light">{r(c.loss)}%</p>
+          <p className="font-mono text-2xl font-semibold leading-none text-text">{r(c.loss)}%</p>
         </div>
       </div>
       {bar}

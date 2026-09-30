@@ -42,7 +42,7 @@ export function WordTag({ id }: { id: string | null }) {
             transition={{ duration: 0.18 }}
             className="overflow-hidden"
           >
-            <div className="rounded-lg border border-border bg-bg/40 px-3 py-2 text-sm">
+            <div className="rounded-xl border-2 border-border bg-surface-2 px-3 py-2 text-sm">
               <p>
                 <span className="font-semibold">{word.name}: </span>
                 {word.meaning}

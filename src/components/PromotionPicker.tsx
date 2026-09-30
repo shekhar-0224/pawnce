@@ -15,7 +15,7 @@ type Props = {
 export function PromotionPicker({ color, onPick, onCancel }: Props) {
   return (
     <motion.div
-      className="absolute inset-0 z-20 grid place-items-center rounded-lg bg-bg/60 backdrop-blur-[2px]"
+      className="absolute inset-0 z-20 grid place-items-center rounded-lg bg-white/70 backdrop-blur-[2px]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -25,7 +25,7 @@ export function PromotionPicker({ color, onPick, onCancel }: Props) {
       <motion.div
         role="dialog"
         aria-label="Choose a piece for your pawn"
-        className="rounded-card border border-border bg-surface p-4"
+        className="card p-4"
         initial={{ scale: 0.9, y: 8 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0 }}
@@ -42,7 +42,7 @@ export function PromotionPicker({ color, onPick, onCancel }: Props) {
                 type="button"
                 whileTap={{ scale: 0.97 }}
                 onClick={() => onPick(p)}
-                className="flex w-16 cursor-pointer flex-col items-center gap-1 rounded-lg border border-border bg-surface-2 p-2 hover:bg-[color-mix(in_srgb,var(--accent)_18%,var(--surface-2))] focus-visible:bg-[color-mix(in_srgb,var(--accent)_18%,var(--surface-2))] sm:w-20"
+                className="flex w-16 cursor-pointer flex-col items-center gap-1 rounded-xl border-2 border-border bg-surface-2 p-2 hover:bg-[color-mix(in_srgb,var(--accent)_18%,var(--surface-2))] focus-visible:bg-[color-mix(in_srgb,var(--accent)_18%,var(--surface-2))] sm:w-20"
               >
                 <span className="block size-12 sm:size-14">
                   <Piece />

@@ -32,7 +32,7 @@ export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBet
       <div className="flex items-start gap-3">
         <span
           className={`grid size-10 shrink-0 place-items-center rounded-lg font-mono text-base font-bold ${
-            blunder ? 'bg-danger text-text' : 'bg-danger/25 text-danger'
+            blunder ? 'bg-danger text-white' : 'bg-danger/25 text-danger'
           }`}
         >
           {blunder ? '??' : '?'}
@@ -51,7 +51,7 @@ export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBet
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2">
         <Button variant="primary" onClick={onTakeBack} className="px-2 text-sm">
-          Take it back
+          Take back
         </Button>
         <Button onClick={onShowBetter} className="px-2 text-sm" disabled={!verdict.betterMove}>
           {showingBetter ? 'Hide move' : 'Show better'}
