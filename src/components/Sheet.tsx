@@ -32,7 +32,7 @@ export function Sheet({ title, onClose, children, footer, wide = false, fill = f
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`flex max-h-[92dvh] w-full flex-col ${fill ? 'narrow:h-[92dvh]' : ''} ${wide ? 'max-w-3xl' : 'max-w-lg'} rounded-t-3xl border border-border bg-surface pb-[max(12px,env(safe-area-inset-bottom))] wide:rounded-card`}
+        className={`flex max-h-[92dvh] w-full flex-col ${fill ? 'h-[min(92dvh,780px)]' : ''} ${wide ? 'max-w-3xl' : 'max-w-lg'} rounded-t-3xl border border-border bg-surface pb-[max(12px,env(safe-area-inset-bottom))] wide:rounded-card`}
         initial={{ y: 60 }}
         animate={{ y: 0 }}
         exit={{ y: 60, opacity: 0 }}

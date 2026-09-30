@@ -1,4 +1,5 @@
-import { type CSSProperties, type ReactNode, useRef } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { type CSSProperties, type ReactNode, useRef, useState } from 'react'
 import { EXAMPLES, exampleBoard } from '../chess/examples'
 import type { Square } from '../chess/game'
 import { WORDS_BY_ID } from '../chess/glossary'
@@ -37,6 +38,92 @@ export function FlashCard({ card, context, progress, fill = false, children }: P
   const ex = word ? EXAMPLES[word.id] : null
   const board = ex ? exampleBoard(ex) : null
   const fresh = word ? isNew(learned.words[word.id]) : false
+  const [tipOpen, setTipOpen] = useState(false)
+  const name = word ? word.name : card.kind === 'opening' ? card.name : ''
+  const meaning = word ? word.meaning : card.kind === 'opening' ? explainOpening(card.name) : ''
+
+  // In a deck: board first, like a play app. The word and one line on top, the
+  // board as big as the screen allows, one short line below. The tip is a tap away.
+  if (fill) {
+    const boardEl =
+      board && ex ? (
+        <ExampleBoard
+          id={`ex-${word!.id}`}
+          fen={board.fen}
+          last={board.last}
+          next={board.next}
+          better={board.better}
+          lines={(ex.arrows ?? []).map(([from, to]) => ({ from, to }))}
+        />
+      ) : card.kind === 'opening' ? (
+        <ExampleBoard id={`op-${card.name}`} fen={card.fen} last={card.last} />
+      ) : null
+    return (
+      <article aria-label={`Flash card: ${name}`} className="card flex h-full min-h-0 flex-col gap-2 p-3 min-[480px]:p-4">
+        <header className="flex shrink-0 items-center justify-between gap-2">
+          <p className="flex min-w-0 items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.08em] text-muted">
+            <span className="truncate">{word ? word.category : 'Opening'}</span>
+            {fresh && <span className="rounded bg-accent px-1 py-px text-[9px] text-on-accent">New</span>}
+          </p>
+          {progress && <p className="shrink-0 font-mono text-[11px] font-bold text-muted">{progress}</p>}
+        </header>
+        <div className="shrink-0">
+          <h2 className="font-display text-2xl font-black leading-tight min-[480px]:text-3xl">{name}</h2>
+          <p className="mt-0.5 line-clamp-2 text-sm font-bold leading-snug text-muted">{meaning}</p>
+        </div>
+
+        <div ref={boardBox} className="relative flex min-h-0 flex-1 items-center justify-center">
+          {boardEl && fit !== null && fit >= 100 && (
+            <div className="w-[var(--fit)]" style={{ '--fit': `${Math.min(fit, 520)}px` } as CSSProperties}>
+              {boardEl}
+            </div>
+          )}
+          <AnimatePresence>
+            {tipOpen && word && (
+              <motion.p
+                role="note"
+                className="absolute inset-x-1 bottom-1 rounded-2xl border-2 border-warn/50 bg-surface p-3 text-sm font-bold leading-snug shadow-lg"
+                initial={{ y: 12, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 12, opacity: 0 }}
+              >
+                <span className="text-warn">Tip · </span>
+                {word.tip}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <footer className="flex shrink-0 items-center gap-2">
+          {context ? (
+            <button
+              type="button"
+              onClick={context.onJump}
+              disabled={!context.onJump}
+              className="flex min-h-10 min-w-0 flex-1 cursor-pointer items-center gap-1 rounded-xl bg-surface-2 px-2.5 text-left text-xs font-bold disabled:cursor-default"
+            >
+              <span className="shrink-0 text-muted">In your game:</span>
+              <span className="min-w-0 truncate">{context.text}</span>
+              {context.onJump && <span aria-hidden className="ml-auto shrink-0 text-accent">›</span>}
+            </button>
+          ) : (
+            <p className="line-clamp-2 min-w-0 flex-1 text-xs font-bold leading-snug text-muted">{ex?.caption ?? ''}</p>
+          )}
+          {word && (
+            <button
+              type="button"
+              aria-expanded={tipOpen}
+              onClick={() => setTipOpen((o) => !o)}
+              className={`min-h-10 shrink-0 cursor-pointer rounded-xl border-2 px-3 text-xs font-black ${tipOpen ? 'border-warn bg-warn/15 text-text' : 'border-border text-muted hover:bg-surface-2'}`}
+            >
+              💡 Tip
+            </button>
+          )}
+        </footer>
+        {children}
+      </article>
+    )
+  }
 
   return (
     <article
