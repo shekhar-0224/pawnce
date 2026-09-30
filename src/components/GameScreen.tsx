@@ -77,12 +77,17 @@ export function GameScreen({
   const [judgeTimeoutPly, setJudgeTimeoutPly] = useState(-1)
   const [dismissedPly, setDismissedPly] = useState(-1)
   const awaitingJudgement = lastIsMine && !lastVerdict && judgeTimeoutPly !== lastPly
+  // Mistakes and blunders get an alert beside the board, never a pause:
+  // the game goes on, and "Take it back" still works after the bot replies.
+  const myLast = g.moves.findLastIndex((m) => m.color === myColor)
+  const myLastVerdict = myLast >= 0 ? analysis.verdicts[myLast] : null
   const moment =
-    lastIsMine &&
-    lastVerdict &&
-    (lastVerdict.quality === 'mistake' || lastVerdict.quality === 'blunder') &&
-    dismissedPly !== lastPly
-      ? { move: lastMove, verdict: lastVerdict }
+    myLast >= 0 &&
+    !g.isOver &&
+    myLastVerdict &&
+    (myLastVerdict.quality === 'mistake' || myLastVerdict.quality === 'blunder') &&
+    dismissedPly !== myLast
+      ? { move: g.moves[myLast], verdict: myLastVerdict, ply: myLast }
       : null
 
   // Never keep the bot waiting long if the judgement is slow.
@@ -106,24 +111,28 @@ export function GameScreen({
 
   const vocab = useVocab(g.moves, analysis.verdicts, myColor, openings.reached, g.summary?.reason ?? null, gameId)
 
-  // Learning in the moment: when a move shows a chess word you haven't
-  // learned yet, the game pauses and its flash card opens (one per move,
-  // after any mistake card; a learned word never interrupts again).
+  // Pop-ups are for big moments only: a new opening, or a major move (a
+  // tactic, a sacrifice, a named checkmate, castling, promotion…). Every
+  // other word is taught quietly (New tag, summary flash cards).
   const [pauseForWords, setPauseForWords] = usePauseForWords()
   const [wordDoneAt, setWordDoneAt] = useState(-1)
-  const newWord =
-    pauseForWords && lastVerdict && !g.isOver && !moment && wordDoneAt !== lastPly ? vocab.newWordAt(lastPly, { forPause: true }) : null
-  const [wordCard, setWordCard] = useState<{ ply: number; id: string } | null>(null)
+  const canPop = pauseForWords && lastVerdict && !g.isOver && wordDoneAt !== lastPly
+  const newOpening = canPop ? vocab.newOpeningAt(lastPly) : null
+  const newWord = canPop && !newOpening ? vocab.newWordAt(lastPly, { forPause: true }) : null
+  const [wordCard, setWordCard] = useState<
+    { ply: number; kind: 'word'; id: string } | { ply: number; kind: 'opening'; name: string } | null
+  >(null)
   // Keep the card on screen until it's dismissed, even once the word is learned.
-  if (newWord && !wordCard) setWordCard({ ply: lastPly, id: newWord })
-  if (wordCard && wordCard.ply !== lastPly && !newWord) setWordCard(null)
+  if (!wordCard && newOpening) setWordCard({ ply: lastPly, kind: 'opening', name: newOpening })
+  else if (!wordCard && newWord) setWordCard({ ply: lastPly, kind: 'word', id: newWord })
+  if (wordCard && wordCard.ply !== lastPly && !newWord && !newOpening) setWordCard(null)
   const dismissWord = (learn: boolean) => {
-    if (learn && wordCard) learnWord(wordCard.id)
+    if (learn && wordCard?.kind === 'word') learnWord(wordCard.id)
     setWordDoneAt(wordCard?.ply ?? lastPly)
     setWordCard(null)
   }
 
-  const shouldHold = awaitingJudgement || moment !== null || wordCard !== null
+  const shouldHold = awaitingJudgement || wordCard !== null
   if (shouldHold !== hold) setHold(shouldHold) // settle before effects run
 
   // Once the game is over, keep its saved record up to date as the last
@@ -162,7 +171,8 @@ export function GameScreen({
   const betterMove =
     showBetterFor === myLastIndex ? (analysis.verdicts[myLastIndex]?.betterMove ?? null) : null
 
-  const momentRefutation = moment?.verdict.refutation ?? null
+  // The red arrows for what punishes your slip, until the bot has replied.
+  const momentRefutation = moment && lastIsMine ? (moment.verdict.refutation ?? null) : null
 
   // A tactic that really works (either side) flashes on the board: lines
   // from the attacker to its targets and a "FORK!" chip, for about 1.5s.
@@ -302,20 +312,22 @@ export function GameScreen({
     <AnimatePresence>
       {moment && (
         <MomentCard
-    key={lastPly}
+    key={moment.ply}
     move={moment.move}
     verdict={moment.verdict}
     showingBetter={betterMove !== null}
     onTakeBack={() => {
       setShowBetterFor(null)
-      g.takeBack()
+      // Undo your move, and the bot's reply if it already answered.
+      if (lastIsMine) g.takeBack()
+      else g.takeBackRound()
     }}
     onShowBetter={() =>
-      setShowBetterFor((v) => (v === lastPly ? null : lastPly))
+      setShowBetterFor((v) => (v === moment.ply ? null : moment.ply))
     }
     onPlayOn={() => {
       setShowBetterFor(null)
-      setDismissedPly(lastPly)
+      setDismissedPly(moment.ply)
     }}
   />
       )}
@@ -451,11 +463,10 @@ export function GameScreen({
             }
             hint={analysis.hints && <HintCard hints={analysis.hints} />}
             coach={
-              moment ? (
-                <div className="hidden min-[900px]:block">{momentCard}</div>
-              ) : (
-                coach
-              )
+              <div className="flex flex-col gap-4">
+                {moment && <div className="hidden min-[900px]:block">{momentCard}</div>}
+                {coach}
+              </div>
             }
             onNewGame={onNewGame}
             onResign={g.resign}
@@ -484,7 +495,7 @@ export function GameScreen({
         {wordCard && lastMove && (
           <Sheet
             key={`word-${wordCard.ply}`}
-            title="New chess word"
+            title={wordCard.kind === 'opening' ? 'New opening' : 'New chess word'}
             onClose={() => dismissWord(false)}
             footer={
               <div className="flex flex-col gap-2">
@@ -512,18 +523,25 @@ export function GameScreen({
               </div>
             }
           >
-            <FlashCard
-              card={{ kind: 'word', id: wordCard.id }}
-              context={{
-                text: gameContext(
-                  { kind: 'word', id: wordCard.id, ply: wordCard.ply },
-                  g.moves[wordCard.ply] ?? lastMove,
-                  analysis.verdicts[wordCard.ply] ?? null,
-                  (g.moves[wordCard.ply] ?? lastMove).color === myColor,
-                  bot,
-                ),
-              }}
-            />
+            {(() => {
+              const at = g.moves[wordCard.ply] ?? lastMove
+              const data =
+                wordCard.kind === 'word'
+                  ? ({ kind: 'word', id: wordCard.id, ply: wordCard.ply } as const)
+                  : ({ kind: 'opening', name: wordCard.name, family: wordCard.name, ply: wordCard.ply } as const)
+              return (
+                <FlashCard
+                  card={
+                    wordCard.kind === 'word'
+                      ? { kind: 'word', id: wordCard.id }
+                      : { kind: 'opening', name: wordCard.name, fen: at.after, last: { from: at.from, to: at.to } }
+                  }
+                  context={{
+                    text: gameContext(data, at, analysis.verdicts[wordCard.ply] ?? null, at.color === myColor, bot),
+                  }}
+                />
+              )
+            })()}
           </Sheet>
         )}
         {sheet === 'coach' && (

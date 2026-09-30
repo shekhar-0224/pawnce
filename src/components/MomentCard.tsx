@@ -21,7 +21,7 @@ export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBet
   const blunder = verdict.quality === 'blunder'
   return (
     <motion.div
-      role="alertdialog"
+      role="alert"
       aria-label={blunder ? 'Blunder' : 'Mistake'}
       className="rounded-card border border-danger/60 bg-danger/10 p-4"
       initial={{ y: 8, opacity: 0 }}
@@ -46,7 +46,7 @@ export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBet
             {verdict.refutation?.text ?? 'This lets your opponent take over.'}
             {verdict.better ? ` ${verdict.better} was better.` : ''}
           </p>
-          <p className="mt-1 font-mono text-xs text-muted">{costLine(verdict)} · clock paused</p>
+          <p className="mt-1 font-mono text-xs text-muted">{costLine(verdict)}</p>
         </div>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2">
@@ -57,7 +57,7 @@ export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBet
           {showingBetter ? 'Hide move' : 'Show better'}
         </Button>
         <Button onClick={onPlayOn} className="px-2 text-sm">
-          Play on
+          Got it
         </Button>
       </div>
     </motion.div>

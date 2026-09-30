@@ -158,13 +158,20 @@ are secondary.
   move, a phase starting, a pawn structure appearing, most strategy words)
   count once per game. Piece names and the two castling sides never pause
   the game. Detection: `src/chess/patterns.ts` and `useVocab.ts`.
-- **Learning in the moment.** When a move shows a word you haven't learned,
-  the game pauses (bot and clocks wait) and its flash card opens in a sheet,
-  with "In your game: …". "Got it · continue" marks it learned (it never
-  interrupts again); "Not now" continues. One card per move, after any
-  mistake card. A "Pause for new words" switch lives in the Menu (phones),
-  the side panel (desktop) and a "Turn off" link on the card. The coach
-  still shows the `NEW` tag with "What's a fork?".
+- **Learning in the moment, without blocking.** Pop-up cards (the game waits,
+  bot and clocks paused) are only for big moments: a **new opening** (its
+  name, idea and board) or a **major move** word: castling, en passant,
+  promotion, the tactics (fork, pin, skewer, discovered attack/check, double
+  check, trapped piece, removing the defender, perpetual check, the
+  exchange), sacrifice, brilliant, and checkmates (plain and named). "Got it
+  · continue" marks it learned; "Not now" continues. Everything else (move
+  grades, pieces, pawns, strategy, phases) is taught quietly: the `NEW` tag
+  in the coach and the summary flash cards. A "Pause for new words" switch
+  (Menu / side panel / "Turn off" on the card) turns pop-ups off.
+- **Mistakes and blunders are alerts, not pauses:** a red card beside the
+  board (under it on phones, above the coach on desktop) explains the slip
+  and offers Take it back (your move, plus the bot's reply if it already
+  answered), Show better and Got it. The game keeps going.
 - **Flash cards** (like vocabulary cards): category and `NEW` pill, the word
   large, a plain definition, an example board (the move highlighted in
   lime; lime lines for what it hits, a faint lime arrow for a better move,

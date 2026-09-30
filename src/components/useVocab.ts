@@ -13,11 +13,17 @@ import type { MoveVerdict } from './useAnalysis'
 
 export type WordAt = { id: string; ply: number; how: Sighting }
 
-/** Everyday words taught by tag and flash card, but never worth pausing the game for. */
-const NO_PAUSE = new Set([
-  'pawn', 'knight', 'bishop', 'rook', 'queen', 'king', 'minor-piece', 'major-piece',
-  // Castling already pauses for its own card.
-  'kingside-castling', 'queenside-castling',
+/**
+ * The only words big enough to pop up mid-game: major moves. Everything
+ * else (grades, pieces, pawn structure, phases…) is taught quietly by the
+ * New tag and the summary flash cards.
+ */
+const POP_UP_WORDS = new Set([
+  'castling', 'en-passant', 'promotion', 'underpromotion',
+  'fork', 'pin', 'skewer', 'discovered-attack', 'discovered-check', 'double-check',
+  'trapped-piece', 'removing-the-defender', 'perpetual-check', 'the-exchange',
+  'sacrifice', 'brilliant',
+  'checkmate', 'back-rank-mate', 'smothered-mate', 'scholars-mate', 'fools-mate', 'ladder-mate',
 ])
 
 /** A flash card: a chess word (or opening) met in this game. */
@@ -211,7 +217,7 @@ export function useVocab(
       (w) =>
         w.how !== 'missed' &&
         !QUIET_WORDS.has(w.id) &&
-        !(opts.forPause && NO_PAUSE.has(w.id)) &&
+        !(opts.forPause && !POP_UP_WORDS.has(w.id)) &&
         isNew(learned.words[w.id]),
     )?.id ?? null
 
@@ -224,5 +230,11 @@ export function useVocab(
   /** Words you met for the very first time in this game. */
   const newThisGame = cards.filter((c) => c.kind === 'word' && !before.words[c.id]).map((c) => (c as { id: string }).id)
 
-  return { newWordAt, cards, newThisGame, perPly }
+  /** A move that enters an opening family you'd never met before this game. */
+  const newOpeningAt = (ply: number): string | null => {
+    const name = reached[ply]
+    return name && !before.openings[openingFamily(name)] ? name : null
+  }
+
+  return { newWordAt, newOpeningAt, cards, newThisGame, perPly }
 }
