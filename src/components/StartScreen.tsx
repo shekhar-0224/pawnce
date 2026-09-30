@@ -8,6 +8,7 @@ import { isLearnedPattern, useLearned } from '../storage/learned'
 import { loadRecentGames, playStreak } from '../storage/recentGames'
 import { formatDuration, loadStats } from '../storage/stats'
 import { buildReport } from './report'
+import { ReportBody } from './ReportPage'
 import { BotAvatar } from './BotAvatar'
 import { Button } from './Button'
 import { type DeckItem, FlashDeck } from './FlashDeck'
@@ -142,6 +143,7 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
   const report = buildReport(games, stats, learned)
   const [choosing, setChoosing] = useState<{ botId?: GameSetup['botId'] } | null>(null)
   const [deck, setDeck] = useState<DeckItem[] | null>(null)
+  const [reportOpen, setReportOpen] = useState(false)
 
   // One short, useful line under the tagline.
   const last = games[0]
@@ -164,46 +166,46 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
   const tileLink =
     'press flex min-w-0 cursor-pointer flex-col gap-2 rounded-card border-2 border-border bg-surface p-3.5 text-left [--edge:var(--border)] hover:bg-surface-2'
 
-  // The report card, as a slim call to action at the top.
+  // The report card, as a slim call to action at the top. Opens as a bottom sheet.
   const reportBar = (
     <motion.div {...pop(0)}>
-      <Link to="/report" aria-label={`Report card: ${report.grade.label}`} className={`${tileLink} !flex-row items-center !gap-3 !py-2.5`}>
+      <button type="button" onClick={() => setReportOpen(true)} aria-label={`Report card: ${report.grade.label}`} className={`${tileLink} w-full !flex-row items-center !gap-3 !py-2.5`}>
         <span className={`grid size-11 shrink-0 place-items-center rounded-xl text-2xl font-black ${report.grade.tone}`} aria-hidden>
           {report.grade.letter}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block font-black leading-tight">Report card</span>
-          <span className="block truncate text-xs font-bold text-muted">
+          <span className="line-clamp-2 text-xs font-bold text-muted">
             {report.games === 0
               ? 'Your grade shows up after your first game'
-              : `${report.games} ${report.games === 1 ? 'game' : 'games'} · ${formatDuration(report.timeMs)} played${report.winRate !== null ? ` · ${report.winRate}% wins` : ''}`}
+              : `${report.games} ${report.games === 1 ? 'game' : 'games'} · ${formatDuration(report.timeMs)}${report.winRate !== null ? ` · ${report.winRate}% wins` : ''}`}
           </span>
         </span>
         <span aria-hidden className="text-lg font-black text-muted">
           ›
         </span>
-      </Link>
+      </button>
     </motion.div>
   )
 
   const hero = (
-    <motion.section aria-labelledby="play-heading" className="card flex flex-col gap-3 p-4 min-[900px]:justify-center min-[900px]:gap-4 min-[900px]:p-6" {...pop(0.04)}>
-      <div className="flex items-center gap-3 min-[900px]:flex-col min-[900px]:text-center">
-        <span className="shrink-0 min-[900px]:[&>svg]:h-auto min-[900px]:[&>svg]:w-28">
+    <motion.section aria-labelledby="play-heading" className="card flex flex-1 flex-col justify-center gap-3 p-4 wide:gap-4 wide:p-6" {...pop(0.04)}>
+      <div className="flex items-center gap-3 tall:flex-col tall:text-center wide:flex-col wide:text-center">
+        <span className="shrink-0 short:hidden max-[359px]:hidden tall:[&>svg]:h-auto tall:[&>svg]:w-24 wide:[&>svg]:w-28">
           <Mascot size={64} mood={returning ? 'happy' : 'wow'} />
         </span>
         <div className="min-w-0">
-          <h1 id="play-heading" className="font-display text-2xl font-black leading-tight min-[900px]:text-3xl">
+          <h1 id="play-heading" className="font-display text-2xl font-black leading-tight max-[359px]:text-xl tall:text-3xl">
             Play the move. <span className="text-accent">Learn its name.</span>
           </h1>
-          <p className="mt-1 text-sm font-bold text-muted">{greeting}</p>
+          <p className="mt-1 text-sm font-bold text-muted [@media(max-height:600px)]:hidden">{greeting}</p>
         </div>
       </div>
       <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
         {returning ? (
           <Button variant="primary" size="lg" className="w-full flex-col !gap-0 py-2" onClick={() => onPlay(setup)}>
             <span className="text-lg uppercase">Play</span>
-            <span className="text-xs font-bold normal-case opacity-90">
+            <span className="max-w-full truncate text-xs font-bold normal-case opacity-90">
               vs {bot.name} · {SIDE_LABEL[setup.side]} · {timeControlName(tc)}
             </span>
           </Button>
@@ -223,13 +225,13 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
                 type="button"
                 onClick={() => setChoosing({ botId: b.id })}
                 aria-label={`Play the ${b.name}, ${b.level}`}
-                className="press flex min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-2xl border-2 border-border bg-surface px-1.5 py-1.5 [--edge:var(--border)] hover:bg-surface-2"
+                className="press flex min-w-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-2xl border-2 border-border bg-surface px-1 py-1.5 [--edge:var(--border)] hover:bg-surface-2 min-[400px]:flex-row min-[400px]:gap-1.5"
               >
                 <BotAvatar bot={b} size={28} />
-                <span className="flex min-w-0 flex-col items-start leading-tight">
-                  <span className="truncate text-sm font-black">{b.name}</span>
+                <span className="flex min-w-0 flex-col items-center leading-tight min-[400px]:items-start">
+                  <span className="text-sm font-black">{b.name}</span>
                   <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-muted">
-                    <span className={`size-1.5 rounded-full ${LEVEL_TONE[b.level] ?? 'bg-muted'}`} />
+                    <span className={`size-1.5 shrink-0 rounded-full ${LEVEL_TONE[b.level] ?? 'bg-muted'}`} />
                     {b.level}
                   </span>
                 </span>
@@ -243,64 +245,64 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
 
   // Patterns: progress and practice. The full list lives on /words.
   const wordsTile = (
-    <motion.section aria-labelledby="words-heading" className="card flex min-w-0 flex-col gap-2.5 p-3.5" {...pop(0.08)}>
-      <Link to="/words" className="flex items-center gap-2.5 rounded-xl hover:opacity-80">
-        <span className="relative">
+    <motion.section aria-labelledby="words-heading" className="card flex min-w-0 flex-col gap-2 p-3" {...pop(0.08)}>
+      <Link to="/words" className="flex items-center gap-2 rounded-xl hover:opacity-80">
+        <span className="relative shrink-0 max-[359px]:hidden land:hidden">
           <ProgressRing value={known.length} total={PATTERN_WORDS.length} />
           <span className="absolute inset-0 grid place-items-center text-sm font-black text-learn">{known.length}</span>
         </span>
         <span className="min-w-0">
-          <span id="words-heading" className="block font-black leading-tight">
-            Patterns learned:{' '}
-            <span className="whitespace-nowrap text-learn">
-              {known.length} of {PATTERN_WORDS.length}
-            </span>
+          <span id="words-heading" className="block text-sm font-black leading-tight">
+            <span className="sr-only">Patterns learned: </span>
+            <span className="text-learn">
+              {known.length}/{PATTERN_WORDS.length}
+            </span>{' '}
+            patterns
           </span>
-          <span className="block text-xs font-bold text-muted">All words ›</span>
+          <span className="block text-xs font-bold text-muted">See words ›</span>
         </span>
       </Link>
-      <Button variant="learn" className="mt-auto w-full whitespace-nowrap uppercase" onClick={practice}>
+      <Button variant="learn" className="mt-auto min-h-10 w-full whitespace-nowrap px-2 uppercase" onClick={practice}>
         {waiting.length > 0 ? `Practice ${waiting.length}` : known.length > 0 ? 'Review' : 'Learn 5'}
       </Button>
     </motion.section>
   )
 
-  // Recent games: the latest few (fewer on short screens). All of them on /games.
+  // Recent games: the latest one (three on big screens). All of them on /games.
   const recentTile = (
-    <motion.section aria-labelledby="recent-heading" className="card flex min-w-0 flex-col gap-2 p-3.5" {...pop(0.12)}>
-      <div className="flex items-center justify-between gap-2">
-        <h2 id="recent-heading" className="font-black">
-          <span className="min-[900px]:hidden">Last game</span>
-          <span className="hidden min-[900px]:inline">Recent games</span>
+    <motion.section aria-labelledby="recent-heading" className="card flex min-w-0 flex-col gap-2 p-3" {...pop(0.12)}>
+      <div className="flex items-center justify-between gap-1">
+        <h2 id="recent-heading" className="whitespace-nowrap text-sm font-black">
+          <span className="wide:hidden">Last game</span>
+          <span className="hidden wide:inline">Recent games</span>
         </h2>
         {returning && (
-          <button type="button" onClick={onRecent} className="min-h-8 cursor-pointer rounded-lg px-1.5 text-xs font-extrabold uppercase text-info hover:bg-info/10">
-            All ›
+          <button type="button" onClick={onRecent} aria-label="All games" className="min-h-8 shrink-0 cursor-pointer rounded-lg px-1.5 text-xs font-extrabold uppercase text-info hover:bg-info/10">
+            <span className="max-[359px]:hidden">All </span>›
           </button>
         )}
       </div>
       {recent.length === 0 ? (
         <p className="text-xs font-bold text-muted">Your games show up here, every move named.</p>
       ) : (
-        <ul className="flex flex-col gap-1.5">
+        <ul className="flex flex-col gap-1">
           {recent.map((g, i) => {
             const tag = RESULT_TAG[g.result] ?? RESULT_TAG.draw
             const b = BOTS[g.bot] ?? BOTS.ant
             return (
-              <li key={g.id} className={i === 0 ? '' : 'hidden min-[900px]:block [@media(max-height:700px)]:!hidden'}>
+              <li key={g.id} className={i === 0 ? '' : 'hidden wide:block short:!hidden'}>
                 <button
                   type="button"
                   onClick={() => onOpenGame(g.id)}
+                  aria-label={`vs ${b.name}, ${tag.label}: open summary`}
                   className="flex w-full cursor-pointer items-center gap-2 rounded-xl p-1 text-left hover:bg-surface-2"
                 >
                   <BotAvatar bot={b} size={32} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-extrabold">vs {b.name}</span>
-                    <span className="block truncate text-[11px] font-bold text-muted">
-                      {g.durationMs ? formatDuration(g.durationMs) : `${g.moves} ${g.moves === 1 ? 'move' : 'moves'}`}
-                    </span>
+                  <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+                    <span className="text-sm font-extrabold leading-tight">vs {b.name}</span>
+                    <span className={`rounded-md px-1.5 py-px text-[10px] font-black uppercase ${tag.className}`}>{tag.label}</span>
                   </span>
-                  <span className={`shrink-0 rounded-lg px-1.5 py-0.5 text-[10px] font-black uppercase ${tag.className}`}>{tag.label}</span>
+                  {g.durationMs ? <span className="hidden text-[11px] font-bold text-muted wide:inline">{formatDuration(g.durationMs)}</span> : null}
                 </button>
               </li>
             )
@@ -311,31 +313,38 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
   )
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-3 px-4 pb-3 pt-3 min-[900px]:px-8 min-[900px]:pt-5">
-      <header className="flex items-center justify-between gap-3">
-        <Logo className="text-2xl" />
-        <div className="flex items-center gap-2">
+    <div className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-3 px-4 pb-3 pt-3 max-[359px]:px-3 wide:px-8 wide:pt-5">
+      <header className="flex items-center justify-between gap-2">
+        <Logo className="text-2xl" textClassName="max-[359px]:sr-only" />
+        <div className="flex min-w-0 items-center gap-1.5 min-[400px]:gap-2">
           <StatPill icon={<FlameIcon />} value={streak} label="day streak" hint="Days in a row you’ve played. Play today to keep it going." tone="text-warn" />
-          <StatPill icon={<BookIcon />} value={known.length} label="patterns" hint="Chess patterns you’ve played yourself, like a fork or castling." tone="text-learn" />
-          <span className="hidden min-[400px]:inline-flex">
+          <span className="hidden min-[340px]:inline-flex">
+            <StatPill icon={<BookIcon />} value={known.length} label="patterns" hint="Chess patterns you’ve played yourself, like a fork or castling." tone="text-learn" />
+          </span>
+          <span className="hidden min-[420px]:inline-flex">
             <StatPill icon={<TrophyIcon />} value={wins} label={wins === 1 ? 'win' : 'wins'} hint="Games you’ve won against the bots." tone="text-info" />
           </span>
           <ThemeToggle />
         </div>
       </header>
 
-      {/* One screen, no scrolling: report bar, the play card, then two small tiles (a side column on wide screens). */}
-      <div className="flex flex-col gap-3 min-[900px]:grid min-[900px]:flex-1 min-[900px]:grid-cols-[1fr_340px] min-[900px]:items-stretch min-[900px]:gap-4">
-        <div className="min-[900px]:hidden">{reportBar}</div>
+      {/*
+        One screen, no scrolling. Phones: report bar, the play card, two small tiles.
+        Landscape phones and big screens: the play card beside a column of tiles.
+      */}
+      <div className="flex flex-1 flex-col gap-3 land:grid land:grid-cols-[1fr_minmax(0,300px)] wide:grid wide:grid-cols-[1fr_340px] wide:items-stretch wide:gap-4">
+        <div className="land:hidden wide:hidden">{reportBar}</div>
         {hero}
-        <div className="grid grid-cols-2 gap-3 min-[900px]:flex min-[900px]:flex-col min-[900px]:gap-4">
-          <div className="hidden min-[900px]:block">{reportBar}</div>
-          {wordsTile}
-          {recentTile}
+        <div className="grid grid-cols-2 gap-3 land:flex land:flex-col wide:flex wide:flex-col wide:gap-4">
+          <div className="hidden land:block wide:block">{reportBar}</div>
+          <div className="contents land:grid land:grid-cols-2 land:gap-3">
+            {wordsTile}
+            {recentTile}
+          </div>
         </div>
       </div>
 
-      <footer className="mt-auto text-center text-[10px] font-bold text-muted/80">
+      <footer className="mt-auto text-center text-[10px] font-bold text-muted/80 short:hidden land:hidden max-[359px]:hidden">
         Animals:{' '}
         <a className="underline hover:text-text" href="https://game-icons.net" target="_blank" rel="noreferrer">
           game-icons.net
@@ -354,6 +363,11 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
               onPlay(next)
             }}
           />
+        )}
+        {reportOpen && (
+          <Sheet key="report" title="Report card" wide onClose={() => setReportOpen(false)}>
+            <ReportBody />
+          </Sheet>
         )}
         {deck && (
           <Sheet key="practice" title="Practice" wide onClose={() => setDeck(null)}>

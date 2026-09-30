@@ -1,5 +1,5 @@
 /** The Pawnce wordmark: a green pawn mark and "pawnce" in heavy rounded type. */
-export function Logo({ className = '' }: { className?: string }) {
+export function Logo({ className = '', textClassName = '' }: { className?: string; textClassName?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 font-display font-black tracking-tight text-accent ${className}`}>
       <svg viewBox="0 0 64 64" className="h-[1em] w-[1em]" aria-hidden>
@@ -9,7 +9,7 @@ export function Logo({ className = '' }: { className?: string }) {
           fill="var(--on-accent)"
         />
       </svg>
-      pawnce
+      <span className={textClassName}>pawnce</span>
     </span>
   )
 }

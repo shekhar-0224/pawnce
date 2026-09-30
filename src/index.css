@@ -10,6 +10,10 @@
 @custom-variant wide (@media (min-width: 900px) and (min-height: 541px));
 @custom-variant narrow (@media (max-width: 899px), (max-height: 540px));
 @custom-variant land (@media (orientation: landscape) and (max-height: 540px));
+/* short: phones with little height (e.g. 375×667 and smaller) */
+@custom-variant short (@media (max-height: 700px));
+/* tall: phones and tablets with room to spare (e.g. 390×844 and up) */
+@custom-variant tall (@media (min-height: 760px));
 
 /* Expose the tokens to Tailwind, e.g. bg-surface, text-muted, border-border */
 @theme inline {
