@@ -21,6 +21,7 @@ import { HintOrbs } from './HintOrbs'
 import { LeafBurst } from './LeafBurst'
 import { LeaveDialog } from './LeaveDialog'
 import { MomentCard } from './MomentCard'
+import { yourMoveWhy } from './coachText'
 import { MoveTicker } from './MoveTicker'
 import { updateGame } from '../storage/recentGames'
 import { Logo } from './Logo'
@@ -314,6 +315,7 @@ export function GameScreen({
     key={moment.ply}
     move={moment.move}
     verdict={moment.verdict}
+    why={yourMoveWhy(moment.move, moment.verdict, openings.reached[moment.ply] ?? null, openings.current[moment.ply] ?? null, bot.name)}
     showingBetter={betterMove !== null}
     onTakeBack={() => {
       setShowBetterFor(null)

@@ -7,6 +7,8 @@ import { type MoveVerdict, costLine } from './useAnalysis'
 type Props = {
   move: Move
   verdict: MoveVerdict
+  /** The coach's sentence about the move ("That looks like a fork, but…"), if any. */
+  why?: string | null
   showingBetter: boolean
   onTakeBack: () => void
   onShowBetter: () => void
@@ -17,7 +19,7 @@ type Props = {
  * The game pauses (clock too) when you make a mistake or blunder, so you can
  * see what went wrong, try again, or carry on.
  */
-export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBetter, onPlayOn }: Props) {
+export function MomentCard({ move, verdict, why, showingBetter, onTakeBack, onShowBetter, onPlayOn }: Props) {
   const blunder = verdict.quality === 'blunder'
   return (
     <motion.div
@@ -43,7 +45,7 @@ export function MomentCard({ move, verdict, showingBetter, onTakeBack, onShowBet
           </p>
           <p className="text-sm text-muted">{plainName(move)}</p>
           <p className="mt-1 text-[15px] leading-snug">
-            {verdict.refutation?.text ?? 'This lets your opponent take over.'}
+            {why ?? verdict.refutation?.text ?? 'This lets your opponent take over.'}
             {verdict.better ? ` ${verdict.better} was better.` : ''}
           </p>
           <p className="mt-1 font-mono text-xs text-muted">{costLine(verdict)}</p>
