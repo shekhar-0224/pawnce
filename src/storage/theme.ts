@@ -1,6 +1,7 @@
 /*
- * Light, dark, or follow the device ("auto"). Saved in this browser and
- * applied as data-theme on <html>; index.html applies it before first paint.
+ * Light or dark. Until you pick one, it follows the device ("auto" under the
+ * hood). Saved in this browser and applied as data-theme on <html>;
+ * index.html applies it before first paint.
  */
 import { useSyncExternalStore } from 'react'
 
@@ -55,4 +56,10 @@ export function useThemePref(): ThemePref {
 export function initTheme() {
   apply(current)
   window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => apply(current))
+}
+
+/** The look you're actually seeing right now. */
+export function effectiveTheme(pref: ThemePref): 'light' | 'dark' {
+  if (pref !== 'auto') return pref
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
