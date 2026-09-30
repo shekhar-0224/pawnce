@@ -208,6 +208,32 @@ are secondary.
   met" open decks. **/words/<id>**: the word's card and seen / played /
   missed counts.
 
+## Screen sizes and breakpoints
+Defined once in `src/index.css` as Tailwind variants:
+
+| Variant  | When                                        | What changes                                   |
+| -------- | ------------------------------------------- | ---------------------------------------------- |
+| `wide:`  | 900px+ wide **and** 541px+ tall             | Desktop: board beside the side panel, centered dialogs |
+| `narrow:`| everything else                             | Phone layout: bottom bar, bottom sheets        |
+| `land:`  | landscape and 540px or shorter              | Landscape phones: board (or play card) left, the rest beside it |
+| `short:` | 700px or shorter                            | Pawny and extra lines hide                     |
+| `tall:`  | 760px or taller                             | Bigger, centered Pawny on home                 |
+| `max-[359px]:` | under 360px wide                      | Icon-only logo, fewer pills, compact labels    |
+
+Checked with `audit.mjs` on 280×653, 304×715, 320×568, 360×740, 375×667,
+390×844, 414×896, 430×932, 768×1024, 820×1180, 1024×768, 1024×1366,
+1280×800, 1440×900, 1920×1080 and landscape 667×375, 844×390, 932×430:
+no page scroll, nothing off-screen, no cut-off labels.
+
+- **Game (phones):** a fixed full-height column. The board is measured into
+  whatever height is left (`useFitSquare`), so it is as big as possible and
+  nothing scrolls. A slip shows as a **bottom sheet** over the action bar in
+  portrait (play goes on), and beside the board in landscape.
+- **Bottom sheets** on phones for every card: word cards, the report card
+  (from home), the coach, moves, menu, new game, leave game, flash cards.
+  They slide up, have a grab bar, and close on a downward swipe, tap
+  outside or ✕. On big screens they are centered panels.
+
 ## One screen, no scrolling
 Every page fits the screen (checked at 375×667, 390×844, 1000×545, 1280×720
 and 1440×900). Long lists scroll inside their own card; the page never does.

@@ -205,7 +205,7 @@ export function GameSummary(p: Props) {
       transition={{ duration: 0.2 }}
     >
       <div className="shrink-0 px-4">
-        <TopBar title="Game summary" onBack={p.onClose} backLabel={p.closeLabel ?? 'Board'} onHome={p.onChangeOpponent} />
+        <TopBar title={<><span className="max-[339px]:hidden">Game </span>summary</>} onBack={p.onClose} backLabel={p.closeLabel ?? 'Board'} onHome={p.onChangeOpponent} />
       </div>
       {/* One screen: lists scroll inside their panel, the page never does. */}
       <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-3 px-4 pb-3 min-[900px]:grid min-[900px]:grid-cols-[minmax(0,1fr)_auto] min-[900px]:grid-rows-[minmax(0,1fr)_auto] min-[900px]:gap-x-5 min-[900px]:px-8 min-[900px]:pb-5">
@@ -324,7 +324,7 @@ export function GameSummary(p: Props) {
                                   <span className={`font-semibold ${here ? 'text-accent' : ''}`}>{word ? word.name : c.kind === 'opening' ? c.name : ''}</span>
                                   {fresh && <span className="rounded bg-accent px-1 font-mono text-[10px] font-bold uppercase text-on-accent">New</span>}
                                 </span>
-                                <span className="block truncate text-xs text-muted">{word ? word.meaning : 'The opening this game followed.'}</span>
+                                <span className="line-clamp-2 text-xs text-muted">{word ? word.meaning : 'The opening this game followed.'}</span>
                               </span>
                             </button>
                           </li>
@@ -395,10 +395,10 @@ export function GameSummary(p: Props) {
           </div>
           <div className="flex w-full items-center justify-between gap-2">
             <div className="flex gap-1">
-              <Button onClick={() => setPly(-1)} aria-label="First move" className="px-3" disabled={ply < 0}>
+              <Button onClick={() => setPly(-1)} aria-label="First move" className="px-3 max-[339px]:hidden" disabled={ply < 0}>
                 ⏮
               </Button>
-              <Button onClick={() => setPly((n) => Math.max(-1, n - 1))} aria-label="Previous move" className="px-3" disabled={ply < 0}>
+              <Button onClick={() => setPly((n) => Math.max(-1, n - 1))} aria-label="Previous move" className="px-3 max-[339px]:px-4" disabled={ply < 0}>
                 ◀
               </Button>
             </div>
@@ -406,10 +406,10 @@ export function GameSummary(p: Props) {
               {ply < 0 ? 'Start' : `${moveNo(ply)} ${current!.san}`} · {ply + 1}/{moves.length}
             </span>
             <div className="flex gap-1">
-              <Button onClick={() => setPly((n) => Math.min(moves.length - 1, n + 1))} aria-label="Next move" className="px-3" disabled={ply >= moves.length - 1}>
+              <Button onClick={() => setPly((n) => Math.min(moves.length - 1, n + 1))} aria-label="Next move" className="px-3 max-[339px]:px-4" disabled={ply >= moves.length - 1}>
                 ▶
               </Button>
-              <Button onClick={() => setPly(moves.length - 1)} aria-label="Last move" className="px-3" disabled={ply >= moves.length - 1}>
+              <Button onClick={() => setPly(moves.length - 1)} aria-label="Last move" className="px-3 max-[339px]:hidden" disabled={ply >= moves.length - 1}>
                 ⏭
               </Button>
             </div>

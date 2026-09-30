@@ -1,5 +1,5 @@
-import { AnimatePresence } from 'framer-motion'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
 import type { Arrow } from 'react-chessboard'
 import { type TimeControl, timeControlName } from '../chess/clock'
 import { type Color, capturedPieces, colorToSide, otherColor } from '../chess/game'
@@ -21,6 +21,7 @@ import { HintOrbs } from './HintOrbs'
 import { LeafBurst } from './LeafBurst'
 import { LeaveDialog } from './LeaveDialog'
 import { MomentCard } from './MomentCard'
+import { useFitSquare } from './useFitSquare'
 import { yourMoveWhy } from './coachText'
 import { MoveTicker } from './MoveTicker'
 import { updateGame } from '../storage/recentGames'
@@ -155,6 +156,8 @@ export function GameScreen({
   }, [g.isOver, gameId, analysis.verdicts, newWordsKey, summaryTitle, summaryDetail])
 
   const [orientation, setOrientation] = useState(colorToSide(myColor))
+  const boardBoxRef = useRef<HTMLDivElement>(null)
+  const fit = useFitSquare(boardBoxRef)
 
   // Going home mid-game asks first: keep playing, or resign and leave.
   const [leaving, setLeaving] = useState(false)
@@ -290,7 +293,7 @@ export function GameScreen({
       capturedColor={botColor}
       lead={myLead}
     >
-      <div className="hidden min-[900px]:block">
+      <div className="hidden wide:block">
         <HintOrbs
           left={analysis.hintsLeft}
           loading={analysis.hintLoading}
@@ -353,9 +356,13 @@ export function GameScreen({
   const flipped = orientation !== colorToSide(myColor)
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-2 pb-24 pt-2 min-[900px]:pb-6 sm:px-4 min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-center min-[900px]:gap-6 min-[900px]:pt-3">
-      {/* Beside the panel, the board is sized to fit the window height (no scrolling). */}
-      <div className="flex w-full flex-col gap-2 min-[900px]:w-[min(680px,calc(100dvh-246px),calc(100vw-400px))] min-[900px]:shrink-0">
+    <div className="mx-auto flex w-full max-w-6xl narrow:h-dvh narrow:overflow-hidden narrow:px-2 narrow:pb-[calc(60px+env(safe-area-inset-bottom))] narrow:pt-1 sm:px-4 wide:flex-row wide:items-start wide:justify-center wide:gap-6 wide:pb-6 wide:pt-3">
+      {/*
+        Phones: one screen, never scrolls. Header, opponent, meter, the board in
+        whatever height is left, feedback, you. Landscape phones: board on the left.
+        Wide screens: the board is sized to the window height, beside the panel.
+      */}
+      <div className="grid w-full grid-cols-1 grid-rows-[auto_auto_auto_minmax(0,1fr)_auto_auto] gap-1.5 narrow:h-full land:grid-cols-[auto_minmax(0,1fr)] land:grid-rows-[auto_auto_auto_minmax(0,1fr)_auto] land:gap-x-4 wide:flex wide:w-[min(680px,calc(100dvh-246px),calc(100vw-400px))] wide:shrink-0 wide:flex-col wide:gap-2">
         <nav className="flex items-center justify-between gap-3">
           <button
             type="button"
@@ -384,7 +391,7 @@ export function GameScreen({
         {flipped ? youBar : botBar}
 
         {/* On phones the win chances sit right above the board. */}
-        <div className="min-[900px]:hidden">
+        <div className="wide:hidden">
           <WinMeter
             compact
             myWinPct={analysis.myWinPct}
@@ -393,12 +400,16 @@ export function GameScreen({
           />
         </div>
 
-        <div className="hidden min-[900px]:block">
+        <div className="hidden wide:block">
           <MoveTicker moves={g.moves} verdicts={analysis.verdicts} myColor={myColor} bot={bot} />
         </div>
 
-        {/* Phones: the board shrinks on short screens so nothing needs scrolling. */}
-        <div className="relative mx-auto w-full max-w-[max(180px,calc(100dvh-396px))] min-[900px]:max-w-none">
+        {/* Phones: the board takes the space left (measured), so nothing needs scrolling. */}
+        <div
+          ref={boardBoxRef}
+          className="flex min-h-0 items-center justify-center land:col-start-1 land:row-span-5 land:row-start-1 land:h-full land:w-[calc(100dvh-72px-env(safe-area-inset-bottom))] wide:block"
+        >
+        <div className="relative w-[var(--fit)] wide:w-full" style={{ '--fit': fit ? `${fit}px` : '100%' } as CSSProperties}>
           <ChessBoard
             game={g.game}
             orientation={orientation}
@@ -423,11 +434,12 @@ export function GameScreen({
             )}
           </AnimatePresence>
         </div>
-        {/* Phones: the coach (or the teaching moment) sits right under the board. */}
-        <div className="min-[900px]:hidden">
-          {moment ? (
-            momentCard
-          ) : (
+        </div>
+        {/* Phones: the coach sits right under the board. A slip shows as a bottom sheet
+            (portrait) or in this spot (landscape), so the board never shrinks for it. */}
+        <div className="min-h-0 overflow-y-auto wide:hidden">
+          {moment && <div className="hidden land:block">{momentCard}</div>}
+          <div className={moment ? 'land:hidden' : ''}>
             <VerdictStrip
               moves={g.moves}
               verdicts={analysis.verdicts}
@@ -439,14 +451,14 @@ export function GameScreen({
               newWordAt={vocab.newWordAt}
               onOpen={() => setSheet('coach')}
             />
-          )}
+          </div>
         </div>
 
         {flipped ? botBar : youBar}
       </div>
 
-      <div className="hidden w-full min-[900px]:relative min-[900px]:block min-[900px]:w-[340px] min-[900px]:shrink-0 min-[900px]:self-stretch">
-        <div className="min-[900px]:absolute min-[900px]:inset-0">
+      <div className="hidden w-full wide:relative wide:block wide:w-[340px] wide:shrink-0 wide:self-stretch">
+        <div className="wide:absolute wide:inset-0">
           <SidePanel
             bot={bot}
             myColor={myColor}
@@ -464,7 +476,7 @@ export function GameScreen({
             }
             hint={analysis.hints && <HintCard hints={analysis.hints} />}
             coach={
-              moment ? <div className="hidden min-[900px]:block">{momentCard}</div> : coach
+              moment ? <div className="hidden wide:block">{momentCard}</div> : coach
             }
             onNewGame={onNewGame}
             onResign={g.resign}
@@ -474,6 +486,25 @@ export function GameScreen({
           />
         </div>
       </div>
+
+      {/* Portrait phones: a slip slides up as a bottom sheet over the action bar. Play goes on. */}
+      <AnimatePresence>
+        {moment && (
+          <motion.div
+            key={`sheet-${moment.ply}`}
+            className="fixed inset-x-0 bottom-0 z-40 px-2 pb-[max(8px,env(safe-area-inset-bottom))] land:hidden wide:hidden"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+          >
+            <div className="mx-auto max-w-lg rounded-t-3xl bg-bg px-1 pt-2 shadow-[0_-10px_30px_rgba(0,0,0,0.18)]">
+              <span aria-hidden className="mx-auto mb-2 block h-1.5 w-10 rounded-full bg-border" />
+              {momentCard}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <PhoneBar
         hintsLeft={analysis.hintsLeft}

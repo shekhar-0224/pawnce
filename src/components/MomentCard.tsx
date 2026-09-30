@@ -25,7 +25,7 @@ export function MomentCard({ move, verdict, why, showingBetter, onTakeBack, onSh
     <motion.div
       role="alert"
       aria-label={blunder ? 'Blunder' : 'Mistake'}
-      className="rounded-card border border-danger/60 bg-danger/10 p-4"
+      className="rounded-card border border-danger/60 bg-danger/10 p-4 narrow:p-3"
       initial={{ y: 8, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 8, opacity: 0 }}
@@ -43,15 +43,15 @@ export function MomentCard({ move, verdict, why, showingBetter, onTakeBack, onSh
           <p className="text-lg font-semibold leading-tight text-danger">
             {blunder ? 'Blunder!' : 'Mistake'} <span className="text-muted">{move.san}</span>
           </p>
-          <p className="text-sm text-muted">{plainName(move)}</p>
-          <p className="mt-1 text-[15px] leading-snug">
+          <p className="text-sm text-muted narrow:hidden">{plainName(move)}</p>
+          <p className="mt-1 text-[15px] leading-snug narrow:text-sm">
             {why ?? verdict.refutation?.text ?? 'This lets your opponent take over.'}
             {verdict.better ? ` ${verdict.better} was better.` : ''}
           </p>
-          <p className="mt-1 font-mono text-xs text-muted">{costLine(verdict)}</p>
+          <p className="mt-1 font-mono text-xs text-muted narrow:hidden">{costLine(verdict)}</p>
         </div>
       </div>
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-3 gap-2 narrow:mt-2">
         <Button variant="primary" onClick={onTakeBack} className="whitespace-nowrap px-1.5 text-[13px]">
           Take back
         </Button>

@@ -57,7 +57,7 @@ export function NewGameFlow({ initial, startStep = 0, onStart, onClose }: Props)
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[#1c2a21]/45 backdrop-blur-[2px] min-[900px]:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[#1c2a21]/45 backdrop-blur-[2px] wide:items-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -68,7 +68,7 @@ export function NewGameFlow({ initial, startStep = 0, onStart, onClose }: Props)
         role="dialog"
         aria-modal="true"
         aria-label="New game"
-        className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-t-2xl border border-border bg-surface pb-[max(16px,env(safe-area-inset-bottom))] min-[900px]:rounded-card"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col rounded-t-3xl border border-border bg-surface pb-[max(16px,env(safe-area-inset-bottom))] wide:rounded-card"
         initial={{ y: 40 }}
         animate={{ y: 0 }}
         exit={{ y: 40 }}

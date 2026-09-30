@@ -25,18 +25,27 @@ function Stat({ label, value, sub, tone = 'text-text' }: { label: string; value:
   )
 }
 
-/** /report: your report card — grade, results, time played, accuracy and more. */
+/** /report: your report card as a page (links). Home opens the same content in a bottom sheet. */
 export function ReportPage() {
+  return (
+    <div className="mx-auto flex h-dvh w-full max-w-3xl flex-col px-4">
+      <TopBar title="Report card" />
+      {/* Fits most screens; on tiny or landscape phones only this part scrolls. */}
+      <div className="pawnce-scroll -mx-4 min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+        <ReportBody />
+      </div>
+    </div>
+  )
+}
+
+/** The report card: grade, results, time played, accuracy and more. Compact so it fits one screen. */
+export function ReportBody() {
   const learned = useLearned()
   const [games] = useState(loadRecentGames)
   const [stats] = useState(loadStats)
   const r = buildReport(games, stats, learned)
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col px-4 pb-4">
-      <TopBar title="Report card" />
-
-      {/* Compact bento so the whole report fits one screen. */}
       <div className="flex flex-col gap-3">
         <motion.section
           aria-label="Overall grade"
@@ -121,7 +130,13 @@ export function ReportPage() {
             )}
           </section>
         </div>
+        <p className="text-center text-[10px] font-bold text-muted/80">
+          Animals:{' '}
+          <a className="underline hover:text-text" href="https://game-icons.net" target="_blank" rel="noreferrer">
+            game-icons.net
+          </a>{' '}
+          (CC BY 3.0) · Engine: Stockfish · Openings: Lichess
+        </p>
       </div>
-    </div>
   )
 }

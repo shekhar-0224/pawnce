@@ -1,6 +1,20 @@
 @import 'tailwindcss';
 @import './theme/tokens.css';
 
+/*
+ * Screen sizes (see DESIGN.md):
+ *   wide:   big enough for the side-by-side desktop layout (900px+ wide AND 541px+ tall)
+ *   narrow: everything else (phones, small tablets, landscape phones)
+ *   land:   a landscape phone (short and wide): board left, the rest beside it
+ */
+@custom-variant wide (@media (min-width: 900px) and (min-height: 541px));
+@custom-variant narrow (@media (max-width: 899px), (max-height: 540px));
+@custom-variant land (@media (orientation: landscape) and (max-height: 540px));
+/* short: phones with little height (e.g. 375×667 and smaller) */
+@custom-variant short (@media (max-height: 700px));
+/* tall: phones and tablets with room to spare (e.g. 390×844 and up) */
+@custom-variant tall (@media (min-height: 760px));
+
 /* Expose the tokens to Tailwind, e.g. bg-surface, text-muted, border-border */
 @theme inline {
   --color-bg: var(--bg);
