@@ -1,7 +1,7 @@
 import { Chess } from 'chess.js'
 import { describe, expect, it } from 'vitest'
 import { parseUci } from './game'
-import { describeLoss } from './refutation'
+import { describeLoss, describeMissed, explainSlip } from './refutation'
 
 /** Play SAN moves from the start and return the FEN plus a helper to turn SAN lines into UCI. */
 function setup(sans: string[]) {
@@ -101,5 +101,66 @@ describe('describeLoss: the real loss, not the first reply', () => {
     const pv = uci(after.fen(), ['fxg5', 'Nxg5'])
     const r = describeLoss(fen, parseUci('a2a3'), pv, 'punisher')
     expect(r?.text).toBe('Their bishop on g5 is still attacked by your pawn on f6, and they didn’t move it.')
+  })
+})
+
+// 1.e4 Nc6 2.Nf3 Na5 3.Bc4 a6 4.d3 h6 5.Nc3 e5??: the pawn on e5 hangs (Nxe5 wins it).
+// The knight on a5 attacks the bishop on c4, but d3 defends it: only a trade.
+const BEFORE_OO = ['e4', 'Nc6', 'Nf3', 'Na5', 'Bc4', 'a6', 'd3', 'h6', 'Nc3', 'e5']
+
+describe('explainSlip: a missed win, not the opponent’s even trade', () => {
+  it('6.O-O?? after 5...e5: "You missed Nxe5, which wins the pawn on e5."', () => {
+    const { fen, uci } = setup(BEFORE_OO)
+    const after = new Chess(fen)
+    after.move('O-O')
+    const afterPv = uci(after.fen(), ['Nxc4', 'dxc4', 'd6', 'Nd5'])
+    const beforePv = uci(fen, ['Nxe5', 'Nxc4', 'dxc4', 'd6', 'Nf3'])
+    const r = explainSlip({
+      fenBefore: fen,
+      move: parseUci('e1g1'),
+      after: { pv: afterPv, best: afterPv[0], mate: null },
+      before: { pv: beforePv },
+    })
+    expect(r?.text).toBe('You missed Nxe5, which wins the pawn on e5.')
+    expect(r?.text).not.toContain('c4')
+  })
+
+  it('the even trade on c4 alone is not a loss', () => {
+    const { fen, uci } = setup(BEFORE_OO)
+    const after = new Chess(fen)
+    after.move('O-O')
+    expect(describeLoss(fen, parseUci('e1g1'), uci(after.fen(), ['Nxc4', 'dxc4', 'd6', 'Nd5']))).toBeNull()
+  })
+
+  it('a real loss still comes first (8.a3?? names the g5 bishop)', () => {
+    const { fen, uci } = setup(BEFORE_A3)
+    const after = new Chess(fen)
+    after.move('a3')
+    const r = explainSlip({
+      fenBefore: fen,
+      move: parseUci('a2a3'),
+      after: { pv: uci(after.fen(), ['fxg5', 'Nxg5', 'Nxc4', 'dxc4']), best: null, mate: null },
+      before: { pv: uci(fen, ['Be3', 'Nxc4', 'dxc4']) },
+    })
+    expect(r?.text).toBe('Your bishop on g5 is still attacked by the pawn on f6, and you didn’t move it.')
+  })
+
+  it('nothing lost and nothing missed: no made-up threat', () => {
+    const { fen, uci } = setup(BEFORE_OO)
+    const after = new Chess(fen)
+    after.move('O-O')
+    const r = explainSlip({
+      fenBefore: fen,
+      move: parseUci('e1g1'),
+      after: { pv: uci(after.fen(), ['Nxc4', 'dxc4', 'd6', 'Nd5']), best: null, mate: null },
+      before: { pv: uci(fen, ['a3', 'd6']) },
+    })
+    expect(r).toBeNull()
+  })
+
+  it('from your side when the bot misses a win', () => {
+    const { fen, uci } = setup(BEFORE_OO)
+    const r = describeMissed(fen, uci(fen, ['Nxe5', 'Nxc4', 'dxc4', 'd6', 'Nf3']), 'punisher')
+    expect(r?.text).toBe('They missed Nxe5, which would have won your pawn on e5.')
   })
 })

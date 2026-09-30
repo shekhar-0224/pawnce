@@ -309,3 +309,92 @@ function stillHanging(before: Chess, after: Chess, me: Color, skip: Square[]): {
   }
   return best && { victim: best.victim, home: best.home }
 }
+
+/**
+ * A winning move you didn't play: walk the engine's best line from the
+ * position before your move and see what it wins, net of trades. Returns
+ * null unless it wins at least a pawn.
+ * "You missed Nxe5, which wins the pawn on e5."
+ */
+export function describeMissed(fenBefore: string, bestPv: string[], view: 'mover' | 'punisher' = 'mover', mateIn: number | null = null): Refutation | null {
+  if (!bestPv.length) return null
+  const g = new Chess(fenBefore)
+  const me = g.turn()
+  let first
+  try {
+    first = new Chess(fenBefore).move(parseUci(bestPv[0]))
+  } catch {
+    return null
+  }
+  const captures: { ply: number; square: Square; victim: string; mine: boolean; value: number; from: Square }[] = []
+  // Follow the whole line (up to 12 moves): a missed win often pays off a few moves in.
+  for (let i = 0; i < Math.min(bestPv.length, 12); i++) {
+    let mv
+    try {
+      mv = g.move(parseUci(bestPv[i]))
+    } catch {
+      break
+    }
+    if (mv.captured) {
+      const sq = mv.isEnPassant() ? (`${mv.to[0]}${mv.from[1]}` as Square) : mv.to
+      // `mine` = one of MY pieces was taken
+      captures.push({ ply: i, square: sq, victim: mv.captured, mine: mv.color !== me, value: VALUE[mv.captured], from: mv.from })
+    }
+  }
+  const P0 = view === 'mover' ? 'You' : 'They'
+  if (mateIn !== null && mateIn > 0) {
+    return { text: `${P0} missed ${first.san}, which ${view === 'mover' ? 'leads' : 'would have led'} to checkmate.`, arrows: [{ from: first.from, to: first.to }] }
+  }
+  const net = captures.reduce((s, c) => s + (c.mine ? -c.value : c.value), 0)
+  if (net < 1) return null
+  // Name what's won: cancel even trades on the same square, then take the biggest prize left.
+  const used = new Set<number>()
+  captures.forEach((c, i) => {
+    if (used.has(i)) return
+    const k = captures.findIndex((n, j) => j > i && !used.has(j) && n.mine !== c.mine && n.square === c.square && n.value >= c.value)
+    if (k >= 0) {
+      used.add(i)
+      used.add(k)
+    }
+  })
+  const won = captures.filter((c, i) => !used.has(i) && !c.mine).sort((a, b) => b.value - a.value)[0]
+  if (!won) return null
+  const piece = PIECE_NAMES[won.victim as keyof typeof PIECE_NAMES]
+  const P = view === 'mover' ? { You: 'You', the: 'the', which: 'which wins' } : { You: 'They', the: 'your', which: 'which would have won' }
+  const now = won.ply === 0
+  return {
+    text: now
+      ? `${P.You} missed ${first.san}, ${P.which} ${P.the} ${piece} on ${won.square}.`
+      : `${P.You} missed ${first.san}: it ${view === 'mover' ? 'wins' : 'would have won'} ${P.the} ${piece} on ${won.square} a few moves later.`,
+    arrows: [{ from: first.from, to: first.to }],
+  }
+}
+
+/**
+ * Why a slip was a slip, in the order that matters: a forced mate, material
+ * you actually lose (net of trades), a win you missed. The opponent's reply
+ * is only described when it really wins something.
+ */
+export function explainSlip(p: {
+  fenBefore: string
+  move: { from: Square; to: Square; promotion?: string }
+  /** The position after the move: the engine's best line and mate count. */
+  after: { pv: string[]; best: string | null; mate: number | null }
+  /** The position before the move: the engine's best line (and mate, for the mover). */
+  before: { pv: string[]; mate?: number | null }
+  view?: 'mover' | 'punisher'
+}): Refutation | null {
+  const view = p.view ?? 'mover'
+  const fenAfter = (() => {
+    const g = new Chess(p.fenBefore)
+    try {
+      g.move({ from: p.move.from, to: p.move.to, promotion: p.move.promotion })
+    } catch {
+      return null
+    }
+    return g.fen()
+  })()
+  if (!fenAfter) return null
+  if (p.after.mate !== null && p.after.best) return describeRefutation(fenAfter, p.after.best, p.after.mate, view)
+  return (p.after.pv.length ? describeLoss(p.fenBefore, p.move, p.after.pv, view) : null) ?? describeMissed(p.fenBefore, p.before.pv, view, p.before.mate ?? null)
+}

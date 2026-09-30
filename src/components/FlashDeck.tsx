@@ -40,8 +40,8 @@ export function FlashDeck({ items, onClose }: Props) {
   const item = items[index]
   const last = index === items.length - 1
   return (
-    <div className="flex flex-col gap-3">
-      <div className="relative overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-2.5">
+      <div className="relative min-h-0 flex-1 overflow-hidden">
         <AnimatePresence mode="popLayout" initial={false} custom={dir}>
           <motion.div
             key={index}
@@ -62,21 +62,27 @@ export function FlashDeck({ items, onClose }: Props) {
               if (info.offset.x < -SWIPE && !last) go(1)
               else if (info.offset.x > SWIPE && index > 0) go(-1)
             }}
-            className="touch-pan-y"
+            className="h-full touch-pan-y"
           >
-            <FlashCard card={item.card} context={item.context} progress={`${index + 1} / ${items.length}`} />
+            <FlashCard fill card={item.card} context={item.context} progress={`${index + 1} / ${items.length}`} />
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Progress dots */}
-      <div className="flex justify-center gap-1.5" aria-hidden>
-        {items.map((_, i) => (
-          <span key={i} className={`h-1.5 rounded-full transition-all ${i === index ? 'w-4 bg-accent' : 'w-1.5 bg-border'}`} />
-        ))}
-      </div>
+      {/* Progress: dots for a short deck, a slim bar for a long one */}
+      {items.length <= 12 ? (
+        <div className="flex shrink-0 justify-center gap-1.5" aria-hidden>
+          {items.map((_, i) => (
+            <span key={i} className={`h-1.5 rounded-full transition-all ${i === index ? 'w-4 bg-accent' : 'w-1.5 bg-border'}`} />
+          ))}
+        </div>
+      ) : (
+        <div className="h-1.5 shrink-0 overflow-hidden rounded-full bg-surface-2" aria-hidden>
+          <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${((index + 1) / items.length) * 100}%` }} />
+        </div>
+      )}
 
-      <div className="grid grid-cols-[auto_1fr_auto] gap-2">
+      <div className="grid shrink-0 grid-cols-[auto_1fr_auto] gap-2">
         <Button aria-label="Previous card" onClick={() => go(-1)} disabled={index === 0} className="px-4">
           ‹
         </Button>
@@ -111,7 +117,7 @@ export function FlashDeck({ items, onClose }: Props) {
           ›
         </Button>
       </div>
-      {index === 0 && <p className="text-center text-xs text-muted [@media(hover:hover)]:hidden">Swipe left or right to flip through the cards.</p>}
+      {index === 0 && <p className="shrink-0 text-center text-xs text-muted short:hidden [@media(hover:hover)]:hidden">Swipe left or right to flip through the cards.</p>}
     </div>
   )
 }

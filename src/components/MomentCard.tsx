@@ -21,6 +21,7 @@ type Props = {
  */
 export function MomentCard({ move, verdict, why, showingBetter, onTakeBack, onShowBetter, onPlayOn }: Props) {
   const blunder = verdict.quality === 'blunder'
+  const text = why ?? verdict.refutation?.text ?? 'This lets your opponent take over.'
   return (
     <motion.div
       role="alert"
@@ -45,8 +46,8 @@ export function MomentCard({ move, verdict, why, showingBetter, onTakeBack, onSh
           </p>
           <p className="text-sm text-muted narrow:hidden">{plainName(move)}</p>
           <p className="mt-1 text-[15px] leading-snug narrow:text-sm">
-            {why ?? verdict.refutation?.text ?? 'This lets your opponent take over.'}
-            {verdict.better ? ` ${verdict.better} was better.` : ''}
+            {text}
+            {verdict.better && !text.includes(verdict.better) ? ` ${verdict.better} was better.` : ''}
           </p>
           <p className="mt-1 font-mono text-xs text-muted narrow:hidden">{costLine(verdict)}</p>
         </div>

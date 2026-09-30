@@ -114,9 +114,16 @@ already won. So there are special rules:
     moves later."
 - If their first reply is a capture you can take back evenly, it is never
   presented as the problem.
-- If nothing is really lost (a mate threat, or a slow positional slip), the
-  explanation falls back to the engine's best reply, in order
-  of importance:
+- **A win you missed.** If you lose nothing but skipped a winning move, the
+  card says so: "You missed Nxe5, which wins the pawn on e5." (or "…wins the
+  rook on h8 a few moves later." when the engine's line pays off later; "…
+  which leads to checkmate." for a missed mate). It follows the engine's best
+  line from before your move, up to 12 moves, net of trades.
+- **Order:** a forced mate against you, then material you really lose, then
+  a win you missed. The opponent's reply is only described when it actually
+  wins something; otherwise the card just names the better move.
+  (`explainSlip`)
+
 (`src/chess/refutation.ts`, tested in `src/chess/refutation.test.ts`; `src/components/GameScreen.tsx`)
 
 ## 6. Tactics (fork, pin, skewer…)

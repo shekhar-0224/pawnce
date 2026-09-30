@@ -9,13 +9,15 @@ type Props = {
   footer?: ReactNode
   /** Wider on big screens (flash cards lay out side by side). */
   wide?: boolean
+  /** Phones: take a fixed tall height and let the content fill it (flash card decks). */
+  fill?: boolean
 }
 
 /**
  * A bottom sheet on phones (slides up; drag its top bar down, tap outside or ✕
  * to close) and a centered panel on big screens.
  */
-export function Sheet({ title, onClose, children, footer, wide = false }: Props) {
+export function Sheet({ title, onClose, children, footer, wide = false, fill = false }: Props) {
   const drag = useDragControls()
   return (
     <motion.div
@@ -30,7 +32,7 @@ export function Sheet({ title, onClose, children, footer, wide = false }: Props)
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`flex max-h-[92dvh] w-full flex-col ${wide ? 'max-w-3xl' : 'max-w-lg'} rounded-t-3xl border border-border bg-surface pb-[max(12px,env(safe-area-inset-bottom))] wide:rounded-card`}
+        className={`flex max-h-[92dvh] w-full flex-col ${fill ? 'h-[min(92dvh,780px)]' : ''} ${wide ? 'max-w-3xl' : 'max-w-lg'} rounded-t-3xl border border-border bg-surface pb-[max(12px,env(safe-area-inset-bottom))] wide:rounded-card`}
         initial={{ y: 60 }}
         animate={{ y: 0 }}
         exit={{ y: 60, opacity: 0 }}
@@ -61,7 +63,7 @@ export function Sheet({ title, onClose, children, footer, wide = false }: Props)
             </button>
           </div>
         </div>
-        <div className="pawnce-scroll min-h-0 overflow-y-auto p-4 min-[480px]:p-5">{children}</div>
+        <div className={`pawnce-scroll min-h-0 overflow-y-auto p-4 min-[480px]:p-5 ${fill ? 'flex flex-1 flex-col narrow:p-3' : ''}`}>{children}</div>
         {footer && <div className="border-t border-border px-5 pt-3">{footer}</div>}
       </motion.div>
     </motion.div>

@@ -160,7 +160,7 @@ export function GameSummary(p: Props) {
   }
   const jumpTo = (target: number) => {
     setPly(target)
-    if (window.matchMedia('(max-width: 899px)').matches) setTab('replay')
+    if (window.matchMedia('(max-width: 899px), (max-height: 540px)').matches) setTab('replay')
   }
   const currentVerdict = ply >= 0 ? verdicts[ply] : null
 
@@ -208,28 +208,28 @@ export function GameSummary(p: Props) {
         <TopBar title={<><span className="max-[339px]:hidden">Game </span>summary</>} onBack={p.onClose} backLabel={p.closeLabel ?? 'Board'} onHome={p.onChangeOpponent} />
       </div>
       {/* One screen: lists scroll inside their panel, the page never does. */}
-      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-3 px-4 pb-3 min-[900px]:grid min-[900px]:grid-cols-[minmax(0,1fr)_auto] min-[900px]:grid-rows-[minmax(0,1fr)_auto] min-[900px]:gap-x-5 min-[900px]:px-8 min-[900px]:pb-5">
-        <div className={`flex min-h-0 flex-col gap-3 min-[900px]:col-start-1 min-[900px]:row-start-1 min-[900px]:flex-1 ${tab === 'replay' ? 'flex-none' : 'flex-1'}`}>
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-3 px-4 pb-3 land:grid land:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] land:grid-rows-[auto_minmax(0,1fr)_auto] land:gap-x-4 land:gap-y-2 wide:grid wide:grid-cols-[minmax(0,1fr)_min-content] wide:grid-rows-[minmax(0,1fr)_auto] wide:gap-x-5 wide:px-8 wide:pb-5">
+        <div className={`flex min-h-0 flex-col gap-3 land:contents wide:col-start-1 wide:row-start-1 wide:flex-1 ${tab === 'replay' ? 'flex-none' : 'flex-1'}`}>
           {/* Result: a bright banner with Pawny and the three numbers */}
           <motion.section
-            className="flex shrink-0 flex-col gap-3 overflow-hidden rounded-[var(--radius-card)] p-3.5 text-white min-[900px]:p-5"
+            className="flex shrink-0 flex-col gap-3 overflow-hidden rounded-[var(--radius-card)] p-3.5 text-white land:col-start-1 land:row-span-2 land:row-start-1 land:justify-center wide:p-5"
             style={{ background: `var(--${p.result === 'win' ? 'accent' : p.result === 'loss' ? 'danger' : 'warn'})`, boxShadow: `0 5px 0 var(--${p.result === 'win' ? 'accent' : p.result === 'loss' ? 'danger' : 'warn'}-edge)` }}
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 320, damping: 18 }}
           >
             <div className="flex items-center gap-3">
-              <span className="shrink-0 min-[900px]:[&>svg]:h-auto min-[900px]:[&>svg]:w-20">
+              <span className="shrink-0 wide:[&>svg]:h-auto wide:[&>svg]:w-20">
                 <Mascot size={52} bounce={false} mood={p.result === 'win' ? 'happy' : p.result === 'loss' ? 'sad' : 'wow'} />
               </span>
               <div className="min-w-0">
-                <h1 id="summary-title" className="text-2xl font-black leading-tight min-[900px]:text-3xl">
+                <h1 id="summary-title" className="text-2xl font-black leading-tight wide:text-3xl">
                   {p.title}
                 </h1>
                 <p className="line-clamp-2 text-sm font-bold text-white/90">{p.detail}</p>
               </div>
             </div>
-            <dl className={`grid grid-cols-3 gap-2 text-center ${tab === 'replay' ? 'max-[899px]:hidden' : ''}`}>
+            <dl className={`grid grid-cols-3 gap-2 text-center ${tab === 'replay' ? 'narrow:hidden' : ''}`}>
               {[
                 ['Accuracy', stats.accuracy !== null ? `${stats.accuracy}%` : '–', 'text-text'],
                 ['Good moves', String((counts.best ?? 0) + (counts.good ?? 0) + (counts.book ?? 0)), 'text-accent'],
@@ -243,7 +243,7 @@ export function GameSummary(p: Props) {
             </dl>
           </motion.section>
 
-          <div role="tablist" aria-label="Summary" className="grid shrink-0 grid-cols-4 gap-1 rounded-2xl bg-surface-2 p-1 min-[900px]:grid-cols-3">
+          <div role="tablist" aria-label="Summary" className="grid shrink-0 grid-cols-4 land:col-start-2 land:row-start-1 gap-1 rounded-2xl bg-surface-2 p-1 wide:grid-cols-3">
             {TABS.map((t) => (
               <button
                 key={t.id}
@@ -251,12 +251,12 @@ export function GameSummary(p: Props) {
                 role="tab"
                 aria-selected={tab === t.id}
                 onClick={() => pickTab(t.id)}
-                className={`cursor-pointer rounded-xl px-1 py-1.5 text-xs font-extrabold ${t.id === 'replay' ? 'min-[900px]:hidden' : ''} ${
+                className={`cursor-pointer rounded-xl px-1 py-1.5 text-xs font-extrabold ${t.id === 'replay' ? 'wide:hidden' : ''} ${
                   t.id === tab ? 'bg-surface text-text shadow-sm' : 'text-muted hover:text-text'
                 } ${
                   t.id === shown
-                    ? 'min-[900px]:bg-surface min-[900px]:text-text min-[900px]:shadow-sm'
-                    : 'min-[900px]:bg-transparent min-[900px]:text-muted min-[900px]:shadow-none'
+                    ? 'wide:bg-surface wide:text-text wide:shadow-sm'
+                    : 'wide:bg-transparent wide:text-muted wide:shadow-none'
                 }`}
               >
                 {t.label}
@@ -267,7 +267,7 @@ export function GameSummary(p: Props) {
           {/* The chosen list (hidden on phones while the replay is open) */}
           <section
             aria-label={shown === 'words' ? 'Words from this game' : shown === 'moments' ? 'Key moments' : 'Patterns played'}
-            className={`card min-h-0 flex-1 flex-col gap-2 p-3 min-[900px]:flex min-[900px]:p-4 ${tab === 'replay' ? 'hidden' : 'flex'}`}
+            className={`card min-h-0 flex-1 flex-col gap-2 p-3 land:col-start-2 land:row-start-2 wide:flex wide:p-4 ${tab === 'replay' ? 'hidden' : 'flex'}`}
           >
             {shown === 'moments' &&
               (moments.length === 0 ? (
@@ -371,9 +371,9 @@ export function GameSummary(p: Props) {
         </div>
 
         {/* Replay: its own tab on phones, always beside the list on wide screens. Sized to fit the screen. */}
-        <section aria-label="Replay" className={`card min-h-0 flex-1 flex-col items-center gap-2 p-3 min-[900px]:col-start-2 min-[900px]:row-span-2 min-[900px]:row-start-1 min-[900px]:flex min-[900px]:flex-none min-[900px]:p-4 ${tab === 'replay' ? 'flex' : 'hidden'}`}>
-          <h2 className="hidden self-start text-[11px] font-semibold uppercase tracking-[0.08em] text-muted min-[900px]:block">Replay</h2>
-          <div className="relative w-[min(100%,calc(100dvh-400px))] shrink-0 overflow-hidden rounded-lg min-[900px]:w-[min(560px,calc(100dvh-330px),calc(100vw-560px))]">
+        <section aria-label="Replay" className={`card min-h-0 flex-1 flex-col items-center gap-2 p-3 land:col-start-2 land:row-span-2 land:row-start-2 wide:col-start-2 wide:row-span-2 wide:row-start-1 wide:flex wide:flex-none wide:p-4 ${tab === 'replay' ? 'flex' : 'hidden'}`}>
+          <h2 className="hidden self-start text-[11px] font-semibold uppercase tracking-[0.08em] text-muted wide:block">Replay</h2>
+          <div className="relative w-[min(100%,calc(100dvh-400px))] shrink-0 land:w-[calc(100dvh-215px)] overflow-hidden rounded-lg wide:w-[min(560px,calc(100dvh-330px),calc(100vw-560px))]">
             {wordsHere[0] && (
               <span className="pointer-events-none absolute left-2 top-2 z-10 rounded-md bg-accent px-2 py-0.5 text-xs font-semibold text-on-accent">
                 {WORDS_BY_ID[wordsHere[0].id].name}
@@ -449,14 +449,14 @@ export function GameSummary(p: Props) {
           </div>
         </section>
 
-        <Button variant="primary" className="shrink-0 uppercase min-[900px]:col-start-1 min-[900px]:row-start-2" onClick={p.onPlayAgain}>
+        <Button variant="primary" className="shrink-0 uppercase land:col-start-1 land:row-start-3 wide:col-start-1 wide:row-start-2" onClick={p.onPlayAgain}>
           Play again
         </Button>
       </div>
 
       <AnimatePresence>
         {deckOpen && deck.length > 0 && (
-          <Sheet key="deck" title="Flash cards" wide onClose={() => setDeckOpen(false)}>
+          <Sheet key="deck" title="Flash cards" wide fill onClose={() => setDeckOpen(false)}>
             <FlashDeck items={deck} onClose={() => setDeckOpen(false)} />
           </Sheet>
         )}
