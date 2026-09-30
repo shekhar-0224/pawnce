@@ -6,6 +6,8 @@ import { BASIC_WORDS, PATTERN_WORDS } from '../chess/glossary'
 import { BOTS, BOT_LIST } from '../engine/bots'
 import { isKnown, isLearnedPattern, useLearned } from '../storage/learned'
 import { loadRecentGames, playStreak } from '../storage/recentGames'
+import { formatDuration, loadStats } from '../storage/stats'
+import { buildReport } from './report'
 import { BotAvatar } from './BotAvatar'
 import { Button } from './Button'
 import { type DeckItem, FlashDeck } from './FlashDeck'
@@ -135,6 +137,8 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
   // Patterns count once you've played them yourself; seen-only ones wait for practice.
   const known = PATTERN_WORDS.filter((w) => isLearnedPattern(learned.words[w.id]))
   const waiting = PATTERN_WORDS.filter((w) => learned.words[w.id] && !isLearnedPattern(learned.words[w.id]))
+  const [stats] = useState(loadStats)
+  const report = buildReport(games, stats, learned)
   const [choosing, setChoosing] = useState<{ botId?: GameSetup['botId'] } | null>(null)
   const [deck, setDeck] = useState<DeckItem[] | null>(null)
 
@@ -284,6 +288,40 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
     </motion.section>
   )
 
+  const reportCard = (
+    <motion.section aria-labelledby="report-heading" className="card flex flex-col gap-4 p-5" {...pop(0.12)}>
+      <div className="flex items-center gap-4">
+        <span className={`grid size-16 shrink-0 place-items-center rounded-2xl text-4xl font-black ${report.grade.tone}`} aria-hidden>
+          {report.grade.letter}
+        </span>
+        <div className="min-w-0">
+          <h2 id="report-heading" className="text-lg font-black leading-tight">
+            Report card
+          </h2>
+          <p className="text-sm font-bold text-muted">{report.grade.label}</p>
+        </div>
+      </div>
+      <dl className="grid grid-cols-3 gap-2 text-center">
+        {[
+          ['Games', String(report.games)],
+          ['Time', formatDuration(report.timeMs)],
+          ['Win rate', report.winRate !== null ? `${report.winRate}%` : '–'],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-xl bg-surface-2 px-1 py-2">
+            <dt className="text-[10px] font-black uppercase tracking-[0.08em] text-muted">{label}</dt>
+            <dd className="text-sm font-black">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <Link
+        to="/report"
+        className="press inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-2xl border-2 border-border bg-surface px-4 text-sm font-extrabold uppercase tracking-wide [--edge:var(--border)] hover:bg-surface-2"
+      >
+        See report card
+      </Link>
+    </motion.section>
+  )
+
   const recentCard = (
     <motion.section aria-labelledby="recent-heading" className="card flex flex-col gap-3 p-5" {...pop(0.16)}>
       <div className="flex items-center justify-between">
@@ -315,6 +353,7 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
                     <span className="block truncate font-extrabold">vs {b.name}</span>
                     <span className="block text-xs font-bold text-muted">
                       {g.moves} {g.moves === 1 ? 'move' : 'moves'}
+                      {g.durationMs ? ` · ${formatDuration(g.durationMs)}` : ''}
                     </span>
                   </span>
                   <span className={`shrink-0 rounded-xl px-2.5 py-1 text-xs font-black uppercase ${tag.className}`}>{tag.label}</span>
@@ -345,10 +384,12 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
           {hero}
           {opponentsCard}
           <div className="min-[900px]:hidden">{wordsCard}</div>
+          <div className="min-[900px]:hidden">{reportCard}</div>
           <div className="min-[900px]:hidden">{recentCard}</div>
         </div>
         <aside className="hidden flex-col gap-4 min-[900px]:flex">
           {wordsCard}
+          {reportCard}
           {recentCard}
         </aside>
       </div>

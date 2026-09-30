@@ -21,6 +21,7 @@ import {
   timeoutOutcome,
 } from '../chess/outcome'
 import { saveGame } from '../storage/recentGames'
+import { recordGameStats } from '../storage/stats'
 
 export type MoveInput = { from: Square; to: Square; promotion?: PieceSymbol }
 
@@ -225,6 +226,12 @@ export function useGame(
     }
   }, [fen, isOver, turn, myColor, bot, play, clockOn, timeControl.incrementMs, hold])
 
+  // When the first move was played, for "time played".
+  const startedAt = useRef<number | null>(null)
+  useEffect(() => {
+    if (moves.length > 0 && startedAt.current === null) startedAt.current = Date.now()
+  }, [moves.length])
+
   // Save the finished game on this device, once.
   const saved = useRef(false)
   useEffect(() => {
@@ -240,9 +247,13 @@ export function useGame(
       g.setHeader('TimeControl', `${timeControl.initialMs / 1000}+${timeControl.incrementMs / 1000}`)
     }
     g.setHeader('Result', outcome.winner === null ? '1/2-1/2' : outcome.winner === 'w' ? '1-0' : '0-1')
+    const date = new Date().toISOString()
+    const durationMs = startedAt.current ? Date.now() - startedAt.current : 0
+    recordGameStats({ id: gameId, bot: bot.id, result: resultFor(outcome, myColor), date, durationMs })
     saveGame({
       id: gameId,
-      date: new Date().toISOString(),
+      date,
+      durationMs,
       bot: bot.id,
       myColor: colorToSide(myColor),
       result: resultFor(outcome, myColor),

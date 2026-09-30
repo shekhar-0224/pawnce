@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { type ReactNode, useMemo, useRef, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
+import { moveAccuracy } from '../chess/accuracy'
 import type { Color, Move } from '../chess/game'
 import { QUALITY_LABELS, QUALITY_MARKS, type Quality, TACTIC_LABELS, termsFor, plainName } from '../chess/naming'
 import type { Opening } from '../chess/openings'
@@ -51,15 +52,6 @@ const QUALITY_TONE: Record<Quality, string> = {
   inaccuracy: 'text-warn',
   mistake: 'text-danger',
   blunder: 'text-danger',
-}
-
-/** Lichess-style accuracy for one move, from the drop in winning chances. */
-function moveAccuracy(v: MoveVerdict): number {
-  const drop = Math.max(0, v.winBefore - v.winAfter)
-  const acc = 103.1668 * Math.exp(-0.04354 * drop) - 3.1669
-  // A big material giveaway caps the score even when chances barely moved.
-  const cap = v.quality === 'blunder' ? 30 : v.quality === 'mistake' ? 55 : 100
-  return Math.min(cap, Math.max(0, acc))
 }
 
 type Moment = { ply: number; tone: string; label: string; text: string }
