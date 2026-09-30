@@ -18,6 +18,8 @@ type Props = {
   onOpen: () => void
 }
 
+const isSlipQuality = (v: MoveVerdict | null) => v?.quality === 'mistake' || v?.quality === 'blunder'
+
 /**
  * Phones: the coach in two lines, right under the board. Your move's grade,
  * the bot's reply, and the one sentence that matters most now. Tap for more.
@@ -52,19 +54,24 @@ export function VerdictStrip({ moves, verdicts, myColor, bot, openings, threat, 
   const latest = moves.length - 1
   const newWord = latest >= 0 ? (newWordAt(latest) ?? (latest > 0 ? newWordAt(latest - 1) : null)) : null
 
+  // A newly named opening on the latest moves.
+  const openingNow = (reply && openings.reached[mine >= 0 ? mine + 1 : 0]) || (mine >= 0 ? openings.reached[mine] : null) || null
+  const OPENING_TONE = 'border border-learn/40 bg-learn/10 text-text'
+
   let line: { text: string; tone: string } | null = null
   if (mine < 0) {
     line = {
       text: reply
-        ? `The ${bot.name} opened with ${reply.san}${openings.reached[0] ? `: the ${openings.reached[0]}` : ''}. Your move!`
+        ? `The ${bot.name} opened with ${reply.san}${openingNow ? `: 📖 ${openingNow}` : ''}. Your move!`
         : 'Your move! Every move gets named here.',
-      tone: '',
+      tone: openingNow ? OPENING_TONE : '',
     }
   } else {
     const note = reply ? botReplyNote(reply, verdicts[mine + 1] ?? null, bot, openings.reached[mine + 1] ?? null, threat) : null
     const why = yourMoveWhy(moves[mine], verdict, openings.reached[mine] ?? null, openings.current[mine] ?? null, bot.name)
     // Something happening now (a threat, a check, a chance) beats talk about your move.
     if (note && note.tone !== 'plain') line = { text: note.text, tone: NOTE_TONES[note.tone] }
+    else if (openingNow && !isSlipQuality(verdict)) line = { text: `📖 Opening: ${openingNow} · tap to learn it`, tone: OPENING_TONE }
     else if (why) {
       const serious = verdict?.quality === 'mistake' || verdict?.quality === 'blunder'
       line = { text: why, tone: serious ? NOTE_TONES.danger : '' }

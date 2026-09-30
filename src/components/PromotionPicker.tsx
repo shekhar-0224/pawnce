@@ -15,7 +15,7 @@ type Props = {
 export function PromotionPicker({ color, onPick, onCancel }: Props) {
   return (
     <motion.div
-      className="absolute inset-0 z-20 grid place-items-center rounded-lg bg-white/70 backdrop-blur-[2px]"
+      className="absolute inset-0 z-20 grid place-items-center rounded-lg bg-bg/70 backdrop-blur-[2px]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { type ReactNode, useMemo, useRef, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
+import { moveAccuracy } from '../chess/accuracy'
 import type { Color, Move } from '../chess/game'
 import { QUALITY_LABELS, QUALITY_MARKS, type Quality, TACTIC_LABELS, termsFor, plainName } from '../chess/naming'
 import type { Opening } from '../chess/openings'
@@ -51,15 +52,6 @@ const QUALITY_TONE: Record<Quality, string> = {
   inaccuracy: 'text-warn',
   mistake: 'text-danger',
   blunder: 'text-danger',
-}
-
-/** Lichess-style accuracy for one move, from the drop in winning chances. */
-function moveAccuracy(v: MoveVerdict): number {
-  const drop = Math.max(0, v.winBefore - v.winAfter)
-  const acc = 103.1668 * Math.exp(-0.04354 * drop) - 3.1669
-  // A big material giveaway caps the score even when chances barely moved.
-  const cap = v.quality === 'blunder' ? 30 : v.quality === 'mistake' ? 55 : 100
-  return Math.min(cap, Math.max(0, acc))
 }
 
 type Moment = { ply: number; tone: string; label: string; text: string }
@@ -244,7 +236,7 @@ export function GameSummary(p: Props) {
             ].map(([label, value, tone], i) => (
               <motion.div
                 key={label}
-                className="rounded-2xl bg-white px-2 py-2"
+                className="rounded-2xl bg-surface px-2 py-2"
                 initial={{ y: 12, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.15 + i * 0.08, type: 'spring', stiffness: 400, damping: 20 }}
@@ -468,7 +460,7 @@ export function GameSummary(p: Props) {
 
       <AnimatePresence>
         {deckOpen && deck.length > 0 && (
-          <Sheet key="deck" title="Flash cards" onClose={() => setDeckOpen(false)}>
+          <Sheet key="deck" title="Flash cards" wide onClose={() => setDeckOpen(false)}>
             <FlashDeck items={deck} onClose={() => setDeckOpen(false)} />
           </Sheet>
         )}

@@ -3,6 +3,7 @@ import { TIME_CONTROLS } from '../chess/clock'
 import { BOTS } from '../engine/bots'
 import type { EndReason, Result } from '../chess/outcome'
 import { loadRecentGames } from '../storage/recentGames'
+import { formatDuration } from '../storage/stats'
 import { BotAvatar } from './BotAvatar'
 import { Button } from './Button'
 
@@ -76,7 +77,10 @@ export function RecentGamesScreen({ onBack, onOpen }: { onBack: () => void; onOp
                         ? ` · ${TIME_CONTROLS[g.timeControl].label}`
                         : ''}
                     </p>
-                    <p className="text-xs text-muted/80">{formatDate(g.date)}</p>
+                    <p className="text-xs text-muted/80">
+                      {formatDate(g.date)}
+                      {g.durationMs ? ` · ${formatDuration(g.durationMs)}` : ''}
+                    </p>
                   </div>
                   <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${badge.className}`}>
                     {badge.label}

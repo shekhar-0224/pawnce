@@ -39,15 +39,18 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
   }
   const reply = mine >= 0 ? moves[mine + 1] : moves[0] // as Black, the bot moves first
   const replyVerdict = mine >= 0 ? verdicts[mine + 1] : verdicts[0]
+  // A newly named opening on the latest moves gets its own card (and isn't repeated below).
+  const replyPly = mine >= 0 ? mine + 1 : 0
+  const openingNow = (reply && openings.reached[replyPly]) || (mine >= 0 ? openings.reached[mine] : null) || null
+  const openingBy = openingNow && reply && openings.reached[replyPly] === openingNow ? bot.name : 'you'
 
   return (
     <section aria-label="Coach" className="flex flex-col gap-3">
+      <AnimatePresence initial={false}>{openingNow && <OpeningCard key={openingNow} name={openingNow} by={openingBy} />}</AnimatePresence>
       {mine < 0 ? (
         <p className="text-[15px]">
           {reply
-            ? openings.reached[0]
-              ? `The ${bot.name} opened with ${reply.san}: the ${openings.reached[0]}. ${explainOpening(openings.reached[0])} Your move!`
-              : `The ${bot.name} opened with ${reply.san}. Your move! A good start: put a pawn or knight toward the center.`
+            ? `The ${bot.name} opened with ${reply.san}. Your move!${openingNow ? '' : ' A good start: put a pawn or knight toward the center.'}`
             : 'Your move! A good start: put a pawn in the middle, like e4 or d4.'}
         </p>
       ) : (
@@ -62,7 +65,7 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
             <YourMove
               move={moves[mine]}
               verdict={verdicts[mine]}
-              reached={openings.reached[mine] ?? null}
+              reached={openingNow ? null : (openings.reached[mine] ?? null)}
               current={openings.current[mine] ?? null}
               botName={bot.name}
               newWords={newWordsAt(mine)}
@@ -80,7 +83,7 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
           move={reply}
           verdict={replyVerdict ?? null}
           bot={bot}
-          reached={openings.reached[mine + 1] ?? null}
+          reached={openingNow ? null : (openings.reached[mine + 1] ?? null)}
           threat={threat}
         />
       )}
@@ -184,5 +187,31 @@ function BotReply({
       {note && <p className={`rounded-lg px-3 py-2 text-sm ${NOTE_TONES[note.tone]}`}>{note.text}</p>}
       <WordChips ids={newWords} />
     </div>
+  )
+}
+
+/** A named opening, the moment the game reaches it: a card, not a question. */
+function OpeningCard({ name, by }: { name: string; by: string }) {
+  return (
+    <motion.div
+      role="status"
+      aria-label={`Opening: ${name}`}
+      className="flex gap-3 rounded-2xl border-2 border-learn/40 bg-learn/10 p-3"
+      initial={{ opacity: 0, scale: 0.96, y: -4 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ type: 'spring', stiffness: 380, damping: 26 }}
+    >
+      <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-xl bg-learn text-white">
+        <svg viewBox="0 0 24 24" className="size-5">
+          <path fill="currentColor" d="M5 3h9a4 4 0 0 1 4 4v14H8a3 3 0 0 1-3-3V3zm3 15a1 1 0 0 0 0 2h8v-2H8z" />
+        </svg>
+      </span>
+      <div className="min-w-0">
+        <p className="text-[11px] font-black uppercase tracking-[0.08em] text-learn">Opening · played by {by}</p>
+        <p className="font-black leading-tight">{name}</p>
+        <p className="mt-1 text-sm leading-snug">{explainOpening(name)}</p>
+      </div>
+    </motion.div>
   )
 }

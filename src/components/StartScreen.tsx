@@ -6,6 +6,8 @@ import { BASIC_WORDS, PATTERN_WORDS } from '../chess/glossary'
 import { BOTS, BOT_LIST } from '../engine/bots'
 import { isKnown, isLearnedPattern, useLearned } from '../storage/learned'
 import { loadRecentGames, playStreak } from '../storage/recentGames'
+import { formatDuration, loadStats } from '../storage/stats'
+import { buildReport } from './report'
 import { BotAvatar } from './BotAvatar'
 import { Button } from './Button'
 import { type DeckItem, FlashDeck } from './FlashDeck'
@@ -13,6 +15,7 @@ import { Logo } from './Logo'
 import { Mascot } from './Mascot'
 import { type GameSetup, NewGameFlow } from './NewGameFlow'
 import { Sheet } from './Sheet'
+import { ThemeToggle } from './ThemeToggle'
 
 export type SidePref = 'white' | 'black' | 'random'
 
@@ -43,16 +46,37 @@ const pop = (delay = 0) => ({
   transition: { type: 'spring' as const, stiffness: 320, damping: 24, delay },
 })
 
-/** Small colorful counters in the top bar, like a game's HUD. */
-function StatPill({ icon, value, label, tone }: { icon: ReactNode; value: ReactNode; label: string; tone: string }) {
+/**
+ * Small colorful counters in the top bar, like a game's HUD. Each has a
+ * label (shown on wider screens) and a short explanation on hover or tap.
+ */
+function StatPill({ icon, value, label, hint, tone }: { icon: ReactNode; value: ReactNode; label: string; hint: string; tone: string }) {
+  const [open, setOpen] = useState(false)
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full border-2 border-border bg-surface px-2.5 py-1 text-sm font-black ${tone}`}
-      title={label}
-      aria-label={label}
-    >
-      {icon}
-      {value}
+    <span className="group relative">
+      <button
+        type="button"
+        className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border-2 border-border bg-surface px-2.5 py-1 text-sm font-black hover:bg-surface-2 ${tone}`}
+        aria-label={`${value} ${label}`}
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        onBlur={() => setOpen(false)}
+      >
+        {icon}
+        {value}
+        <span className="hidden text-xs font-extrabold text-muted sm:inline">{label}</span>
+      </button>
+      <span
+        role="tooltip"
+        className={`pointer-events-none absolute right-0 top-full z-30 mt-2 w-max max-w-[12rem] rounded-xl bg-text px-3 py-2 text-xs font-bold leading-snug text-bg shadow-lg transition-opacity ${
+          open ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}
+      >
+        <span className="block font-black">
+          {value} {label}
+        </span>
+        {hint}
+      </span>
     </span>
   )
 }
@@ -114,8 +138,22 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
   // Patterns count once you've played them yourself; seen-only ones wait for practice.
   const known = PATTERN_WORDS.filter((w) => isLearnedPattern(learned.words[w.id]))
   const waiting = PATTERN_WORDS.filter((w) => learned.words[w.id] && !isLearnedPattern(learned.words[w.id]))
+  const [stats] = useState(loadStats)
+  const report = buildReport(games, stats, learned)
   const [choosing, setChoosing] = useState<{ botId?: GameSetup['botId'] } | null>(null)
   const [deck, setDeck] = useState<DeckItem[] | null>(null)
+
+  // One short, useful line under the tagline.
+  const last = games[0]
+  const greeting = !returning
+    ? 'Play a real game. Every move gets its chess name as you go.'
+    : streak >= 2
+      ? `${streak} days in a row. Keep your streak going!`
+      : last?.result === 'win'
+        ? `You beat the ${BOTS[last.bot]?.name ?? 'bot'} last time. Again?`
+        : last?.result === 'loss'
+          ? `The ${BOTS[last.bot]?.name ?? 'bot'} won last time. Rematch?`
+          : 'Welcome back. Ready for a game?'
 
   const practice = () => {
     const ids = waiting.length > 0 ? waiting.map((w) => w.id) : known.length > 0 ? known.map((w) => w.id).slice(-8) : STARTER_WORDS
@@ -124,32 +162,22 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
 
   const hero = (
     <motion.section aria-labelledby="play-heading" className="card flex flex-col items-center gap-5 p-6 text-center" {...pop(0)}>
-      <div className="flex items-end gap-3">
-        <Mascot size={112} mood={returning ? 'happy' : 'wow'} />
-        <motion.p
-          className="relative mb-10 max-w-[13rem] rounded-2xl border-2 border-border bg-surface px-3 py-2 text-left text-sm font-extrabold"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 380, damping: 18, delay: 0.25 }}
-        >
-          {returning ? `Ready for a rematch vs the ${bot.name}?` : 'Hi, I’m Pawny! Play a game and I’ll name every move for you.'}
-          <span aria-hidden className="absolute -left-2 bottom-3 size-3 rotate-45 border-b-2 border-l-2 border-border bg-surface" />
-        </motion.p>
-      </div>
-      <div>
+      <Mascot size={96} mood={returning ? 'happy' : 'wow'} />
+      <div className="flex flex-col gap-2">
         <h1 id="play-heading" className="font-display text-3xl font-black leading-tight">
           Play the move. <span className="text-accent">Learn its name.</span>
         </h1>
+        <p className="text-sm font-bold text-muted">{greeting}</p>
       </div>
       <div className="flex w-full max-w-sm flex-col gap-2">
         {returning ? (
           <>
-            <Button variant="primary" size="lg" className="w-full text-lg uppercase" onClick={() => onPlay(setup)}>
-              Play
+            <Button variant="primary" size="lg" className="w-full flex-col !gap-0 py-2" onClick={() => onPlay(setup)}>
+              <span className="text-lg uppercase">Play</span>
+              <span className="text-xs font-bold normal-case opacity-90">
+                vs {bot.name} · {SIDE_LABEL[setup.side]} · {timeControlName(tc)}
+              </span>
             </Button>
-            <p className="text-xs font-bold text-muted">
-              vs {bot.name} · {SIDE_LABEL[setup.side]} · {timeControlName(tc)}
-            </p>
             <Button size="lg" className="w-full uppercase" onClick={() => setChoosing({})}>
               New game
             </Button>
@@ -248,16 +276,50 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <Button variant="learn" className="uppercase" onClick={practice}>
-          {waiting.length > 0 ? `Practice ${waiting.length}` : known.length > 0 ? 'Review' : 'Learn 5 words'}
+        <Button variant="learn" className="w-full whitespace-nowrap uppercase" onClick={practice}>
+          {waiting.length > 0 ? `Practice ${waiting.length}` : known.length > 0 ? 'Review' : 'Learn 5'}
         </Button>
         <Link
           to="/words"
-          className="press inline-flex min-h-11 items-center justify-center rounded-2xl border-2 border-border bg-surface px-4 text-sm font-extrabold uppercase [--edge:var(--border)] hover:bg-surface-2"
+          className="press inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-2xl border-2 border-border bg-surface px-4 text-sm font-extrabold uppercase tracking-wide [--edge:var(--border)] hover:bg-surface-2"
         >
           All words
         </Link>
       </div>
+    </motion.section>
+  )
+
+  const reportCard = (
+    <motion.section aria-labelledby="report-heading" className="card flex flex-col gap-4 p-5" {...pop(0.12)}>
+      <div className="flex items-center gap-4">
+        <span className={`grid size-16 shrink-0 place-items-center rounded-2xl text-4xl font-black ${report.grade.tone}`} aria-hidden>
+          {report.grade.letter}
+        </span>
+        <div className="min-w-0">
+          <h2 id="report-heading" className="text-lg font-black leading-tight">
+            Report card
+          </h2>
+          <p className="text-sm font-bold text-muted">{report.grade.label}</p>
+        </div>
+      </div>
+      <dl className="grid grid-cols-3 gap-2 text-center">
+        {[
+          ['Games', String(report.games)],
+          ['Time', formatDuration(report.timeMs)],
+          ['Win rate', report.winRate !== null ? `${report.winRate}%` : '–'],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-xl bg-surface-2 px-1 py-2">
+            <dt className="text-[10px] font-black uppercase tracking-[0.08em] text-muted">{label}</dt>
+            <dd className="text-sm font-black">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <Link
+        to="/report"
+        className="press inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-2xl border-2 border-border bg-surface px-4 text-sm font-extrabold uppercase tracking-wide [--edge:var(--border)] hover:bg-surface-2"
+      >
+        See report card
+      </Link>
     </motion.section>
   )
 
@@ -292,6 +354,7 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
                     <span className="block truncate font-extrabold">vs {b.name}</span>
                     <span className="block text-xs font-bold text-muted">
                       {g.moves} {g.moves === 1 ? 'move' : 'moves'}
+                      {g.durationMs ? ` · ${formatDuration(g.durationMs)}` : ''}
                     </span>
                   </span>
                   <span className={`shrink-0 rounded-xl px-2.5 py-1 text-xs font-black uppercase ${tag.className}`}>{tag.label}</span>
@@ -309,11 +372,12 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
       <header className="sticky top-0 z-20 -mx-4 flex items-center justify-between gap-3 border-b-2 border-border bg-bg/95 px-4 py-3 backdrop-blur min-[900px]:static min-[900px]:mx-0 min-[900px]:border-0 min-[900px]:bg-transparent min-[900px]:px-0">
         <Logo className="text-2xl" />
         <div className="flex items-center gap-2">
-          <StatPill icon={<FlameIcon />} value={streak} label={`${streak}-day streak`} tone="text-warn" />
-          <StatPill icon={<BookIcon />} value={known.length} label={`${known.length} patterns learned`} tone="text-learn" />
+          <StatPill icon={<FlameIcon />} value={streak} label="day streak" hint="Days in a row you’ve played. Play today to keep it going." tone="text-warn" />
+          <StatPill icon={<BookIcon />} value={known.length} label="patterns" hint="Chess patterns you’ve played yourself, like a fork or castling." tone="text-learn" />
           <span className="hidden min-[400px]:inline-flex">
-            <StatPill icon={<TrophyIcon />} value={wins} label={`${wins} wins`} tone="text-info" />
+            <StatPill icon={<TrophyIcon />} value={wins} label={wins === 1 ? 'win' : 'wins'} hint="Games you’ve won against the bots." tone="text-info" />
           </span>
+          <ThemeToggle />
         </div>
       </header>
 
@@ -322,10 +386,12 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
           {hero}
           {opponentsCard}
           <div className="min-[900px]:hidden">{wordsCard}</div>
+          <div className="min-[900px]:hidden">{reportCard}</div>
           <div className="min-[900px]:hidden">{recentCard}</div>
         </div>
         <aside className="hidden flex-col gap-4 min-[900px]:flex">
           {wordsCard}
+          {reportCard}
           {recentCard}
         </aside>
       </div>
@@ -351,7 +417,7 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
           />
         )}
         {deck && (
-          <Sheet key="practice" title="Practice" onClose={() => setDeck(null)}>
+          <Sheet key="practice" title="Practice" wide onClose={() => setDeck(null)}>
             <FlashDeck items={deck} onClose={() => setDeck(null)} />
           </Sheet>
         )}

@@ -7,10 +7,12 @@ type Props = {
   children: ReactNode
   /** Buttons pinned below the scrolling content, always in reach. */
   footer?: ReactNode
+  /** Wider on big screens (flash cards lay out side by side). */
+  wide?: boolean
 }
 
 /** A panel that slides up from the bottom of the screen (phones first). */
-export function Sheet({ title, onClose, children, footer }: Props) {
+export function Sheet({ title, onClose, children, footer, wide = false }: Props) {
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-end justify-center bg-[#1c2a21]/45 backdrop-blur-[2px] min-[900px]:items-center"
@@ -24,7 +26,7 @@ export function Sheet({ title, onClose, children, footer }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="flex max-h-[80dvh] w-full max-w-lg flex-col rounded-t-2xl border border-border bg-surface pb-[max(16px,env(safe-area-inset-bottom))] min-[900px]:rounded-card"
+        className={`flex max-h-[92dvh] w-full flex-col ${wide ? 'max-w-3xl' : 'max-w-lg'} rounded-t-2xl border border-border bg-surface pb-[max(16px,env(safe-area-inset-bottom))] min-[900px]:rounded-card`}
         initial={{ y: 40 }}
         animate={{ y: 0 }}
         exit={{ y: 40 }}
@@ -42,7 +44,7 @@ export function Sheet({ title, onClose, children, footer }: Props) {
             ✕
           </button>
         </div>
-        <div className="pawnce-scroll min-h-0 overflow-y-auto p-5">{children}</div>
+        <div className="pawnce-scroll min-h-0 overflow-y-auto p-4 min-[480px]:p-5">{children}</div>
         {footer && <div className="border-t border-border px-5 pt-3">{footer}</div>}
       </motion.div>
     </motion.div>

@@ -111,7 +111,7 @@ export function FlashDeck({ items, onClose }: Props) {
           ›
         </Button>
       </div>
-      <p className="text-center text-xs text-muted">Swipe left or right to flip through the cards.</p>
+      {index === 0 && <p className="text-center text-xs text-muted [@media(hover:hover)]:hidden">Swipe left or right to flip through the cards.</p>}
     </div>
   )
 }

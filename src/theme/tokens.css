@@ -4,6 +4,7 @@
  * Each strong color has an "-edge": the darker 3D bottom of chunky buttons.
  */
 :root {
+  color-scheme: light;
   --bg: #ffffff;
   --surface: #ffffff;
   --surface-2: #f4f7f1;
@@ -45,6 +46,8 @@
   --piece-day-edge: #b9b39c;
   --piece-day-ink: #1f3a2a;
   --last-move: rgba(255, 214, 0, 0.42);
+  /* Where the selected piece can go: dark enough to read on both squares */
+  --move-dot: rgba(20, 42, 28, 0.34);
 
   --success: var(--accent);
   --accent-2: var(--info);
@@ -58,4 +61,69 @@
   --font-display: 'Nunito', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-body: 'Nunito', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+/*
+ * Dark mode: follows the device unless you pick Light or Dark in the app
+ * (saved as data-theme on <html>). Same colors, deep jungle-night surfaces.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+  --bg: #111b15;
+  --surface: #18251d;
+  --surface-2: #203028;
+  --border: #2c3f33;
+  --border-edge: #1f2e25;
+  --text: #e6eee8;
+  --text-muted: #93a69a;
+
+  --accent: #43c057;
+  --accent-edge: #2c8a3b;
+  --on-accent: #ffffff;
+  --info: #2fb4f5;
+  --info-edge: #1a80b3;
+  --learn: #a883ff;
+  --learn-edge: #7a4fe0;
+  --warn: #ffbf1f;
+  --warn-edge: #c98f00;
+  --danger: #ff6b6b;
+  --danger-edge: #cf4040;
+
+  --board-light: #cdd6ae;
+  --board-dark: #5f9a4c;
+  --last-move: rgba(255, 214, 0, 0.38);
+  --move-dot: rgba(8, 20, 12, 0.45);
+
+  --shadow-raised: 0 18px 40px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --bg: #111b15;
+  --surface: #18251d;
+  --surface-2: #203028;
+  --border: #2c3f33;
+  --border-edge: #1f2e25;
+  --text: #e6eee8;
+  --text-muted: #93a69a;
+
+  --accent: #43c057;
+  --accent-edge: #2c8a3b;
+  --on-accent: #ffffff;
+  --info: #2fb4f5;
+  --info-edge: #1a80b3;
+  --learn: #a883ff;
+  --learn-edge: #7a4fe0;
+  --warn: #ffbf1f;
+  --warn-edge: #c98f00;
+  --danger: #ff6b6b;
+  --danger-edge: #cf4040;
+
+  --board-light: #cdd6ae;
+  --board-dark: #5f9a4c;
+  --last-move: rgba(255, 214, 0, 0.38);
+  --move-dot: rgba(8, 20, 12, 0.45);
+
+  --shadow-raised: 0 18px 40px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
 }

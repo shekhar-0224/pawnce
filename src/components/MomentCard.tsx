@@ -52,13 +52,13 @@ export function MomentCard({ move, verdict, why, showingBetter, onTakeBack, onSh
         </div>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2">
-        <Button variant="primary" onClick={onTakeBack} className="px-2 text-sm">
+        <Button variant="primary" onClick={onTakeBack} className="whitespace-nowrap px-1.5 text-[13px]">
           Take back
         </Button>
-        <Button onClick={onShowBetter} className="px-2 text-sm" disabled={!verdict.betterMove}>
+        <Button onClick={onShowBetter} className="whitespace-nowrap px-1.5 text-[13px]" disabled={!verdict.betterMove}>
           {showingBetter ? 'Hide move' : 'Show better'}
         </Button>
-        <Button onClick={onPlayOn} className="px-2 text-sm">
+        <Button onClick={onPlayOn} className="whitespace-nowrap px-1.5 text-[13px]">
           Got it
         </Button>
       </div>

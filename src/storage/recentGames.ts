@@ -41,6 +41,8 @@ export type SavedGame = {
   /** The summary headline and one-line explanation. */
   title?: string
   detail?: string
+  /** Time from the first move to the end (ms). Missing on older games. */
+  durationMs?: number
 }
 
 const KEY = 'pawnce.recentGames.v1'
