@@ -45,24 +45,28 @@ Tagline: **Play the move. Learn its name.**
 All colors are CSS variables in `src/theme/tokens.css`, exposed to Tailwind
 in `src/index.css`. Never hard-code a hex value in a component.
 
-| Token           | Value                     | Use                                         |
-| --------------- | ------------------------- | ------------------------------------------- |
-| `--bg`          | `#0B100D`                 | Page background (deep green-black)          |
-| `--surface`     | `#111814`                 | Tiles, panels                               |
-| `--surface-2`   | `#172019`                 | Raised or selected controls, hover          |
-| `--border`      | `#222D26`                 | Thin 1px borders and dividers               |
-| `--text`        | `#E9EEEA`                 | Primary text                                |
-| `--text-muted`  | `#8C9A91`                 | Secondary text, labels                      |
-| `--accent`      | `#C6F36B`                 | The one accent (lime): Play, selection, focus, good moves, hints |
-| `--on-accent`   | `#0B100D`                 | Text on the accent                          |
-| `--warn`        | `#F2B84B`                 | Inaccuracies and mistakes                   |
-| `--danger`      | `#F2555A`                 | Blunders, check, errors                     |
-| `--board-light` | `#DDE4D6`                 | Light squares (soft sage-cream)             |
-| `--board-dark`  | `#6F8F76`                 | Dark squares (muted sage)                   |
-| `--last-move`   | `rgba(198,243,107,0.30)`  | From/to squares of the last move            |
+| Token          | Light      | Dark       | Use                                    |
+| -------------- | ---------- | ---------- | -------------------------------------- |
+| `--bg`         | `#FFFFFF`  | `#111B15`  | Page background                        |
+| `--surface`    | `#FFFFFF`  | `#18251D`  | Cards, panels                          |
+| `--surface-2`  | `#F4F7F1`  | `#203028`  | Raised controls, hover, stat chips     |
+| `--border`     | `#E3E8DF`  | `#2C3F33`  | Card borders, 3D edge of plain buttons |
+| `--text`       | `#33413A`  | `#E6EEE8`  | Primary text                           |
+| `--text-muted` | `#7B8A81`  | `#93A69A`  | Labels, secondary text                 |
+| `--accent`     | `#43C057`  | `#43C057`  | Jungle green: Play, good moves         |
+| `--info`       | `#1EAAF1`  | `#2FB4F5`  | Hints, help, wins                      |
+| `--learn`      | `#9B6BFF`  | `#A883FF`  | Chess words, openings, patterns        |
+| `--warn`       | `#FFB400`  | `#FFBF1F`  | Inaccuracies, streak, time             |
+| `--danger`     | `#FF5B5B`  | `#FF6B6B`  | Mistakes, blunders, check              |
+| `--board-light`/`--board-dark` | `#EEF2D9`/`#74B25E` | `#CDD6AE`/`#5F9A4C` | Squares |
+| `--move-dot`   | dark green, 34% | 45%   | Legal-move dots (read on both squares) |
 
-`--success` and `--accent-2` are kept as aliases of `--accent` so there is
-only one accent color in practice.
+Each strong color has an `-edge` twin for the 3D bottom of chunky buttons.
+
+**Dark mode** follows the device by default. The round button at the end of
+the home header cycles Auto → Dark → Light (saved as `pawnce.theme`, applied
+as `data-theme` on `<html>` before first paint by a tiny script in
+`index.html`).
 
 ## Typography (Google Fonts, loaded in `index.html`)
 - **Geist** for everything: 600 to 700 for headings, 400 to 500 for body.
@@ -78,7 +82,8 @@ only one accent color in practice.
 
 ## Board
 - Flat sage board, coordinates shown in small Geist.
-- Selected piece: accent ring. Legal moves: small dots; captures: a ring.
+- Selected piece: accent ring. Legal moves: dark green dots (`--move-dot`),
+  clear on light and dark squares; captures: a ring.
 - Last move: `--last-move`. Check: the king's square pulses `--danger` twice.
 - Hints: accent arrows, strongest boldest. Better move: accent arrow.
 
@@ -95,8 +100,12 @@ formula); the draw share is sized for everyday players.
   only when it matters to you.
 - Ticker above the board: the last two moves with who played them and how
   good they were.
-- A mistake or blunder pauses the game (clock too) with a card (under the
-  board on phones, top of the panel on desktop): what it cost, the better move, Take it back / Show better / Play on.
+- A mistake or blunder shows a red card (under the board on phones, top of
+  the panel on desktop) without pausing: the piece really lost, what it
+  cost, the better move, Take back / Show better / Got it.
+- A newly named opening gets a purple **opening card** at the top of the
+  coach (who played it and what it's about); on phones the strip shows
+  "📖 Opening: … · tap to learn it".
 
 ## Naming comes first
 Every piece of feedback names a pattern in board terms; grades and numbers
@@ -199,10 +208,25 @@ are secondary.
   met" open decks. **/words/<id>**: the word's card and seen / played /
   missed counts.
 
+## Home and report card
+- Header: logo, then labelled stat pills (day streak, patterns, wins). Each
+  explains itself on hover or tap. Then the theme button.
+- Hero: Pawny, the tagline, one short contextual line (streak, last result),
+  a Play button that shows its setup ("vs Frog · White · Blitz 3+2") and
+  New game.
+- **Report card** tile: a letter grade from recent accuracy (A 85+, B 75+,
+  C 65+, D 50+, else E), games, time played, win rate, and a link to
+  `/report`: grade and trend, games (W/D/L), win rate, time played,
+  accuracy, good-move share, slips per game, patterns learned, openings
+  met, record vs each bot, recent form. Lifetime totals live in
+  `pawnce.stats.v1`; time counts from your first move to the game's end.
+- Flash cards fit on screen: board beside the text on wide screens, and the
+  board shrinks with the screen height.
+
 ## Pages
 `/` home · `/play` the game · `/game/<id>/summary` a game's summary
 (`?ply=12` opens the replay at a move) · `/games` recent games (each opens
-its summary) · `/words` and `/words/<id>`. Games are saved in full in this
+its summary) · `/words` and `/words/<id>` · `/report` your report card. Games are saved in full in this
 browser (moves, grades, new words), so summaries reopen later.
 
 ## Move quality
