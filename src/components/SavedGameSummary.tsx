@@ -6,6 +6,7 @@ import { BOTS } from '../engine/bots'
 import { loadGame } from '../storage/recentGames'
 import { Button } from './Button'
 import { GameSummary } from './GameSummary'
+import { TopBar } from './TopBar'
 import type { MoveVerdict } from './useAnalysis'
 import { gameCards, wordsPerMove } from './useVocab'
 
@@ -62,7 +63,9 @@ export function SavedGameSummary({ id, initialPly, onPlayAgain, onHome, onBack }
 
   if (!record || !record.sans) {
     return (
-      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
+      <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center gap-4 px-4 text-center">
+        <TopBar title="Game summary" onHome={onHome} />
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-2">
         <h1 className="text-2xl font-bold">{record ? 'No summary for this game' : 'Game not found'}</h1>
         <p className="text-muted">
           {record
@@ -72,6 +75,7 @@ export function SavedGameSummary({ id, initialPly, onPlayAgain, onHome, onBack }
         <Button variant="primary" onClick={onHome}>
           Home
         </Button>
+        </div>
       </div>
     )
   }

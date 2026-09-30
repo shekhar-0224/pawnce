@@ -10,6 +10,7 @@ import { moveNo } from './cardContext'
 import { type DeckItem, FlashDeck } from './FlashDeck'
 import { FlashCard } from './FlashCard'
 import { Sheet } from './Sheet'
+import { TopBar } from './TopBar'
 
 type Status = 'known' | 'waiting' | 'unmet'
 
@@ -33,28 +34,16 @@ function firstMet(s: WordStats | undefined): { label: string; href: string } | n
   }
 }
 
-function PageHeader({ title, back }: { title: string; back: () => void }) {
-  return (
-    <div className="mb-5 flex items-center justify-between gap-3">
-      <h1 className="text-2xl font-bold">{title}</h1>
-      <Button variant="ghost" onClick={back}>
-        ← Back
-      </Button>
-    </div>
-  )
-}
-
 /** /words: every chess word, with its meaning and where you learned it. */
 export function WordsPage() {
-  const navigate = useNavigate()
   const learned = useLearned()
   const [deck, setDeck] = useState<DeckItem[] | null>(null)
   const known = PATTERN_WORDS.filter((w) => statusOf(learned, w.id) === 'known').length
   const met = PATTERN_WORDS.filter((w) => statusOf(learned, w.id) !== 'unmet')
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pb-12 pt-6 sm:pt-10">
-      <PageHeader title="Your chess vocabulary" back={() => navigate('/')} />
+    <div className="mx-auto w-full max-w-2xl px-4 pb-12">
+      <TopBar title="Chess words" />
 
       <section className="mb-6 flex flex-col gap-3 card p-5">
         <p>
@@ -162,8 +151,8 @@ export function WordPage() {
   const word = WORDS_BY_ID[wordId]
   if (!word) {
     return (
-      <div className="mx-auto w-full max-w-2xl px-4 pt-10">
-        <PageHeader title="Word not found" back={() => navigate('/words')} />
+      <div className="mx-auto w-full max-w-2xl px-4">
+        <TopBar title="Word not found" />
         <Link to="/words" className="text-accent underline">
           See all chess words
         </Link>
@@ -173,8 +162,8 @@ export function WordPage() {
   const s = learned.words[word.id]
   const where = firstMet(s)
   return (
-    <div className="mx-auto w-full max-w-lg px-4 pb-12 pt-6 sm:pt-10">
-      <PageHeader title={word.name} back={() => navigate('/words')} />
+    <div className="mx-auto w-full max-w-lg px-4 pb-12">
+      <TopBar title={word.name} />
       <FlashCard
         card={{ kind: 'word', id: word.id }}
         context={where ? { text: `you first met it ${where.label}.`, onJump: () => navigate(where.href) } : undefined}

@@ -5,7 +5,7 @@ import type { EndReason, Result } from '../chess/outcome'
 import { loadRecentGames } from '../storage/recentGames'
 import { formatDuration } from '../storage/stats'
 import { BotAvatar } from './BotAvatar'
-import { Button } from './Button'
+import { TopBar } from './TopBar'
 
 const BADGE: Record<Result, { label: string; className: string }> = {
   win: { label: 'Win', className: 'bg-accent/15 text-accent' },
@@ -35,17 +35,12 @@ function formatDate(iso: string) {
   return Number.isNaN(d.getTime()) ? '' : dateFormat.format(d)
 }
 
-export function RecentGamesScreen({ onBack, onOpen }: { onBack: () => void; onOpen: (id: string) => void }) {
+export function RecentGamesScreen({ onOpen }: { onOpen: (id: string) => void }) {
   const [games] = useState(loadRecentGames)
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pb-10 pt-6 sm:pt-10">
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Recent games</h1>
-        <Button variant="ghost" onClick={onBack}>
-          ← Back
-        </Button>
-      </div>
+    <div className="mx-auto w-full max-w-2xl px-4 pb-10">
+      <TopBar title="Recent games" />
 
       {games.length === 0 ? (
         <div className="card p-8 text-center">

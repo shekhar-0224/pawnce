@@ -98,7 +98,7 @@ export default function App() {
       settings={settings}
       onStart={startGame}
       onHome={() => navigate('/')}
-      onBack={() => navigate(-1)}
+      onBack={() => (((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0 ? navigate(-1) : navigate('/'))}
     />
   )
 
@@ -121,7 +121,6 @@ export default function App() {
                 path="/games"
                 element={
                   <RecentGamesScreen
-                    onBack={() => navigate('/')}
                     onOpen={(id) => navigate(`/game/${id}/summary`)}
                   />
                 }

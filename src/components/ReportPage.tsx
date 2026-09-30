@@ -1,12 +1,11 @@
 import { motion } from 'framer-motion'
 import { type ReactNode, useState } from 'react'
-import { useNavigate } from 'react-router'
 import { BOTS } from '../engine/bots'
 import { useLearned } from '../storage/learned'
 import { loadRecentGames } from '../storage/recentGames'
 import { formatDuration, loadStats } from '../storage/stats'
 import { BotAvatar } from './BotAvatar'
-import { Button } from './Button'
+import { TopBar } from './TopBar'
 import { buildReport } from './report'
 
 const RESULT_DOT = { win: 'bg-accent', draw: 'bg-warn', loss: 'bg-danger' } as const
@@ -24,20 +23,14 @@ function Stat({ label, value, sub, tone = 'text-text' }: { label: string; value:
 
 /** /report: your report card — grade, results, time played, accuracy and more. */
 export function ReportPage() {
-  const navigate = useNavigate()
   const learned = useLearned()
   const [games] = useState(loadRecentGames)
   const [stats] = useState(loadStats)
   const r = buildReport(games, stats, learned)
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 pb-12 pt-6 sm:pt-10">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-black">Report card</h1>
-        <Button variant="ghost" onClick={() => navigate('/')}>
-          ← Back
-        </Button>
-      </div>
+    <div className="mx-auto w-full max-w-3xl px-4 pb-6">
+      <TopBar title="Report card" />
 
       <motion.section
         aria-label="Overall grade"

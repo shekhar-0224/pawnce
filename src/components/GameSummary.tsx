@@ -16,6 +16,7 @@ import { Mascot } from './Mascot'
 import { gameContext } from './cardContext'
 import { type DeckItem, FlashDeck } from './FlashDeck'
 import { Sheet } from './Sheet'
+import { TopBar } from './TopBar'
 import type { LearnCardData, WordAt } from './useVocab'
 import type { MoveVerdict } from './useAnalysis'
 
@@ -37,7 +38,7 @@ type Props = {
   onPlayAgain: () => void
   onChangeOpponent: () => void
   onClose: () => void
-  /** The close button's text ("Back to board" for a live game). */
+  /** The back button's text ("Board" for a live game, "Back" for a saved one). */
   closeLabel?: string
   /** Start the replay at this move (e.g. from a word's link). */
   initialPly?: number
@@ -207,7 +208,10 @@ export function GameSummary(p: Props) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <div className="mx-auto grid w-full max-w-6xl gap-3 px-4 py-5 min-[900px]:grid-cols-12 min-[900px]:px-8 min-[900px]:py-8">
+      <div className="px-4">
+        <TopBar title="Game summary" onBack={p.onClose} backLabel={p.closeLabel ?? 'Board'} onHome={p.onChangeOpponent} />
+      </div>
+      <div className="mx-auto grid w-full max-w-6xl gap-3 px-4 pb-5 min-[900px]:grid-cols-12 min-[900px]:px-8 min-[900px]:pb-8">
         {/* Result: a bright banner with Pawny */}
         <motion.section
           className="order-1 flex min-w-0 flex-col gap-4 overflow-hidden rounded-[var(--radius-card)] p-5 text-white min-[900px]:order-none min-[900px]:col-span-5"
@@ -446,15 +450,9 @@ export function GameSummary(p: Props) {
         {/* Play again */}
         <section className="order-2 flex flex-col gap-2 card p-5 min-[900px]:order-last min-[900px]:col-span-12 min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between">
           <p className="text-sm text-muted">Ready for another? Every game teaches something new.</p>
-          <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-3">
-            <Button variant="primary" onClick={p.onPlayAgain}>
-              Play again
-            </Button>
-            <Button onClick={p.onChangeOpponent}>Home</Button>
-            <Button variant="ghost" onClick={p.onClose}>
-              {p.closeLabel ?? 'Back to board'}
-            </Button>
-          </div>
+          <Button variant="primary" className="uppercase min-[900px]:min-w-56" onClick={p.onPlayAgain}>
+            Play again
+          </Button>
         </section>
       </div>
 
