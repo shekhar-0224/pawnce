@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { BASIC_WORDS, PATTERN_WORDS, WORDS_BY_ID, WORD_CATEGORIES, isBasic } from '../chess/glossary'
 import { BOTS } from '../engine/bots'
 import { type Learned, type WordStats, isKnown, isLearnedPattern, useLearned } from '../storage/learned'
@@ -10,6 +10,7 @@ import { moveNo } from './cardContext'
 import { type DeckItem, FlashDeck } from './FlashDeck'
 import { FlashCard } from './FlashCard'
 import { Sheet } from './Sheet'
+import { TopBar } from './TopBar'
 
 type Status = 'known' | 'waiting' | 'unmet'
 
@@ -33,115 +34,96 @@ function firstMet(s: WordStats | undefined): { label: string; href: string } | n
   }
 }
 
-function PageHeader({ title, back }: { title: string; back: () => void }) {
-  return (
-    <div className="mb-5 flex items-center justify-between gap-3">
-      <h1 className="text-2xl font-bold">{title}</h1>
-      <Button variant="ghost" onClick={back}>
-        ← Back
-      </Button>
-    </div>
-  )
-}
-
-/** /words: every chess word, with its meaning and where you learned it. */
+/** /words: every chess word by group (one tab at a time), with its meaning and where you learned it. */
 export function WordsPage() {
-  const navigate = useNavigate()
   const learned = useLearned()
   const [deck, setDeck] = useState<DeckItem[] | null>(null)
+  const [search, setSearch] = useSearchParams()
   const known = PATTERN_WORDS.filter((w) => statusOf(learned, w.id) === 'known').length
   const met = PATTERN_WORDS.filter((w) => statusOf(learned, w.id) !== 'unmet')
 
-  return (
-    <div className="mx-auto w-full max-w-2xl px-4 pb-12 pt-6 sm:pt-10">
-      <PageHeader title="Your chess vocabulary" back={() => navigate('/')} />
+  // Tactics and checkmates first: they're what the game teaches most.
+  const first = ['Tactics', 'Checkmate patterns']
+  const groups = WORD_CATEGORIES.filter((c) => PATTERN_WORDS.some((w) => w.category === c))
+  const tabs = [...first.filter((c) => groups.includes(c as never)), ...groups.filter((c) => !first.includes(c)), 'Basics'] as string[]
+  const tab = tabs.includes(search.get('tab') ?? '') ? search.get('tab')! : tabs[0]
+  const words = tab === 'Basics' ? BASIC_WORDS : PATTERN_WORDS.filter((w) => w.category === tab)
+  const countIn = (t: string) => {
+    const ws = t === 'Basics' ? BASIC_WORDS : PATTERN_WORDS.filter((w) => w.category === t)
+    return `${ws.filter((w) => statusOf(learned, w.id) === 'known').length}/${ws.length}`
+  }
 
-      <section className="mb-6 flex flex-col gap-3 card p-5">
-        <p>
-          <span className="text-muted">Patterns learned: </span>
-          <span className="font-mono text-3xl font-semibold text-accent">{known}</span>
-          <span className="text-muted"> of {PATTERN_WORDS.length}</span>
-        </p>
-        <p className="text-sm text-muted">A pattern counts once you’ve played it yourself, not just seen it.</p>
-        <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
-          <div className="h-full rounded-full bg-accent" style={{ width: `${(known / PATTERN_WORDS.length) * 100}%` }} />
+  // One screen: the list scrolls inside its card, the page itself doesn't.
+  return (
+    <div className="mx-auto flex h-dvh w-full max-w-2xl flex-col px-4 pb-3">
+      <TopBar title="Chess words" />
+
+      <section className="card flex shrink-0 flex-col gap-2 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-black">
+            Patterns learned:{' '}
+            <span className="text-learn">
+              {known} of {PATTERN_WORDS.length}
+            </span>
+          </p>
+          <p className="hidden text-xs font-bold text-muted min-[480px]:block">Counts once you’ve played it yourself.</p>
         </div>
-        <div className="grid gap-2 min-[480px]:grid-cols-2">
-          <Button variant="primary" onClick={() => setDeck(PATTERN_WORDS.map((w) => ({ card: { kind: 'word', id: w.id } })))}>
-            Study all {PATTERN_WORDS.length} patterns
+        <div className="h-1.5 overflow-hidden rounded-full bg-surface-2" aria-hidden>
+          <div className="h-full rounded-full bg-learn" style={{ width: `${(known / PATTERN_WORDS.length) * 100}%` }} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="learn" className="whitespace-nowrap" onClick={() => setDeck(words.map((w) => ({ card: { kind: 'word', id: w.id } })))}>
+            Study {tab === 'Basics' ? 'the basics' : tab.toLowerCase()}
           </Button>
-          <Button
-            disabled={met.length === 0}
-            onClick={() => setDeck(met.map((w) => ({ card: { kind: 'word', id: w.id } })))}
-          >
-            Study the {met.length} I’ve met
+          <Button className="whitespace-nowrap" disabled={met.length === 0} onClick={() => setDeck(met.map((w) => ({ card: { kind: 'word', id: w.id } })))}>
+            The {met.length} I’ve met
           </Button>
         </div>
       </section>
 
-      <div className="flex flex-col gap-6">
-        {WORD_CATEGORIES.map((cat) => {
-          const words = PATTERN_WORDS.filter((w) => w.category === cat)
-          if (words.length === 0) return null
+      <div role="tablist" aria-label="Word groups" className="pawnce-scroll -mx-4 my-3 flex shrink-0 gap-1.5 overflow-x-auto px-4 pb-1">
+        {tabs.map((t) => (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            aria-selected={t === tab}
+            onClick={() => setSearch({ tab: t }, { replace: true })}
+            className={`shrink-0 cursor-pointer whitespace-nowrap rounded-xl border-2 px-3 py-1.5 text-xs font-extrabold ${
+              t === tab ? 'border-learn bg-learn text-white' : 'border-border bg-surface text-muted hover:bg-surface-2'
+            }`}
+          >
+            {t} <span className={t === tab ? 'text-white/80' : 'text-muted/80'}>{countIn(t)}</span>
+          </button>
+        ))}
+      </div>
+
+      <ul role="tabpanel" aria-label={tab} className="pawnce-scroll card min-h-0 flex-1 divide-y divide-border overflow-y-auto">
+        {words.map((w) => {
+          const st = statusOf(learned, w.id)
+          const where = firstMet(learned.words[w.id])
           return (
-            <section key={cat} aria-label={cat}>
-              <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{cat}</h2>
-              <ul className="flex flex-col divide-y divide-border card">
-                {words.map((w) => {
-                  const st = statusOf(learned, w.id)
-                  const where = firstMet(learned.words[w.id])
-                  return (
-                    <li key={w.id} className="flex flex-col gap-1 px-4 py-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <Link to={`/words/${w.id}`} className={`font-semibold hover:text-accent ${st === 'unmet' ? 'text-muted' : ''}`}>
-                          {w.name}
-                        </Link>
-                        <span className="shrink-0 text-xs">
-                          {st === 'known' && <span className="text-accent">✓ Learned</span>}
-                          {st === 'waiting' && <span className="rounded bg-learn px-1.5 py-px font-mono text-[10px] font-bold uppercase text-white">Seen</span>}
-                          {st === 'unmet' && <span className="text-muted">Not met yet</span>}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted">{w.meaning}</p>
-                      {where && (
-                        <Link to={where.href} className="self-start text-xs font-semibold text-accent hover:underline">
-                          First met: {where.label} ›
-                        </Link>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
+            <li key={w.id} className="flex flex-col gap-0.5 px-4 py-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <Link to={`/words/${w.id}`} className={`font-extrabold hover:text-accent ${st === 'unmet' ? 'text-muted' : ''}`}>
+                  {w.name} <span aria-hidden className="text-muted">›</span>
+                </Link>
+                <span className="shrink-0 text-xs font-bold">
+                  {st === 'known' && <span className="text-accent">✓ {tab === 'Basics' ? 'Known' : 'Learned'}</span>}
+                  {st === 'waiting' && <span className="rounded bg-learn px-1.5 py-px text-[10px] font-black uppercase text-white">Seen</span>}
+                  {st === 'unmet' && <span className="text-muted">Not met yet</span>}
+                </span>
+              </div>
+              <p className="line-clamp-2 text-sm text-muted">{w.meaning}</p>
+              {where && (
+                <Link to={where.href} className="self-start text-xs font-semibold text-accent hover:underline">
+                  First met: {where.label} ›
+                </Link>
+              )}
+            </li>
           )
         })}
-
-        <section aria-label="Basics">
-          <div className="mb-2 flex items-baseline justify-between gap-3">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Basics</h2>
-            <button
-              type="button"
-              className="text-xs font-semibold text-accent hover:underline"
-              onClick={() => setDeck(BASIC_WORDS.map((w) => ({ card: { kind: 'word', id: w.id } })))}
-            >
-              Study the basics
-            </button>
-          </div>
-          <ul className="grid grid-cols-2 gap-px overflow-hidden card min-[480px]:grid-cols-3">
-            {BASIC_WORDS.map((w) => {
-              const st = statusOf(learned, w.id)
-              return (
-                <li key={w.id} className="bg-surface">
-                  <Link to={`/words/${w.id}`} className={`flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-surface-2 ${st === 'unmet' ? 'text-muted' : ''}`}>
-                    <span className="truncate font-semibold">{w.name}</span>
-                    {st === 'known' && <span className="text-xs text-accent">✓</span>}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </section>
-      </div>
+      </ul>
 
       <AnimatePresence>
         {deck && (
@@ -162,8 +144,8 @@ export function WordPage() {
   const word = WORDS_BY_ID[wordId]
   if (!word) {
     return (
-      <div className="mx-auto w-full max-w-2xl px-4 pt-10">
-        <PageHeader title="Word not found" back={() => navigate('/words')} />
+      <div className="mx-auto w-full max-w-2xl px-4">
+        <TopBar title="Word not found" />
         <Link to="/words" className="text-accent underline">
           See all chess words
         </Link>
@@ -173,25 +155,25 @@ export function WordPage() {
   const s = learned.words[word.id]
   const where = firstMet(s)
   return (
-    <div className="mx-auto w-full max-w-lg px-4 pb-12 pt-6 sm:pt-10">
-      <PageHeader title={word.name} back={() => navigate('/words')} />
+    <div className="mx-auto w-full max-w-2xl px-4 pb-4">
+      <TopBar title={word.name} />
       <FlashCard
         card={{ kind: 'word', id: word.id }}
         context={where ? { text: `you first met it ${where.label}.`, onJump: () => navigate(where.href) } : undefined}
       />
-      <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+      <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
         {[
           ['Seen', s?.seen ?? 0],
           ['Played', s?.played ?? 0],
           ['Missed', s?.missed ?? 0],
         ].map(([label, n]) => (
-          <div key={label} className="rounded-lg border border-border bg-surface p-2">
+          <div key={label} className="rounded-lg border border-border bg-surface px-2 py-1">
             <dt className="text-[11px] text-muted">{label}</dt>
-            <dd className="font-mono text-xl font-semibold">{n}</dd>
+            <dd className="font-mono text-lg font-semibold">{n}</dd>
           </div>
         ))}
       </dl>
-      <p className="mt-3 text-center text-xs text-muted">
+      <p className="mt-2 text-center text-xs text-muted">
         {isBasic(word.id)
           ? s
             ? isKnown(s)

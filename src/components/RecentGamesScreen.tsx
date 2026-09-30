@@ -5,7 +5,7 @@ import type { EndReason, Result } from '../chess/outcome'
 import { loadRecentGames } from '../storage/recentGames'
 import { formatDuration } from '../storage/stats'
 import { BotAvatar } from './BotAvatar'
-import { Button } from './Button'
+import { TopBar } from './TopBar'
 
 const BADGE: Record<Result, { label: string; className: string }> = {
   win: { label: 'Win', className: 'bg-accent/15 text-accent' },
@@ -35,17 +35,12 @@ function formatDate(iso: string) {
   return Number.isNaN(d.getTime()) ? '' : dateFormat.format(d)
 }
 
-export function RecentGamesScreen({ onBack, onOpen }: { onBack: () => void; onOpen: (id: string) => void }) {
+export function RecentGamesScreen({ onOpen }: { onOpen: (id: string) => void }) {
   const [games] = useState(loadRecentGames)
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pb-10 pt-6 sm:pt-10">
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Recent games</h1>
-        <Button variant="ghost" onClick={onBack}>
-          ← Back
-        </Button>
-      </div>
+    <div className="mx-auto flex h-dvh w-full max-w-2xl flex-col px-4 pb-3">
+      <TopBar title="Recent games" />
 
       {games.length === 0 ? (
         <div className="card p-8 text-center">
@@ -53,7 +48,7 @@ export function RecentGamesScreen({ onBack, onOpen }: { onBack: () => void; onOp
           <p className="mt-1 text-muted">Finish a game and it will show up here.</p>
         </div>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="pawnce-scroll -mx-1 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-1 pb-1">
           {games.map((g) => {
             const bot = BOTS[g.bot] ?? BOTS.ant
             const badge = BADGE[g.result] ?? BADGE.draw

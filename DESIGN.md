@@ -63,9 +63,9 @@ in `src/index.css`. Never hard-code a hex value in a component.
 
 Each strong color has an `-edge` twin for the 3D bottom of chunky buttons.
 
-**Dark mode** follows the device by default. The round button at the end of
-the home header cycles Auto → Dark → Light (saved as `pawnce.theme`, applied
-as `data-theme` on `<html>` before first paint by a tiny script in
+**Dark mode** follows the device until you choose. The round button at the
+end of the home header flips light/dark in one tap (saved as `pawnce.theme`,
+applied as `data-theme` on `<html>` before first paint by a tiny script in
 `index.html`).
 
 ## Typography (Google Fonts, loaded in `index.html`)
@@ -208,18 +208,30 @@ are secondary.
   met" open decks. **/words/<id>**: the word's card and seen / played /
   missed counts.
 
-## Home and report card
-- Header: logo, then labelled stat pills (day streak, patterns, wins). Each
-  explains itself on hover or tap. Then the theme button.
-- Hero: Pawny, the tagline, one short contextual line (streak, last result),
-  a Play button that shows its setup ("vs Frog · White · Blitz 3+2") and
-  New game.
-- **Report card** tile: a letter grade from recent accuracy (A 85+, B 75+,
-  C 65+, D 50+, else E), games, time played, win rate, and a link to
-  `/report`: grade and trend, games (W/D/L), win rate, time played,
-  accuracy, good-move share, slips per game, patterns learned, openings
-  met, record vs each bot, recent form. Lifetime totals live in
-  `pawnce.stats.v1`; time counts from your first move to the game's end.
+## One screen, no scrolling
+Every page fits the screen (checked at 375×667, 390×844, 1000×545, 1280×720
+and 1440×900). Long lists scroll inside their own card; the page never does.
+
+- **Top bar on every page** (not home or the live board): ← Back on the
+  left, the page title, Home on the right. Back goes to the previous page,
+  or home if the page was opened from a link. (`TopBar.tsx`)
+- **Home:** header (logo, labelled stat pills that explain themselves on
+  hover or tap, light/dark button), then the **report card as a slim bar**
+  (grade, games, time played, win rate), the play card (Pawny, tagline, one
+  contextual line, Play with its setup, and a row of the three bots for a
+  new game), and two small tiles: Patterns learned (with Practice) and Last
+  game (three recent games on wide screens). Full lists live on /words and
+  /games.
+- **Report card** (`/report`): letter grade from recent accuracy (A 85+,
+  B 75+, C 65+, D 50+, else E) with trend, then games, win rate, time,
+  accuracy, good moves, slips per game, patterns, openings, record vs each
+  bot and recent form. Lifetime totals live in `pawnce.stats.v1`; time
+  counts from your first move to the game's end.
+- **Chess words** (`/words`): progress and study buttons, then tabs
+  (Tactics, Checkmate patterns, … , Basics) with the list scrolling inside.
+- **Game summary:** result banner, then tabs: Words (default), Moments,
+  Patterns, and Replay on phones; on wide screens the replay board sits
+  beside the tabs, sized to the window. Play again at the bottom.
 - Flash cards fit on screen: board beside the text on wide screens, and the
   board shrinks with the screen height.
 
