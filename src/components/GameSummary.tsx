@@ -208,7 +208,7 @@ export function GameSummary(p: Props) {
         <TopBar title={<><span className="max-[339px]:hidden">Game </span>summary</>} onBack={p.onClose} backLabel={p.closeLabel ?? 'Board'} onHome={p.onChangeOpponent} />
       </div>
       {/* One screen: lists scroll inside their panel, the page never does. */}
-      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-3 px-4 pb-3 land:grid land:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] land:grid-rows-[auto_minmax(0,1fr)_auto] land:gap-x-4 land:gap-y-2 wide:grid wide:grid-cols-[minmax(0,1fr)_auto] wide:grid-rows-[minmax(0,1fr)_auto] wide:gap-x-5 wide:px-8 wide:pb-5">
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-3 px-4 pb-3 land:grid land:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] land:grid-rows-[auto_minmax(0,1fr)_auto] land:gap-x-4 land:gap-y-2 wide:grid wide:grid-cols-[minmax(0,1fr)_min-content] wide:grid-rows-[minmax(0,1fr)_auto] wide:gap-x-5 wide:px-8 wide:pb-5">
         <div className={`flex min-h-0 flex-col gap-3 land:contents wide:col-start-1 wide:row-start-1 wide:flex-1 ${tab === 'replay' ? 'flex-none' : 'flex-1'}`}>
           {/* Result: a bright banner with Pawny and the three numbers */}
           <motion.section
