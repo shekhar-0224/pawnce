@@ -2,9 +2,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { type ReactNode, useState } from 'react'
 import { Link } from 'react-router'
 import { TIME_CONTROLS, timeControlName } from '../chess/clock'
-import { BASIC_WORDS, PATTERN_WORDS } from '../chess/glossary'
+import { PATTERN_WORDS } from '../chess/glossary'
 import { BOTS, BOT_LIST } from '../engine/bots'
-import { isKnown, isLearnedPattern, useLearned } from '../storage/learned'
+import { isLearnedPattern, useLearned } from '../storage/learned'
 import { loadRecentGames, playStreak } from '../storage/recentGames'
 import { formatDuration, loadStats } from '../storage/stats'
 import { buildReport } from './report'
@@ -103,7 +103,7 @@ function ProgressRing({ value, total }: { value: number; total: number }) {
   const c = 2 * Math.PI * r
   const pct = total ? value / total : 0
   return (
-    <svg viewBox="0 0 76 76" className="size-20 shrink-0 -rotate-90" aria-hidden>
+    <svg viewBox="0 0 76 76" className="size-12 shrink-0 -rotate-90" aria-hidden>
       <circle cx="38" cy="38" r={r} fill="none" stroke="var(--border)" strokeWidth="9" />
       <motion.circle
         cx="38"
@@ -146,7 +146,7 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
   // One short, useful line under the tagline.
   const last = games[0]
   const greeting = !returning
-    ? 'Play a real game. Every move gets its chess name as you go.'
+    ? 'Every move you play gets its chess name.'
     : streak >= 2
       ? `${streak} days in a row. Keep your streak going!`
       : last?.result === 'win'
@@ -160,204 +160,147 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
     setDeck(ids.map((id) => ({ card: { kind: 'word', id } })))
   }
 
+  const LEVEL_TONE: Record<string, string> = { Easy: 'bg-accent', Medium: 'bg-warn', Hard: 'bg-danger' }
+  const tileLink =
+    'press flex min-w-0 cursor-pointer flex-col gap-2 rounded-card border-2 border-border bg-surface p-3.5 text-left [--edge:var(--border)] hover:bg-surface-2'
+
+  // The report card, as a slim call to action at the top.
+  const reportBar = (
+    <motion.div {...pop(0)}>
+      <Link to="/report" aria-label={`Report card: ${report.grade.label}`} className={`${tileLink} !flex-row items-center !gap-3 !py-2.5`}>
+        <span className={`grid size-11 shrink-0 place-items-center rounded-xl text-2xl font-black ${report.grade.tone}`} aria-hidden>
+          {report.grade.letter}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-black leading-tight">Report card</span>
+          <span className="block truncate text-xs font-bold text-muted">
+            {report.games === 0
+              ? 'Your grade shows up after your first game'
+              : `${report.games} ${report.games === 1 ? 'game' : 'games'} · ${formatDuration(report.timeMs)} played${report.winRate !== null ? ` · ${report.winRate}% wins` : ''}`}
+          </span>
+        </span>
+        <span aria-hidden className="text-lg font-black text-muted">
+          ›
+        </span>
+      </Link>
+    </motion.div>
+  )
+
   const hero = (
-    <motion.section aria-labelledby="play-heading" className="card flex flex-col items-center gap-5 p-6 text-center" {...pop(0)}>
-      <Mascot size={96} mood={returning ? 'happy' : 'wow'} />
-      <div className="flex flex-col gap-2">
-        <h1 id="play-heading" className="font-display text-3xl font-black leading-tight">
-          Play the move. <span className="text-accent">Learn its name.</span>
-        </h1>
-        <p className="text-sm font-bold text-muted">{greeting}</p>
+    <motion.section aria-labelledby="play-heading" className="card flex flex-col gap-3 p-4 min-[900px]:justify-center min-[900px]:gap-4 min-[900px]:p-6" {...pop(0.04)}>
+      <div className="flex items-center gap-3 min-[900px]:flex-col min-[900px]:text-center">
+        <span className="shrink-0 min-[900px]:[&>svg]:h-auto min-[900px]:[&>svg]:w-28">
+          <Mascot size={64} mood={returning ? 'happy' : 'wow'} />
+        </span>
+        <div className="min-w-0">
+          <h1 id="play-heading" className="font-display text-2xl font-black leading-tight min-[900px]:text-3xl">
+            Play the move. <span className="text-accent">Learn its name.</span>
+          </h1>
+          <p className="mt-1 text-sm font-bold text-muted">{greeting}</p>
+        </div>
       </div>
-      <div className="flex w-full max-w-sm flex-col gap-2">
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
         {returning ? (
-          <>
-            <Button variant="primary" size="lg" className="w-full flex-col !gap-0 py-2" onClick={() => onPlay(setup)}>
-              <span className="text-lg uppercase">Play</span>
-              <span className="text-xs font-bold normal-case opacity-90">
-                vs {bot.name} · {SIDE_LABEL[setup.side]} · {timeControlName(tc)}
-              </span>
-            </Button>
-            <Button size="lg" className="w-full uppercase" onClick={() => setChoosing({})}>
-              New game
-            </Button>
-          </>
+          <Button variant="primary" size="lg" className="w-full flex-col !gap-0 py-2" onClick={() => onPlay(setup)}>
+            <span className="text-lg uppercase">Play</span>
+            <span className="text-xs font-bold normal-case opacity-90">
+              vs {bot.name} · {SIDE_LABEL[setup.side]} · {timeControlName(tc)}
+            </span>
+          </Button>
         ) : (
           <Button variant="primary" size="lg" className="w-full text-lg uppercase" onClick={() => setChoosing({})}>
             Start playing
           </Button>
         )}
-      </div>
-    </motion.section>
-  )
-
-  const LEVEL_TONE: Record<string, string> = { Easy: 'bg-accent', Medium: 'bg-warn', Hard: 'bg-danger' }
-  const opponentsCard = (
-    <motion.section aria-labelledby="opponents-heading" className="card flex flex-col gap-3 p-5" {...pop(0.04)}>
-      <h2 id="opponents-heading" className="text-xl font-black">
-        Pick your opponent
-      </h2>
-      <div className="grid grid-cols-3 gap-2">
-        {BOT_LIST.map((b, i) => (
-          <motion.button
-            key={b.id}
-            type="button"
-            onClick={() => setChoosing({ botId: b.id })}
-            aria-label={`Play the ${b.name}, ${b.level}`}
-            className="press flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-border bg-surface px-2 py-3 [--edge:var(--border)] hover:bg-surface-2"
-            whileHover={{ y: -2 }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + i * 0.06, type: 'spring', stiffness: 360, damping: 22 }}
-          >
-            <BotAvatar bot={b} size={56} />
-            <span className="font-black">{b.name}</span>
-            <span className={`rounded-lg px-2 py-0.5 text-[11px] font-black uppercase text-white ${LEVEL_TONE[b.level] ?? 'bg-muted'}`}>
-              {b.level}
-            </span>
-          </motion.button>
-        ))}
-      </div>
-    </motion.section>
-  )
-
-  const wordsCard = (
-    <motion.section aria-labelledby="words-heading" className="card flex flex-col gap-4 p-5" {...pop(0.08)}>
-      <div className="flex items-center gap-4">
-        <div className="relative">
-          <ProgressRing value={known.length} total={PATTERN_WORDS.length} />
-          <span className="absolute inset-0 grid place-items-center text-lg font-black text-learn">{known.length}</span>
+        <div role="group" aria-labelledby="opponents-heading" className="flex flex-col gap-1.5">
+          <p id="opponents-heading" className="text-center text-[11px] font-black uppercase tracking-[0.08em] text-muted">
+            {returning ? 'Or a new game vs' : 'Pick your opponent'}
+          </p>
+          <div className="grid grid-cols-3 gap-2">
+            {BOT_LIST.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => setChoosing({ botId: b.id })}
+                aria-label={`Play the ${b.name}, ${b.level}`}
+                className="press flex min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-2xl border-2 border-border bg-surface px-1.5 py-1.5 [--edge:var(--border)] hover:bg-surface-2"
+              >
+                <BotAvatar bot={b} size={28} />
+                <span className="flex min-w-0 flex-col items-start leading-tight">
+                  <span className="truncate text-sm font-black">{b.name}</span>
+                  <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-muted">
+                    <span className={`size-1.5 rounded-full ${LEVEL_TONE[b.level] ?? 'bg-muted'}`} />
+                    {b.level}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="min-w-0">
-          <h2 id="words-heading" className="text-lg font-black leading-tight">
-            <span className="block">Patterns learned:</span>{' '}
-            <span className="text-learn">
+      </div>
+    </motion.section>
+  )
+
+  // Patterns: progress and practice. The full list lives on /words.
+  const wordsTile = (
+    <motion.section aria-labelledby="words-heading" className="card flex min-w-0 flex-col gap-2.5 p-3.5" {...pop(0.08)}>
+      <Link to="/words" className="flex items-center gap-2.5 rounded-xl hover:opacity-80">
+        <span className="relative">
+          <ProgressRing value={known.length} total={PATTERN_WORDS.length} />
+          <span className="absolute inset-0 grid place-items-center text-sm font-black text-learn">{known.length}</span>
+        </span>
+        <span className="min-w-0">
+          <span id="words-heading" className="block font-black leading-tight">
+            Patterns learned:{' '}
+            <span className="whitespace-nowrap text-learn">
               {known.length} of {PATTERN_WORDS.length}
             </span>
-          </h2>
-          <p className="text-sm font-bold text-muted">
-            {waiting.length > 0 ? (
-              <span className="text-learn">{waiting.length} seen, not played yet</span>
-            ) : (
-              'Play a pattern yourself to learn it.'
-            )}
-          </p>
-        </div>
-      </div>
-      {(waiting.length > 0 || known.length > 0) && (
-        <div className="flex flex-wrap gap-1.5">
-          {[...known, ...waiting].slice(0, 8).map((w) => (
-            <Link
-              key={w.id}
-              to={`/words/${w.id}`}
-              className={`rounded-xl border-2 px-2.5 py-1 text-xs font-extrabold hover:brightness-95 ${
-                isLearnedPattern(learned.words[w.id]) ? 'border-accent/40 bg-accent/10 text-accent-edge' : 'border-learn/40 bg-learn/10 text-learn'
-              }`}
-            >
-              {isLearnedPattern(learned.words[w.id]) ? '✓ ' : ''}
-              {w.name}
-            </Link>
-          ))}
-        </div>
-      )}
-      <div aria-label="Basics" role="group" className="flex flex-col gap-1.5 border-t-2 border-border pt-3">
-        <p className="text-[11px] font-black uppercase tracking-[0.08em] text-muted">Basics</p>
-        <div className="flex flex-wrap gap-1">
-          {BASIC_WORDS.map((w) => (
-            <Link
-              key={w.id}
-              to={`/words/${w.id}`}
-              className={`rounded-lg px-1.5 py-0.5 text-[11px] font-bold hover:bg-surface-2 ${isKnown(learned.words[w.id]) ? 'text-text' : 'text-muted'}`}
-            >
-              {isKnown(learned.words[w.id]) && <span className="text-accent">✓ </span>}
-              {w.name}
-            </Link>
-          ))}
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Button variant="learn" className="w-full whitespace-nowrap uppercase" onClick={practice}>
-          {waiting.length > 0 ? `Practice ${waiting.length}` : known.length > 0 ? 'Review' : 'Learn 5'}
-        </Button>
-        <Link
-          to="/words"
-          className="press inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-2xl border-2 border-border bg-surface px-4 text-sm font-extrabold uppercase tracking-wide [--edge:var(--border)] hover:bg-surface-2"
-        >
-          All words
-        </Link>
-      </div>
-    </motion.section>
-  )
-
-  const reportCard = (
-    <motion.section aria-labelledby="report-heading" className="card flex flex-col gap-4 p-5" {...pop(0.12)}>
-      <div className="flex items-center gap-4">
-        <span className={`grid size-16 shrink-0 place-items-center rounded-2xl text-4xl font-black ${report.grade.tone}`} aria-hidden>
-          {report.grade.letter}
+          </span>
+          <span className="block text-xs font-bold text-muted">All words ›</span>
         </span>
-        <div className="min-w-0">
-          <h2 id="report-heading" className="text-lg font-black leading-tight">
-            Report card
-          </h2>
-          <p className="text-sm font-bold text-muted">{report.grade.label}</p>
-        </div>
-      </div>
-      <dl className="grid grid-cols-3 gap-2 text-center">
-        {[
-          ['Games', String(report.games)],
-          ['Time', formatDuration(report.timeMs)],
-          ['Win rate', report.winRate !== null ? `${report.winRate}%` : '–'],
-        ].map(([label, value]) => (
-          <div key={label} className="rounded-xl bg-surface-2 px-1 py-2">
-            <dt className="text-[10px] font-black uppercase tracking-[0.08em] text-muted">{label}</dt>
-            <dd className="text-sm font-black">{value}</dd>
-          </div>
-        ))}
-      </dl>
-      <Link
-        to="/report"
-        className="press inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-2xl border-2 border-border bg-surface px-4 text-sm font-extrabold uppercase tracking-wide [--edge:var(--border)] hover:bg-surface-2"
-      >
-        See report card
       </Link>
+      <Button variant="learn" className="mt-auto w-full whitespace-nowrap uppercase" onClick={practice}>
+        {waiting.length > 0 ? `Practice ${waiting.length}` : known.length > 0 ? 'Review' : 'Learn 5'}
+      </Button>
     </motion.section>
   )
 
-  const recentCard = (
-    <motion.section aria-labelledby="recent-heading" className="card flex flex-col gap-3 p-5" {...pop(0.16)}>
-      <div className="flex items-center justify-between">
-        <h2 id="recent-heading" className="text-xl font-black">
-          Recent games
+  // Recent games: the latest few (fewer on short screens). All of them on /games.
+  const recentTile = (
+    <motion.section aria-labelledby="recent-heading" className="card flex min-w-0 flex-col gap-2 p-3.5" {...pop(0.12)}>
+      <div className="flex items-center justify-between gap-2">
+        <h2 id="recent-heading" className="font-black">
+          <span className="min-[900px]:hidden">Last game</span>
+          <span className="hidden min-[900px]:inline">Recent games</span>
         </h2>
         {returning && (
-          <button type="button" onClick={onRecent} className="min-h-9 cursor-pointer rounded-xl px-2 text-sm font-extrabold uppercase text-info hover:bg-info/10">
-            See all
+          <button type="button" onClick={onRecent} className="min-h-8 cursor-pointer rounded-lg px-1.5 text-xs font-extrabold uppercase text-info hover:bg-info/10">
+            All ›
           </button>
         )}
       </div>
       {recent.length === 0 ? (
-        <p className="text-sm font-bold text-muted">Your finished games will show up here, with every move named.</p>
+        <p className="text-xs font-bold text-muted">Your games show up here, every move named.</p>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {recent.map((g) => {
+        <ul className="flex flex-col gap-1.5">
+          {recent.map((g, i) => {
             const tag = RESULT_TAG[g.result] ?? RESULT_TAG.draw
             const b = BOTS[g.bot] ?? BOTS.ant
             return (
-              <li key={g.id}>
+              <li key={g.id} className={i === 0 ? '' : 'hidden min-[900px]:block [@media(max-height:700px)]:!hidden'}>
                 <button
                   type="button"
                   onClick={() => onOpenGame(g.id)}
-                  className="press flex w-full cursor-pointer items-center gap-3 rounded-2xl border-2 border-border bg-surface p-2.5 text-left [--edge:var(--border)] hover:bg-surface-2"
+                  className="flex w-full cursor-pointer items-center gap-2 rounded-xl p-1 text-left hover:bg-surface-2"
                 >
-                  <BotAvatar bot={b} size={40} />
+                  <BotAvatar bot={b} size={32} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-extrabold">vs {b.name}</span>
-                    <span className="block text-xs font-bold text-muted">
-                      {g.moves} {g.moves === 1 ? 'move' : 'moves'}
-                      {g.durationMs ? ` · ${formatDuration(g.durationMs)}` : ''}
+                    <span className="block truncate text-sm font-extrabold">vs {b.name}</span>
+                    <span className="block truncate text-[11px] font-bold text-muted">
+                      {g.durationMs ? formatDuration(g.durationMs) : `${g.moves} ${g.moves === 1 ? 'move' : 'moves'}`}
                     </span>
                   </span>
-                  <span className={`shrink-0 rounded-xl px-2.5 py-1 text-xs font-black uppercase ${tag.className}`}>{tag.label}</span>
+                  <span className={`shrink-0 rounded-lg px-1.5 py-0.5 text-[10px] font-black uppercase ${tag.className}`}>{tag.label}</span>
                 </button>
               </li>
             )
@@ -368,8 +311,8 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
   )
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-4 px-4 pb-8 pt-4 min-[900px]:px-8">
-      <header className="sticky top-0 z-20 -mx-4 flex items-center justify-between gap-3 border-b-2 border-border bg-bg/95 px-4 py-3 backdrop-blur min-[900px]:static min-[900px]:mx-0 min-[900px]:border-0 min-[900px]:bg-transparent min-[900px]:px-0">
+    <div className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-3 px-4 pb-3 pt-3 min-[900px]:px-8 min-[900px]:pt-5">
+      <header className="flex items-center justify-between gap-3">
         <Logo className="text-2xl" />
         <div className="flex items-center gap-2">
           <StatPill icon={<FlameIcon />} value={streak} label="day streak" hint="Days in a row you’ve played. Play today to keep it going." tone="text-warn" />
@@ -381,27 +324,23 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
         </div>
       </header>
 
-      <div className="grid gap-4 min-[900px]:grid-cols-[1fr_340px] min-[900px]:items-start">
-        <div className="flex flex-col gap-4">
-          {hero}
-          {opponentsCard}
-          <div className="min-[900px]:hidden">{wordsCard}</div>
-          <div className="min-[900px]:hidden">{reportCard}</div>
-          <div className="min-[900px]:hidden">{recentCard}</div>
+      {/* One screen, no scrolling: report bar, the play card, then two small tiles (a side column on wide screens). */}
+      <div className="flex flex-col gap-3 min-[900px]:grid min-[900px]:flex-1 min-[900px]:grid-cols-[1fr_340px] min-[900px]:items-stretch min-[900px]:gap-4">
+        <div className="min-[900px]:hidden">{reportBar}</div>
+        {hero}
+        <div className="grid grid-cols-2 gap-3 min-[900px]:flex min-[900px]:flex-col min-[900px]:gap-4">
+          <div className="hidden min-[900px]:block">{reportBar}</div>
+          {wordsTile}
+          {recentTile}
         </div>
-        <aside className="hidden flex-col gap-4 min-[900px]:flex">
-          {wordsCard}
-          {reportCard}
-          {recentCard}
-        </aside>
       </div>
 
-      <footer className="mt-auto pt-2 text-center text-xs font-bold text-muted/80">
-        Bot animals from{' '}
+      <footer className="mt-auto text-center text-[10px] font-bold text-muted/80">
+        Animals:{' '}
         <a className="underline hover:text-text" href="https://game-icons.net" target="_blank" rel="noreferrer">
           game-icons.net
         </a>{' '}
-        (CC BY 3.0) · Engine: Stockfish · Openings: Lichess
+        (CC BY 3.0) · Stockfish · Lichess openings
       </footer>
 
       <AnimatePresence>
