@@ -153,10 +153,10 @@ export function ChessBoard({
           <div style={{ ...layer, display: 'grid', placeItems: 'center' }}>
             <div
               style={{
-                width: '28%',
-                height: '28%',
+                width: '30%',
+                height: '30%',
                 borderRadius: '50%',
-                background: 'color-mix(in srgb, var(--bg) 42%, transparent)',
+                background: 'var(--move-dot)',
               }}
             />
           </div>

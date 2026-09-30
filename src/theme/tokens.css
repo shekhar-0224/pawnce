@@ -45,6 +45,8 @@
   --piece-day-edge: #b9b39c;
   --piece-day-ink: #1f3a2a;
   --last-move: rgba(255, 214, 0, 0.42);
+  /* Where the selected piece can go: dark enough to read on both squares */
+  --move-dot: rgba(20, 42, 28, 0.34);
 
   --success: var(--accent);
   --accent-2: var(--info);
