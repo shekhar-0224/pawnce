@@ -18,6 +18,8 @@ export const HINT_ALPHAS = [1, 0.62, 0.38]
 /** Think time for judging each position, and for a hint. */
 const EVAL_MS = 400
 const HINT_MS = 1200
+/** A longer look at the position before a mistake, so its explanation sees far enough. */
+const EXPLAIN_MS = 1200
 
 export type Hint = {
   rank: number
@@ -162,6 +164,24 @@ export function useAnalysis(
     if (realMate || pass.cp - botCpNow >= THREAT_CP) threat = pass.threat
   }
 
+  // Explaining a slip needs the engine's line from before the move to be long
+  // enough to show what was won. The quick judging search sometimes returns a
+  // short one, so slips get one longer look (once per position).
+  const [deepPv, setDeepPv] = useState<Record<string, string[]>>({})
+  const deepRequested = useRef(new Set<string>())
+  const deepen = useCallback((position: string, best: string | null) => {
+    if (deepRequested.current.has(position)) return
+    deepRequested.current.add(position)
+    analyst
+      .search({ fen: position, movetimeMs: EXPLAIN_MS })
+      .then((res) => {
+        const line = res.lines[0]
+        // Keep it only if it starts with the same best move we graded against.
+        if (line && line.pv.length && (!best || line.pv[0] === best)) setDeepPv((d) => ({ ...d, [position]: line.pv }))
+      })
+      .catch(() => deepRequested.current.delete(position))
+  }, [])
+
   // A grade for every move, once both positions around it are judged.
   const verdicts = useMemo<(MoveVerdict | null)[]>(
     () =>
@@ -196,19 +216,28 @@ export function useAnalysis(
         const view = m.color === myColor ? 'mover' : 'punisher'
         // A mate, else what is really lost down their line (net of trades), else
         // the win you missed. Their reply is only described when it wins something.
+        const beforePv = deepPv[m.before] ?? before.pv
         const refutation = slip
           ? explainSlip({
               fenBefore: m.before,
               move: m,
               after: { pv: after.pv, best: after.best, mate: after.mate },
-              before: { pv: before.pv[0] === m.lan ? [] : before.pv, mate: before.mate },
+              before: { pv: beforePv[0] === m.lan ? [] : beforePv, mate: before.mate },
               view,
             })
           : null
         return { quality, winBefore, winAfter, cpLoss, better, betterMove, refutation }
       }),
-    [moves, evals, openingsReady, myColor, suggested],
+    [moves, evals, openingsReady, myColor, suggested, deepPv],
   )
+
+  useEffect(() => {
+    moves.forEach((m, i) => {
+      const v = verdicts[i]
+      const before = evals[m.before]
+      if (v && before && (v.quality === 'mistake' || v.quality === 'blunder') && before.pv.length < 10) deepen(m.before, before.best)
+    })
+  }, [moves, verdicts, evals, deepen])
 
   const requestHint = useCallback(async () => {
     if (!myTurn || hintsLeft <= 0 || hintLoadingFen) return
