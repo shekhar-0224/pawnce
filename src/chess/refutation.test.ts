@@ -145,7 +145,7 @@ describe('explainSlip: a missed win, not the opponent’s even trade', () => {
     expect(r?.text).toBe('Your bishop on g5 is still attacked by the pawn on f6, and you didn’t move it.')
   })
 
-  it('nothing lost and nothing missed: no made-up threat', () => {
+  it('nothing lost and no material missed: names the better move, no made-up threat', () => {
     const { fen, uci } = setup(BEFORE_OO)
     const after = new Chess(fen)
     after.move('O-O')
@@ -155,12 +155,20 @@ describe('explainSlip: a missed win, not the opponent’s even trade', () => {
       after: { pv: uci(after.fen(), ['Nxc4', 'dxc4', 'd6', 'Nd5']), best: null, mate: null },
       before: { pv: uci(fen, ['a3', 'd6']) },
     })
-    expect(r).toBeNull()
+    expect(r?.text).toBe('You missed a3, a much stronger move.')
   })
 
   it('from your side when the bot misses a win', () => {
     const { fen, uci } = setup(BEFORE_OO)
     const r = describeMissed(fen, uci(fen, ['Nxe5', 'Nxc4', 'dxc4', 'd6', 'Nf3']), 'punisher')
     expect(r?.text).toBe('They missed Nxe5, which would have won your pawn on e5.')
+  })
+})
+
+describe('describeMissed: a missed attack', () => {
+  it('a winning king hunt without material yet: "starts a strong attack"', () => {
+    const { fen, uci } = setup(BEFORE_OO)
+    const r = describeMissed(fen, uci(fen, ['Bxf7+', 'Kxf7', 'Nxe5+', 'Kf6', 'Qh5', 'Ne7', 'Qf7+', 'Kxe5']))
+    expect(r?.text).toBe('You missed Bxf7+: it starts a strong attack on their king.')
   })
 })

@@ -71,6 +71,7 @@ export function Coach({ moves, verdicts, myColor, bot, showingBetter, onToggleBe
               newWords={newWordsAt(mine)}
               showingBetter={showingBetter}
               onToggleBetter={onToggleBetter}
+              replied={!!reply}
             />
           </motion.div>
         </AnimatePresence>
@@ -100,7 +101,10 @@ function YourMove({
   newWords,
   showingBetter,
   onToggleBetter,
+  replied,
 }: {
+  /** The bot has answered: the better move is shown on the earlier position. */
+  replied: boolean
   newWords: string[]
   move: Move
   verdict: MoveVerdict | null
@@ -153,7 +157,7 @@ function YourMove({
           onClick={onToggleBetter}
           className="self-start rounded-lg border border-accent/50 px-3 py-2 text-sm font-semibold text-accent hover:bg-accent/10"
         >
-          {showingBetter ? 'Hide better move' : `Show better move (${verdict.better})`}
+          {showingBetter ? (replied ? 'Back to game' : 'Hide better move') : replied ? `See ${verdict.better} on the board before your move` : `Show better move (${verdict.better})`}
         </button>
       )}
     </div>

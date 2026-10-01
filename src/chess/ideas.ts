@@ -73,7 +73,32 @@ export function describeIdea(fen: string, uci: string, line: Line): string {
       : `Starts a forced checkmate in ${line.mate} moves. Can you find the rest?`
   }
 
-  // 2. Castling and promotion
+  // 2. In check: say first how the move gets you out of it.
+  if (before.inCheck()) {
+    const king = allSquares(before, me).find((p) => p.type === 'k')!.square
+    const checkers = before.attackers(king, them)
+    const backCheck = after.inCheck() ? ', with check back' : ''
+    const takenAt = capturedSquare(move)
+    if (move.captured && takenAt && checkers.includes(takenAt)) {
+      const victim = PIECE_NAMES[move.captured]
+      const net = materialSwing(fen, line.pv, me)
+      const free = net !== null ? net >= VALUE[move.captured] : line.pv[1]?.slice(2, 4) !== takenAt
+      return `Gets out of check by taking the checking ${victim}${free ? ' for free' : ''}${backCheck}.`
+    }
+    if (piece.type === 'k') {
+      const took = move.captured ? `, taking their ${PIECE_NAMES[move.captured]}` : ''
+      return checkers.length > 1
+        ? `Double check, so only the king can move: it steps to ${to}${took}.`
+        : `Gets out of check: your king steps to ${to}${took}.`
+    }
+    const hits = allSquares(after, them).filter(
+      (p) => p.type !== 'k' && after.attackers(p.square, me).includes(to) && VALUE[p.type] > VALUE[piece.type],
+    )
+    const bonus = hits.length ? `, and it attacks their ${PIECE_NAMES[hits.sort((a, b) => VALUE[b.type] - VALUE[a.type])[0].type]}` : ''
+    return `Gets out of check by blocking with your ${name}${bonus}${backCheck}.`
+  }
+
+  // 3. Castling and promotion
   if (move.isKingsideCastle() || move.isQueensideCastle()) {
     return 'Castles: your king gets safe behind its pawns and your rook joins the game.'
   }
@@ -83,7 +108,7 @@ export function describeIdea(fen: string, uci: string, line: Line): string {
 
   const check = after.inCheck()
 
-  // 3. Captures: only call it "free" if the engine's line keeps it won
+  // 4. Captures: only call it "free" if the engine's line keeps it won
   if (move.captured) {
     const victim = PIECE_NAMES[move.captured]
     const reply = line.pv[1]
@@ -112,7 +137,7 @@ export function describeIdea(fen: string, uci: string, line: Line): string {
     return `Takes the ${victim}${withCheck}, but they can win it back.`
   }
 
-  // 4. Tactics (fork, pin, skewer, discovered attack), then plain threats
+  // 5. Tactics (fork, pin, skewer, discovered attack), then plain threats
   const tactic = mainTactic(detectTactics(fen, { from, to, promotion }))
   if (tactic) return describeTactic(tactic, true, '', piece.type)
   const targets = allSquares(after, them).filter(
@@ -128,7 +153,7 @@ export function describeIdea(fen: string, uci: string, line: Line): string {
     return `Attacks their ${target}. They'll have to spend a move saving it.`
   }
 
-  // 5. Safety: rescuing a piece in danger, or protecting one
+  // 6. Safety: rescuing a piece in danger, or protecting one
   if (piece.type !== 'p' && piece.type !== 'k' && before.isAttacked(from, them)) {
     const cheapestAttacker = Math.min(
       ...before.attackers(from, them).map((sq) => VALUE[before.get(sq)!.type]),
@@ -146,7 +171,7 @@ export function describeIdea(fen: string, uci: string, line: Line): string {
   )
   if (saved) return `Protects your ${PIECE_NAMES[saved.type]}, which was hanging.`
 
-  // 6. Opening principles
+  // 7. Opening principles
   const moveNumber = Number(fen.split(' ')[5] ?? 1)
   const backRank = me === 'w' ? '1' : '8'
   if (moveNumber <= 12 && (piece.type === 'n' || piece.type === 'b') && from[1] === backRank) {
@@ -156,7 +181,7 @@ export function describeIdea(fen: string, uci: string, line: Line): string {
     return 'Grabs space in the center, where the fight usually happens.'
   }
 
-  // 7. Something general
+  // 8. Something general
   if (piece.type === 'p') return 'A useful pawn push that gains space.'
   if (piece.type === 'k') return 'Steps your king to a safer square.'
   return `Puts your ${name} on a better square.`

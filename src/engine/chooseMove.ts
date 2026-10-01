@@ -14,6 +14,10 @@ function randomMove(fen: string): UciMove | null {
   return moves[Math.floor(Math.random() * moves.length)].lan
 }
 
+function isLegal(fen: string, uci: string): boolean {
+  return new Chess(fen).moves({ verbose: true }).some((m) => m.lan === uci)
+}
+
 let warned = false
 
 export async function chooseBotMove(
@@ -25,12 +29,14 @@ export async function chooseBotMove(
     return randomMove(fen)
   }
   try {
-    return await engine.bestMove({
+    const uci = await engine.bestMove({
       fen,
       skillLevel: bot.skillLevel,
       movetimeMs,
       depth: bot.depth,
     })
+    // Never let the game get stuck: an empty or illegal answer falls back to a legal move.
+    return uci && isLegal(fen, uci) ? uci : randomMove(fen)
   } catch (err) {
     if (!warned) {
       warned = true

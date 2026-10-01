@@ -346,7 +346,8 @@ export function describeMissed(fenBefore: string, bestPv: string[], view: 'mover
     return { text: `${P0} missed ${first.san}, which ${view === 'mover' ? 'leads' : 'would have led'} to checkmate.`, arrows: [{ from: first.from, to: first.to }] }
   }
   const net = captures.reduce((s, c) => s + (c.mine ? -c.value : c.value), 0)
-  if (net < 1) return null
+  // No material in the line: it's an attack (several checks), or simply a much better move.
+  if (net < 1) return missedNoMaterial(fenBefore, bestPv, first.san, first.from, first.to, view)
   // Name what's won: cancel even trades on the same square, then take the biggest prize left.
   const used = new Set<number>()
   captures.forEach((c, i) => {
@@ -358,7 +359,7 @@ export function describeMissed(fenBefore: string, bestPv: string[], view: 'mover
     }
   })
   const won = captures.filter((c, i) => !used.has(i) && !c.mine).sort((a, b) => b.value - a.value)[0]
-  if (!won) return null
+  if (!won) return missedNoMaterial(fenBefore, bestPv, first.san, first.from, first.to, view)
   const piece = PIECE_NAMES[won.victim as keyof typeof PIECE_NAMES]
   const P = view === 'mover' ? { You: 'You', the: 'the', which: 'which wins' } : { You: 'They', the: 'your', which: 'which would have won' }
   const now = won.ply === 0
@@ -368,6 +369,30 @@ export function describeMissed(fenBefore: string, bestPv: string[], view: 'mover
       : `${P.You} missed ${first.san}: it ${view === 'mover' ? 'wins' : 'would have won'} ${P.the} ${piece} on ${won.square} a few moves later.`,
     arrows: [{ from: first.from, to: first.to }],
   }
+}
+
+/** A missed move that wins no material within the line: an attack, or just much stronger. */
+function missedNoMaterial(fenBefore: string, pv: string[], san: string, from: Square, to: Square, view: 'mover' | 'punisher'): Refutation {
+  const g = new Chess(fenBefore)
+  const me = g.turn()
+  let checks = 0
+  for (const u of pv.slice(0, 12)) {
+    let mv
+    try {
+      mv = g.move(parseUci(u))
+    } catch {
+      break
+    }
+    if (mv.color === me && mv.san.includes('+')) checks++
+  }
+  const arrows = [{ from, to }]
+  if (checks >= 2) {
+    return {
+      text: view === 'mover' ? `You missed ${san}: it starts a strong attack on their king.` : `They missed ${san}, which would have started a strong attack on your king.`,
+      arrows,
+    }
+  }
+  return { text: view === 'mover' ? `You missed ${san}, a much stronger move.` : `They missed ${san}, a much stronger move.`, arrows }
 }
 
 /**

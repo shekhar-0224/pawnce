@@ -1,3 +1,4 @@
+import { Chess } from 'chess.js'
 import { AnimatePresence, motion } from 'framer-motion'
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react'
 import type { Arrow } from 'react-chessboard'
@@ -174,6 +175,13 @@ export function GameScreen({
   const betterMove =
     showBetterFor === myLastIndex ? (analysis.verdicts[myLastIndex]?.betterMove ?? null) : null
 
+  // The better move belongs to the position BEFORE your move. Once the bot has
+  // replied (maybe with check), show that earlier position, read-only, with
+  // the arrow on it, never on today's board.
+  const betterPreview = betterMove && !lastIsMine && myLastIndex >= 0 ? g.moves[myLastIndex] : null
+  const previewFen = betterPreview?.before ?? null
+  const previewGame = useMemo(() => (previewFen ? new Chess(previewFen) : null), [previewFen])
+
   // The red arrows for what punishes your slip, until the bot has replied.
   const momentRefutation = moment && lastIsMine ? (moment.verdict.refutation ?? null) : null
 
@@ -193,7 +201,7 @@ export function GameScreen({
   }, [lastTactic, lastPly])
   const arrows = useMemo<Arrow[]>(() => {
     const lagoon = readToken('--accent-2', '#3fb8af')
-    if (analysis.hints) {
+    if (analysis.hints && !previewGame) {
       return analysis.hints.map((h) => ({
         startSquare: h.from,
         endSquare: h.to,
@@ -228,7 +236,7 @@ export function GameScreen({
       }))
     }
     return []
-  }, [analysis.hints, betterMove, momentRefutation, flash, flashMine, analysis.threat])
+  }, [analysis.hints, betterMove, momentRefutation, flash, flashMine, analysis.threat, previewGame])
 
   // Give the final move a beat to land before the result card pops up.
   // (Only once: closing the summary shouldn't reopen it.)
@@ -411,14 +419,28 @@ export function GameScreen({
         >
         <div className="relative w-[var(--fit)] wide:w-full" style={{ '--fit': fit ? `${fit}px` : '100%' } as CSSProperties}>
           <ChessBoard
-            game={g.game}
+            game={previewGame ?? g.game}
             orientation={orientation}
             myColor={myColor}
-            canMove={g.myTurn}
-            lastMove={g.lastMove}
+            canMove={!previewGame && g.myTurn}
+            lastMove={previewGame ? (g.moves[myLastIndex - 1] ?? undefined) : g.lastMove}
             onMove={g.play}
             arrows={arrows}
           />
+          {betterPreview && (
+            <div className="absolute inset-x-2 top-2 z-20 flex items-center justify-between gap-2 rounded-xl bg-[#1c2a21]/85 px-3 py-2 text-xs font-bold text-white shadow-lg backdrop-blur">
+              <span className="min-w-0">
+                Before your move {betterPreview.san}: <span className="text-accent">{analysis.verdicts[myLastIndex]?.better}</span> was better
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowBetterFor(null)}
+                className="min-h-8 shrink-0 cursor-pointer rounded-lg bg-white px-2.5 font-black text-[#1c2a21]"
+              >
+                Back to game
+              </button>
+            </div>
+          )}
           <AnimatePresence>
             {flash && !analysis.hints && !momentRefutation && (
               <PatternChip
