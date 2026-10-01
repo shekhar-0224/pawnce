@@ -137,19 +137,31 @@ already won. So there are special rules:
 
 ## 7. Hints
 
+- **"Better move" is about the position before your move.** If the bot has
+  already replied (say with check), "See Nf3 on the board before your move"
+  shows that earlier position, read-only, with the arrow and a "Back to game"
+  button. The arrow is never drawn on the live board, where it could look
+  like advice for now.
+- **The bots never get stuck:** if the engine returns nothing or an illegal
+  move, the bot plays a random legal move instead (`chooseMove.ts`).
+
 - **2 per game.** Each hint asks the analyst for the top **3** moves
   (MultiPV 3) with **1.2 seconds** of thinking.
 - Arrows on the board: #1 boldest, #3 faintest.
 - Each hint gets a one-line **idea**, chosen in this order:
   1. forced mate
-  2. castling or promotion
-  3. captures (see honesty below)
-  4. a tactic
-  5. check
-  6. attacking a piece
-  7. rescuing a piece or protecting a hanging one
-  8. development or the center
-  9. a general "better square"
+  2. **in check:** how the move gets you out ("Gets out of check by blocking
+     with your pawn, and it attacks their queen", "…by taking the checking
+     queen for free", "your king steps to e2", "Double check, so only the king
+     can move")
+  3. castling or promotion
+  4. captures (see honesty below)
+  5. a tactic
+  6. check
+  7. attacking a piece
+  8. rescuing a piece or protecting a hanging one
+  9. development or the center
+  10. a general "better square"
 - **Honest captures:** Pawnce plays out the engine's line (your move, then 3
   moves each) and counts material.
   - "Wins a free knight" appears only if you're still up that knight after
