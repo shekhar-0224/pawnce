@@ -8,10 +8,12 @@ import { analyst, engine } from '../engine/stockfish'
 import { GameScreen } from './GameScreen'
 import { RecentGamesScreen } from './RecentGamesScreen'
 import { SavedGameSummary } from './SavedGameSummary'
+import { AdminPage } from './AdminPage'
 import { ReportPage } from './ReportPage'
 import { WordPage, WordsPage } from './WordsPage'
 import { newGameId } from '../storage/recentGames'
 import { type SidePref, StartScreen } from './StartScreen'
+import { track, trackPage } from '../analytics/track'
 
 type Settings = { botId: BotId; side: SidePref; timeControl: TimeControlId }
 
@@ -49,6 +51,7 @@ type Match = { gameId: string; myColor: Color }
  *   /games                recent games
  *   /words, /words/<id>   your chess vocabulary, and one word
  *   /report               your report card
+ *   /admin                the owner's analytics dashboard (password)
  */
 export default function App() {
   const navigate = useNavigate()
@@ -73,11 +76,14 @@ export default function App() {
   // Scroll to the top on every new page.
   useEffect(() => {
     window.scrollTo({ top: 0 })
+    // Usage analytics (anonymous); the owner's dashboard doesn't count itself.
+    if (location.pathname !== '/admin') trackPage(location.pathname)
   }, [location.pathname])
 
   const startGame = (next: Settings = settings) => {
     setSettings(next)
     setMatch({ gameId: newGameId(), myColor: pickColor(next.side) })
+    track('game_start', { bot: next.botId, side: next.side, tc: next.timeControl })
     navigate('/play')
   }
 
@@ -90,7 +96,13 @@ export default function App() {
   // Leaving the game page ends the live match (leaving mid-game resigns it
   // first). From then on, its link opens the saved summary and replay, not
   // a fresh board.
-  if (match && !onGamePage) setMatch(null)
+  // (Only on the way OUT of the game page: right after Play, the URL hasn't
+  // switched to /play yet, and clearing then would start a second game.)
+  const [wasOnGamePage, setWasOnGamePage] = useState(onGamePage)
+  if (wasOnGamePage !== onGamePage) {
+    setWasOnGamePage(onGamePage)
+    if (wasOnGamePage && !onGamePage && match) setMatch(null)
+  }
 
   const gameHost = (
     <GameHost
@@ -127,6 +139,7 @@ export default function App() {
               />
               <Route path="/words" element={<WordsPage />} />
               <Route path="/report" element={<ReportPage />} />
+              <Route path="/admin" element={<AdminPage />} />
               <Route path="/words/:wordId" element={<WordPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

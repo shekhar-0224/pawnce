@@ -1,4 +1,5 @@
 import { effectiveTheme, setThemePref, useThemePref } from '../storage/theme'
+import { track } from '../analytics/track'
 
 /** One tap flips between light and dark. */
 export function ThemeToggle() {
@@ -7,7 +8,10 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
-      onClick={() => setThemePref(dark ? 'light' : 'dark')}
+      onClick={() => {
+        setThemePref(dark ? 'light' : 'dark')
+        track('theme', { to: dark ? 'light' : 'dark' })
+      }}
       aria-label={label}
       title={label}
       className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full border-2 border-border bg-surface text-muted hover:bg-surface-2 hover:text-text"

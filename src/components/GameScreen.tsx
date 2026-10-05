@@ -40,6 +40,7 @@ import { HINT_ALPHAS, useAnalysis } from './useAnalysis'
 import { useGame } from './useGame'
 import { useVocab } from './useVocab'
 import { WinMeter } from './WinMeter'
+import { track } from '../analytics/track'
 
 type Props = {
   bot: Bot
@@ -127,12 +128,23 @@ export function GameScreen({
   >(null)
   // Keep the card on screen until it's dismissed, even once the word is learned.
   if (!wordCard && newWord) setWordCard({ ply: lastPly, kind: 'word', id: newWord })
+  const pausedWord = wordCard?.kind === 'word' ? wordCard.id : null
+  useEffect(() => {
+    if (pausedWord) track('word_pause', { id: pausedWord })
+  }, [pausedWord])
   if (wordCard && wordCard.ply !== lastPly && !newWord) setWordCard(null)
   const dismissWord = (learn: boolean) => {
     if (learn && wordCard?.kind === 'word') learnWord(wordCard.id)
     setWordDoneAt(wordCard?.ply ?? lastPly)
     setWordCard(null)
   }
+
+  // Analytics: each mistake or blunder card shown (once per move).
+  const momentPly = moment?.ply ?? null
+  const momentQuality = moment?.verdict.quality
+  useEffect(() => {
+    if (momentPly !== null) track('slip', { q: momentQuality })
+  }, [momentPly, momentQuality])
 
   const shouldHold = awaitingJudgement || wordCard !== null
   if (shouldHold !== hold) setHold(shouldHold) // settle before effects run
@@ -306,7 +318,10 @@ export function GameScreen({
           left={analysis.hintsLeft}
           loading={analysis.hintLoading}
           enabled={analysis.canHint}
-          onUse={analysis.requestHint}
+          onUse={() => {
+            track('hint')
+            analysis.requestHint()
+          }}
         />
       </div>
       {g.clockOn && (
@@ -331,6 +346,7 @@ export function GameScreen({
     onTakeBack={() => {
       setShowBetterFor(null)
       // Undo your move, and the bot's reply if it already answered.
+      track('takeback')
       if (lastIsMine) g.takeBack()
       else g.takeBackRound()
     }}
@@ -532,7 +548,10 @@ export function GameScreen({
         hintsLeft={analysis.hintsLeft}
         hintLoading={analysis.hintLoading}
         canHint={analysis.canHint}
-        onHint={analysis.requestHint}
+        onHint={() => {
+          track('hint')
+          analysis.requestHint()
+        }}
         canTakeBack={g.canTakeBack && g.myTurn}
         onTakeBack={() => {
           setShowBetterFor(null)

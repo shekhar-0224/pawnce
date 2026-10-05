@@ -17,6 +17,7 @@ import { Mascot } from './Mascot'
 import { type GameSetup, NewGameFlow } from './NewGameFlow'
 import { Sheet } from './Sheet'
 import { ThemeToggle } from './ThemeToggle'
+import { track } from '../analytics/track'
 
 export type SidePref = 'white' | 'black' | 'random'
 
@@ -169,7 +170,10 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
   // The report card, as a slim call to action at the top. Opens as a bottom sheet.
   const reportBar = (
     <motion.div {...pop(0)}>
-      <button type="button" onClick={() => setReportOpen(true)} aria-label={`Report card: ${report.grade.label}`} className={`${tileLink} w-full !flex-row items-center !gap-3 !py-2.5`}>
+      <button type="button" onClick={() => {
+          setReportOpen(true)
+          track('report_open')
+        }} aria-label={`Report card: ${report.grade.label}`} className={`${tileLink} w-full !flex-row items-center !gap-3 !py-2.5`}>
         <span className={`grid size-11 shrink-0 place-items-center rounded-xl text-2xl font-black ${report.grade.tone}`} aria-hidden>
           {report.grade.letter}
         </span>

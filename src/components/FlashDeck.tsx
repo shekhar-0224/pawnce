@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { EXAMPLES, exampleBoard } from '../chess/examples'
 import { WORDS, WORDS_BY_ID } from '../chess/glossary'
 import { learnWord } from '../storage/learned'
 import { Button } from './Button'
 import { ExampleBoard } from './ExampleBoard'
 import { FlashCard, type FlashCardData } from './FlashCard'
+import { track } from '../analytics/track'
 
 export type DeckItem = { card: FlashCardData; context?: { text: string; onJump?: () => void } }
 
@@ -27,6 +28,8 @@ export function FlashDeck({ items, onClose }: Props) {
   const [dir, setDir] = useState(1)
   const [mode, setMode] = useState<'cards' | 'quiz'>('cards')
   const wordIds = items.flatMap((i) => (i.card.kind === 'word' ? [i.card.id] : []))
+  const deckSize = items.length
+  useEffect(() => track('deck_open', { n: deckSize }), [deckSize])
 
   const go = (step: number) => {
     const cur = items[index]?.card
@@ -159,6 +162,10 @@ function Quiz({ wordIds, onDone }: { wordIds: string[]; onDone: () => void }) {
   const [at, setAt] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
   const [score, setScore] = useState(0)
+  const finished = at >= questions.length
+  useEffect(() => {
+    if (finished) track('quiz_done', { score, total: questions.length })
+  }, [finished]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (at >= questions.length) {
     return (

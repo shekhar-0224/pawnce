@@ -7,6 +7,7 @@
  * that it counts as known.
  */
 import { useSyncExternalStore } from 'react'
+import { track } from '../analytics/track'
 
 export type WordStats = {
   /** ISO date first met. */
@@ -97,6 +98,7 @@ export function recordWord(id: string, how: Sighting, key: string, where?: { gam
   if (recorded.has(key)) return
   recorded.add(key)
   const cur = read()
+  if (!cur.words[id]) track('word_new', { id })
   const s = cur.words[id] ?? { first: new Date().toISOString(), seen: 0, played: 0, missed: 0, ...where }
   const next: WordStats = {
     ...s,
