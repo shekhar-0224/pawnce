@@ -22,6 +22,7 @@ import {
 } from '../chess/outcome'
 import { saveGame } from '../storage/recentGames'
 import { recordGameStats } from '../storage/stats'
+import { track } from '../analytics/track'
 
 export type MoveInput = { from: Square; to: Square; promotion?: PieceSymbol }
 
@@ -250,6 +251,7 @@ export function useGame(
     const date = new Date().toISOString()
     const durationMs = startedAt.current ? Date.now() - startedAt.current : 0
     recordGameStats({ id: gameId, bot: bot.id, result: resultFor(outcome, myColor), date, durationMs })
+    track('game_end', { bot: bot.id, result: resultFor(outcome, myColor), reason: outcome.reason, moves: Math.ceil(moves.length / 2), ms: durationMs })
     saveGame({
       id: gameId,
       date,

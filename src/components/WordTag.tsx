@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 import { WORDS_BY_ID, askAbout } from '../chess/glossary'
 import { learnWord } from '../storage/learned'
+import { track } from '../analytics/track'
 
 /**
  * The "New" tag on a chess word you haven't learned yet, with a tappable
@@ -22,6 +23,7 @@ export function WordTag({ id }: { id: string | null }) {
         type="button"
         aria-expanded={open}
         onClick={() => {
+          if (!open) track('word_open', { id: word.id })
           setOpen((o) => !o)
           learnWord(word.id)
         }}
