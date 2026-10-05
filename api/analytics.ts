@@ -8,7 +8,8 @@
  * Storage: daily counters in Upstash Redis (free tier), added to the Vercel
  * project from the Marketplace (it sets KV_REST_API_URL / KV_REST_API_TOKEN).
  * Unique visitors are counted with HyperLogLog, so no list of visitor ids is
- * ever stored. No IP addresses are kept: only the country Vercel already
+ * ever stored. Each event is one request of about 6 to 8 small commands; a
+ * day's counters take a few KB, so nothing needs to expire. No IP addresses are kept: only the country Vercel already
  * knows, and the screen size class (phone / tablet / desktop).
  */
 
@@ -16,7 +17,6 @@
 export type Store = { run(cmds: (string | number)[][]): Promise<unknown[]> }
 
 const PREFIX = 'pc'
-const KEEP_SECONDS = 400 * 24 * 3600
 
 /** Events the app may send, and the properties each one may carry. */
 const EVENTS: Record<string, string[]> = {
@@ -124,7 +124,6 @@ export function eventCommands(body: TrackBody, ctx: { now: number; country: stri
       cmds.push(inc(`theme:${p.to}`))
       break
   }
-  for (const set of ['d', 'uv', 'us', 'up', 'uf', 'ud']) cmds.push(['EXPIRE', `${PREFIX}:${set}:${day}`, KEEP_SECONDS])
   // A short live feed for the dashboard (no ids in it).
   const feed = JSON.stringify({ t: ctx.now, e: body.e, p, c: clean(ctx.country, 2), dev: deviceOf(body.w) })
   cmds.push(['LPUSH', `${PREFIX}:recent`, feed], ['LTRIM', `${PREFIX}:recent`, 0, 99])

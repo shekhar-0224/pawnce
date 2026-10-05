@@ -60,6 +60,10 @@ A solo, non-developer founder working with Claude Code. So:
   (Ant, Frog, Jaguar avatars) and the overall theme, not in piece shapes.
 - Clear feedback moments (teaching-moment card, "Fork!" tags), never cluttered.
 
+## Analytics
+Anonymous usage events and a private /admin dashboard: see docs/ANALYTICS.md.
+(A small serverless function and an Upstash Redis store; still no user accounts.)
+
 ## Current phase
 Phases 1 to 5 are built, plus a learning round, the minimal redesign and
 "naming first" (threat alerts, verified tactics, openings, vocabulary memory).
