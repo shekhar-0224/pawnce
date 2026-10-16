@@ -53,6 +53,20 @@ describe('analytics API', () => {
     expect((await handle(post({ vid: 'v', sid: 's', e: 'hint' }), env, null, NOW)).status).toBe(204)
   })
 
+  it('sample traffic is added only when ANALYTICS_DEMO=1', async () => {
+    const store = memoryStore()
+    await handle(post({ vid: 'real', sid: 's', e: 'page_view', p: { path: '/', first: true } }), env, store, NOW)
+    const read = async (extra: Record<string, string>) =>
+      (await (await handle(new Request('http://x/api/analytics?days=30', { headers: { authorization: 'Bearer secret' } }), { ...env, ...extra }, store, NOW)).json()) as {
+        visitors: number
+        recent: { t: number }[]
+      }
+    expect((await read({})).visitors).toBe(1)
+    const demo = await read({ ANALYTICS_DEMO: '1' })
+    expect(demo.visitors).toBe(80)
+    expect(demo.recent.every((r) => r.t <= NOW)).toBe(true)
+  })
+
   it('pages, not ids', () => {
     expect(normalizePath('/words/fork')).toBe('/words/*')
     expect(normalizePath('/play')).toBe('/play')
