@@ -1,21 +1,22 @@
 /*
  * Sample traffic for the /admin dashboard (demos and screenshots).
  *
- * Simulates 79 people using Pawnce over the last 30 days: visits, games,
+ * Simulates 79 people using Pawnce since analytics went live (5 Oct 2026): visits, games,
  * hints, mistakes, words, flash cards. Nothing is written to the database:
  * the events are replayed into memory and added to the real numbers when the
  * ANALYTICS_DEMO=1 environment variable is set. Remove that variable to go
  * back to real data only.
  *
  * The same seed gives the same people, so numbers stay steady between
- * refreshes; days are relative to today, and today's activity fills in as the
- * hours pass (events "in the future" are left out).
+ * refreshes; today's activity fills in as the hours pass (events "in the
+ * future" are left out).
  */
 import { eventCommands, memoryStore, readStats, type Stats, type TrackBody } from './analytics.js'
 
 const PEOPLE = 79
-const SPAN_DAYS = 30
 const DAY = 86_400_000
+/** Analytics went live on 5 Oct 2026 (06:32 UTC): no sample activity before that. */
+const LAUNCH = Date.parse('2026-10-05T06:32:00Z')
 
 /** Small seeded random generator (mulberry32). */
 function rng(seed: number) {
@@ -78,6 +79,8 @@ type Ev = { t: number; c: string; body: TrackBody }
 /** Every sample event up to `now`, oldest first. */
 export function demoEvents(now: number): Ev[] {
   const today = Math.floor(now / DAY) * DAY
+  const launchDay = Math.floor(LAUNCH / DAY) * DAY
+  const span = Math.max(0, Math.round((today - launchDay) / DAY))
   const out: Ev[] = []
   for (let i = 0; i < PEOPLE; i++) {
     const r = rng(7919 * (i + 1))
@@ -87,7 +90,7 @@ export function demoEvents(now: number): Ev[] {
     const w = WIDTH[device] + int(r, -20, 20)
     const skill = r()
     // More people arrive in recent days (the app is growing).
-    const firstDay = today - Math.floor(SPAN_DAYS * r() ** 1.5) * DAY
+    const firstDay = today - Math.min(span, Math.floor((span + 1) * r() ** 1.2)) * DAY
     const keen = r()
     const visits = keen < 0.42 ? 1 : keen < 0.72 ? int(r, 2, 3) : keen < 0.94 ? int(r, 4, 8) : int(r, 9, 15)
     const plays = r() < 0.83
@@ -97,8 +100,10 @@ export function demoEvents(now: number): Ev[] {
     let themed = false
     for (let v = 0; v < visits && day <= today; v++) {
       let hour = evening ? int(r, 16, 23) : int(r, 6, 22)
-      // Today: only hours that have already passed, so everyone shows up.
-      if (day === today) hour = Math.min(hour, Math.max(0, Math.floor((now - today) / 3_600_000) - 1))
+      // Today: a first visit lands in the hours already passed (so everyone shows up); a return visit later today just hasn't happened yet.
+      if (day === today && v === 0) hour = Math.min(hour, Math.max(0, Math.floor((now - today) / 3_600_000) - 1))
+      // Launch day: only after it went live.
+      if (day === launchDay) hour = Math.max(hour, 7)
       let t = day + hour * 3_600_000 + int(r, 0, 59) * 60_000
       const sid = id(r)
       const send = (e: string, p: TrackBody['p'] = {}) => {
@@ -171,7 +176,7 @@ export function demoEvents(now: number): Ev[] {
       day += (r() < 0.6 ? int(r, 1, 2) : int(r, 3, 7)) * DAY
     }
   }
-  return out.filter((e) => e.t <= now).sort((a, b) => a.t - b.t)
+  return out.filter((e) => e.t >= LAUNCH && e.t <= now).sort((a, b) => a.t - b.t)
 }
 
 /** The dashboard's numbers for the sample traffic alone. */
