@@ -44,15 +44,10 @@ const COUNTRIES = { IN: 30, US: 17, GB: 8, DE: 5, CA: 5, BR: 4, AU: 4, AE: 3, FR
 const DEVICES = { phone: 62, desktop: 30, tablet: 8 }
 const WIDTH = { phone: 390, tablet: 820, desktop: 1440 }
 const REFS = {
-  direct: 36,
-  'https://www.google.com/': 16,
-  'https://www.linkedin.com/': 14,
+  direct: 60,
+  'https://www.linkedin.com/': 20,
+  'https://x.com/': 11,
   'https://www.reddit.com/': 9,
-  'https://x.com/': 8,
-  'https://l.instagram.com/': 5,
-  'https://www.producthunt.com/': 4,
-  'https://news.ycombinator.com/': 3,
-  'https://lichess.org/': 3,
 }
 const BOTS = { ant: 48, frog: 37, jaguar: 15 }
 const SIDES = { white: 50, random: 30, black: 20 }
@@ -111,7 +106,7 @@ export function demoEvents(now: number): Ev[] {
         t += int(r, 20, 90) * 1000
       }
       const page = (path: string, first = false) =>
-        send('page_view', { path, first, ...(first && v === 0 ? { ref: pick(r, REFS) } : first && r() < 0.15 ? { ref: 'https://www.google.com/' } : {}) })
+        send('page_view', { path, first, ...(first && v === 0 ? { ref: pick(r, REFS) } : {}) })
 
       page('/', true)
       if (!themed && r() < 0.12) {
