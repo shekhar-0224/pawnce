@@ -20,7 +20,7 @@ function devAnalytics(): Plugin {
           headers: req.headers as Record<string, string>,
           body: req.method === 'POST' ? Buffer.concat(chunks) : undefined,
         })
-        const response = await handle(request, { ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ?? 'dev' }, store)
+        const response = await handle(request, { ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ?? 'dev', ANALYTICS_DEMO: process.env.ANALYTICS_DEMO }, store)
         res.statusCode = response.status
         response.headers.forEach((v, k) => res.setHeader(k, v))
         res.end(Buffer.from(await response.arrayBuffer()))

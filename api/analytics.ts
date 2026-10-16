@@ -193,6 +193,27 @@ export async function readStats(store: Store, days: number, now: number): Promis
   }
 }
 
+/** Two sets of numbers for the same days, added together (visitor ids never overlap). */
+export function mergeStats(a: Stats, b: Stats): Stats {
+  const add = (x: Record<string, number>, y: Record<string, number>) => {
+    const m = { ...x }
+    for (const [k, v] of Object.entries(y)) m[k] = (m[k] ?? 0) + v
+    return m
+  }
+  return {
+    days: a.days.map((d, i) => {
+      const e = b.days[i]
+      return e ? { day: d.day, h: add(d.h, e.h), visitors: d.visitors + e.visitors, sessions: d.sessions + e.sessions, players: d.players + e.players } : d
+    }),
+    visitors: a.visitors + b.visitors,
+    players: a.players + b.players,
+    finishers: a.finishers + b.finishers,
+    deckUsers: a.deckUsers + b.deckUsers,
+    totals: add(a.totals, b.totals),
+    recent: [...a.recent, ...b.recent].sort((x, y) => y.t - x.t).slice(0, 50),
+  }
+}
+
 /** Upstash Redis over its REST API (one pipeline request per call). */
 export function upstashStore(env: Record<string, string | undefined>): Store | null {
   const url = env.KV_REST_API_URL ?? env.UPSTASH_REDIS_REST_URL
@@ -300,7 +321,11 @@ export async function handle(request: Request, env: Record<string, string | unde
     if (!same(auth, `Bearer ${password}`)) return json(401, { error: 'password' })
     if (!store) return json(503, { error: 'setup', missing: ['database'] })
     const days = Math.max(1, Math.min(90, Number(new URL(request.url).searchParams.get('days')) || 30))
-    return json(200, await readStats(store, days, now))
+    const stats = await readStats(store, days, now)
+    if (env.ANALYTICS_DEMO !== '1') return json(200, stats)
+    // Sample traffic for demos, added to the real numbers (see api/_demo.ts).
+    const { demoStats } = await import('./_demo.js')
+    return json(200, mergeStats(stats, await demoStats(days, now)))
   }
   return new Response(null, { status: 405 })
 }
