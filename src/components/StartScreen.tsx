@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { TIME_CONTROLS, timeControlName } from '../chess/clock'
-import { PATTERN_WORDS } from '../chess/glossary'
+import { PATTERN_WORDS, WORDS } from '../chess/glossary'
 import { BOTS, BOT_LIST } from '../engine/bots'
 import { isLearnedPattern, useLearned } from '../storage/learned'
 import { loadRecentGames, playStreak } from '../storage/recentGames'
@@ -18,6 +18,7 @@ import { type GameSetup, NewGameFlow } from './NewGameFlow'
 import { Sheet } from './Sheet'
 import { ThemeToggle } from './ThemeToggle'
 import { track } from '../analytics/track'
+import { HINTS_PER_GAME } from './useAnalysis'
 
 export type SidePref = 'white' | 'black' | 'random'
 
@@ -145,6 +146,21 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
   const [choosing, setChoosing] = useState<{ botId?: GameSetup['botId'] } | null>(null)
   const [deck, setDeck] = useState<DeckItem[] | null>(null)
   const [reportOpen, setReportOpen] = useState(false)
+  // For new visitors: real games played so far (null until there are enough to show).
+  const [liveGames, setLiveGames] = useState<number | null>(null)
+  useEffect(() => {
+    if (returning) return
+    let live = true
+    fetch('/api/analytics?public=1')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { games?: number | null } | null) => {
+        if (live && typeof d?.games === 'number') setLiveGames(d.games)
+      })
+      .catch(() => undefined)
+    return () => {
+      live = false
+    }
+  }, [returning])
 
   // One short, useful line under the tagline.
   const last = games[0]
@@ -202,7 +218,18 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
           <h1 id="play-heading" className="font-display text-2xl font-black leading-tight max-[359px]:text-xl tall:text-3xl">
             Play the move. <span className="text-accent">Learn its name.</span>
           </h1>
-          <p className="mt-1 text-sm font-bold text-muted [@media(max-height:600px)]:hidden">{greeting}</p>
+          {returning ? (
+            <p className="mt-1 text-sm font-bold text-muted [@media(max-height:600px)]:hidden">{greeting}</p>
+          ) : (
+            // New visitors: what Pawnce gives you, in four short facts.
+            <ul aria-label="What you get" className="mt-2 flex flex-wrap gap-1.5 tall:justify-center wide:justify-center [@media(max-height:600px)]:hidden">
+              {[`${WORDS.length} chess words`, `${BOT_LIST.length} bots`, `${HINTS_PER_GAME} hints a game`, 'Free, no sign-up'].map((f, i) => (
+                <li key={f} className={`rounded-full border-2 border-border px-2 py-0.5 text-[11px] font-extrabold leading-tight text-muted ${i === 1 ? 'max-[399px]:hidden' : i === 2 ? 'max-[479px]:hidden' : ''}`}>
+                  {f}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
       <div className="mx-auto flex w-full max-w-sm flex-col gap-3">
@@ -321,6 +348,8 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
       <header className="flex items-center justify-between gap-2">
         <Logo className="text-2xl" textClassName="max-[359px]:sr-only" />
         <div className="flex min-w-0 items-center gap-1.5 min-[400px]:gap-2">
+          {returning ? (
+            <>
           <StatPill icon={<FlameIcon />} value={streak} label="day streak" hint="Days in a row you’ve played. Play today to keep it going." tone="text-warn" />
           <span className="hidden min-[340px]:inline-flex">
             <StatPill icon={<BookIcon />} value={known.length} label="patterns" hint="Chess patterns you’ve played yourself, like a fork or castling." tone="text-learn" />
@@ -328,6 +357,14 @@ export function StartScreen({ setup, onPlay, onRecent, onOpenGame }: Props) {
           <span className="hidden min-[420px]:inline-flex">
             <StatPill icon={<TrophyIcon />} value={wins} label={wins === 1 ? 'win' : 'wins'} hint="Games you’ve won against the bots." tone="text-info" />
           </span>
+            </>
+          ) : (
+            // New visitors: the app is new (or, once there are enough, how many games have been played).
+            <span className="inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-full bg-accent/15 px-2.5 text-[11px] font-black uppercase tracking-[0.06em] text-accent">
+              <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-accent motion-safe:animate-pulse" />
+              {liveGames !== null ? `${liveGames.toLocaleString()} games played` : 'Just launched'}
+            </span>
+          )}
           <ThemeToggle />
         </div>
       </header>
