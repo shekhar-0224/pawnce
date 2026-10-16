@@ -75,6 +75,19 @@ describe('analytics API', () => {
     expect(all.days.filter((d) => d.visitors > 0).every((d) => d.day >= '2026-10-05')).toBe(true)
   })
 
+  it('the home page count shows real games only, and only past the threshold', async () => {
+    const store = memoryStore()
+    const publicGames = async (e: Record<string, string> = env) =>
+      ((await (await handle(new Request('http://x/api/analytics?public=1'), e, store, NOW)).json()) as { games: number | null }).games
+    const end = post({ vid: 'v', sid: 's', e: 'game_end', p: { bot: 'ant', result: 'win', reason: 'checkmate', moves: 20, ms: 60000 } })
+    await handle(end, env, store, NOW)
+    expect(await publicGames()).toBe(null)
+    expect(await publicGames({ ...env, ANALYTICS_DEMO: '1' })).toBe(null)
+    await store.run([['HINCRBY', 'pc:all', 'games', 600]])
+    expect(await publicGames()).toBe(601)
+    expect(await publicGames({})).toBe(601)
+  })
+
   it('pages, not ids', () => {
     expect(normalizePath('/words/fork')).toBe('/words/*')
     expect(normalizePath('/play')).toBe('/play')

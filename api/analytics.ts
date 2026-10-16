@@ -18,6 +18,9 @@ export type Store = { run(cmds: (string | number)[][]): Promise<unknown[]> }
 
 const PREFIX = 'pc'
 
+/** The home page shows "N games played" once real games reach this many. */
+export const PUBLIC_MIN_GAMES = 500
+
 /** Events the app may send, and the properties each one may carry. */
 const EVENTS: Record<string, string[]> = {
   page_view: ['path', 'first', 'ref'],
@@ -102,6 +105,8 @@ export function eventCommands(body: TrackBody, ctx: { now: number; country: stri
         inc('sum:moves', num('moves')),
         inc('sum:secs', Math.round(num('ms') / 1000)),
         ['PFADD', `${PREFIX}:uf:${day}`, vid],
+        // All-time count for the home page (real games only; sample data never touches it).
+        ['HINCRBY', `${PREFIX}:all`, 'games', 1],
       )
       break
     case 'slip':
@@ -144,6 +149,14 @@ export type Stats = {
   recent: { t: number; e: string; p: Record<string, string>; c: string; dev: string }[]
 }
 
+/** A Redis hash as numbers (Upstash returns HGETALL as [field, value, field, value, …]). */
+function toMap(v: unknown): Record<string, number> {
+  const m: Record<string, number> = {}
+  if (Array.isArray(v)) for (let i = 0; i < v.length; i += 2) m[String(v[i])] = Number(v[i + 1]) || 0
+  else if (v && typeof v === 'object') for (const [f, x] of Object.entries(v)) m[f] = Number(x) || 0
+  return m
+}
+
 /** The dashboard's numbers for the last `days` days (today included). */
 export async function readStats(store: Store, days: number, now: number): Promise<Stats> {
   const list = Array.from({ length: days }, (_, i) => dayOf(now - (days - 1 - i) * 86_400_000))
@@ -161,13 +174,6 @@ export async function readStats(store: Store, days: number, now: number): Promis
   ]
   const out = await store.run(cmds)
   const n = list.length
-  const toMap = (v: unknown): Record<string, number> => {
-    // Upstash returns HGETALL as [field, value, field, value, …]
-    const m: Record<string, number> = {}
-    if (Array.isArray(v)) for (let i = 0; i < v.length; i += 2) m[String(v[i])] = Number(v[i + 1]) || 0
-    else if (v && typeof v === 'object') for (const [f, x] of Object.entries(v)) m[f] = Number(x) || 0
-    return m
-  }
   const totals: Record<string, number> = {}
   const daysOut = list.map((day, i) => {
     const h = toMap(out[i])
@@ -315,6 +321,19 @@ export async function handle(request: Request, env: Record<string, string | unde
     return new Response(null, { status: 204 })
   }
   if (request.method === 'GET') {
+    // Public, for the home page: real games played, only once there are enough to be worth showing.
+    if (new URL(request.url).searchParams.get('public') === '1') {
+      let games: number | null = null
+      try {
+        const total = store ? (toMap((await store.run([['HGETALL', `${PREFIX}:all`]]))[0]).games ?? 0) : 0
+        games = total >= PUBLIC_MIN_GAMES ? total : null
+      } catch {
+        games = null
+      }
+      return new Response(JSON.stringify({ games }), {
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300, s-maxage=600, stale-while-revalidate=3600' },
+      })
+    }
     const password = env.ADMIN_PASSWORD
     if (!password) return json(503, { error: 'setup', missing: ['ADMIN_PASSWORD', ...(store ? [] : ['database'])] })
     const auth = request.headers.get('authorization') ?? ''
