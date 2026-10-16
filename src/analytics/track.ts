@@ -40,6 +40,11 @@ export function setTrackingOff(off: boolean) {
   } catch {
     // Not saved; fine.
   }
+  // Switched back on: the next page counts as the start of a visit.
+  if (!off) {
+    firstView = true
+    lastPath = null
+  }
 }
 
 /** Record one event. Never throws, never waits. */
@@ -67,6 +72,8 @@ let firstView = true
 let lastPath: string | null = null
 /** A page view; the first one of a visit also notes where the visitor came from. */
 export function trackPage(path: string) {
+  // Not counted (e.g. the owner's browser): keep the visit's "first page" for when counting is switched on.
+  if (trackingOff()) return
   if (path === lastPath) return // the same page reported twice (e.g. React dev double effects)
   lastPath = path
   const first = firstView

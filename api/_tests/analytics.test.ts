@@ -65,6 +65,14 @@ describe('analytics API', () => {
     const demo = await read({ ANALYTICS_DEMO: '1' })
     expect(demo.visitors).toBe(80)
     expect(demo.recent.every((r) => r.t <= NOW)).toBe(true)
+    // Nothing before analytics went live (5 Oct 2026).
+    const later = Date.parse('2026-10-16T15:00:00Z')
+    const all = (await (await handle(new Request('http://x/api/analytics?days=90', { headers: { authorization: 'Bearer secret' } }), { ...env, ANALYTICS_DEMO: '1' }, memoryStore(), later)).json()) as {
+      visitors: number
+      days: { day: string; visitors: number }[]
+    }
+    expect(all.visitors).toBe(79)
+    expect(all.days.filter((d) => d.visitors > 0).every((d) => d.day >= '2026-10-05')).toBe(true)
   })
 
   it('pages, not ids', () => {

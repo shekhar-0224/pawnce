@@ -299,17 +299,28 @@ export function AdminPage() {
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <label className="flex cursor-pointer items-center gap-1.5 text-xs font-bold text-muted">
-            <input
-              type="checkbox"
-              checked={countMe}
-              onChange={(e) => {
-                setCountMe(e.target.checked)
-                setTrackingOff(!e.target.checked)
-              }}
-            />
+          {/* This page is never counted; the switch is about your visits to the rest of the app. */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={countMe}
+            title={countMe ? 'Your visits to the app are counted (this dashboard never is)' : 'Your visits are not counted. Switch on to count them from your next page'}
+            onClick={() => {
+              setCountMe(!countMe)
+              setTrackingOff(countMe)
+            }}
+            className="flex min-h-9 cursor-pointer items-center gap-2 rounded-xl px-1.5 text-xs font-bold text-muted hover:text-text"
+          >
+            <span
+              aria-hidden
+              className={`relative h-5 w-9 shrink-0 rounded-full border-2 transition-colors ${countMe ? 'border-accent bg-accent' : 'border-border bg-surface-2'}`}
+            >
+              <span
+                className={`absolute top-1/2 size-3 -translate-y-1/2 rounded-full transition-all ${countMe ? 'left-[18px] bg-on-accent' : 'left-0.5 bg-muted'}`}
+              />
+            </span>
             Count my visits
-          </label>
+          </button>
           <Button className="min-h-9 px-3 text-xs" onClick={() => void load(key, range)} disabled={state === 'loading'}>
             {state === 'loading' ? 'Loading…' : 'Refresh'}
           </Button>
